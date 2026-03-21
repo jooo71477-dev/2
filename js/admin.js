@@ -20,6 +20,9 @@ const auth = firebase.auth();
 const ADMIN_EMAIL = "jooo71477@gmail.com";
 const ADMIN_EMAILS = ["jooo714777@gmail.com", "jooo71477@gmail.com", "products@icloth-fashion-store.com"];
 
+// 🚚 BOSTA PROXY (Cloudflare Worker)
+const BOSTA_PROXY_URL = "https://bosta-proxy.jooo71477.workers.dev";
+
 const governorates = [
     "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "البحر الأحمر", "البحيرة", "الفيوم", "الغربية", "الإسماعيلية", "المنوفية", "المنيا", "القليوبية", "الوادي الجديد", "السويس", "الشرقية", "دمياط", "بورسعيد", "جنوب سيناء", "كفر الشيخ", "مطروح", "الأقصر", "قنا", "شمال سيناء", "سوهاج", "بني سويف", "أسيوط", "أسوان"
 ];
@@ -1202,6 +1205,15 @@ function renderOrders(data = orders) {
             <td style="padding:15px;"><span class="status-badge ${getStatusClass(o.status)}">${getStatusLabel(o.status)}</span></td>
             <td style="padding:15px;">
                 <div style="display:flex; gap:12px; align-items:center;" onclick="event.stopPropagation()">
+                    ${o.trackingNumber ? `
+                        <button onclick="window.open('https://bosta.co/tracking-requests/${o.trackingNumber}', '_blank')" style="color:#4CAF50; background:none; border:none; cursor:pointer; font-size:1.1rem;" title="تتبع الشحنة">
+                            <i class="fas fa-truck"></i>
+                        </button>
+                    ` : `
+                        <button id="bosta-btn-tab-${o.id}" onclick="shipToBosta('${o.id}')" style="color:#e20613; background:none; border:none; cursor:pointer; font-size:1.1rem;" title="ارسل لبوسطة">
+                            <i class="fas fa-shipping-fast"></i>
+                        </button>
+                    `}
                     <button onclick="openOrderDetails('${o.id}')" style="color:#d4af37; background:none; border:none; cursor:pointer; font-size:1.1rem;" title="عرض التفاصيل">
                         <i class="fas fa-eye"></i>
                     </button>
@@ -1299,17 +1311,23 @@ window.openOrderDetails = (id) => {
             </div>
         </div>
 
-        <!-- 5. Status Control -->
+        </div>
+
+        <!-- 🚚 Bosta Shipping Control -->
         <div class="details-card">
-            <div class="details-label">🔄 حالة الطلب:</div>
-            <div style="background: #000; padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px;">
-                <select id="details-status-select" onchange="updateOrderStatus('${o.id}', this.value)" style="flex: 1; background: none; border: none; color: #fff; font-family: 'Cairo'; font-size: 1.1rem; cursor: pointer; outline: none;">
-                    <option value="verifying" ${o.status === 'verifying' ? 'selected' : ''}>⏳ جاري التأكد من الإيصال</option>
-                    <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>🆕 جديد (تم التأكد)</option>
-                    <option value="shipping" ${o.status === 'shipping' ? 'selected' : ''}>🚚 جاري الشحن</option>
-                    <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>✅ تم التوصيل</option>
-                    <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>❌ ملغي</option>
-                </select>
+            <div class="details-label">🚚 شحن بوسطة Bosta:</div>
+            <div id="bosta-details-container-${o.id}">
+                ${o.trackingNumber ? `
+                    <div style="background: rgba(76,175,80,0.1); border: 1px solid #4CAF50; padding: 12px; border-radius: 12px; text-align: center;">
+                        <p style="color:#4CAF50; font-weight:bold; margin-bottom:5px;">✅ تم الشحن بوسطة</p>
+                        <p style="font-family:monospace; font-size:1rem; letter-spacing:1px; margin-bottom:10px;">${o.trackingNumber}</p>
+                        <a href="https://bosta.co/tracking-requests/${o.trackingNumber}" target="_blank" style="display:inline-block; padding:8px 20px; background:#2196F3; color:#fff; text-decoration:none; border-radius:8px; font-size:0.9rem;">📦 تتبع الشحنة</a>
+                    </div>
+                ` : `
+                    <button id="bosta-btn-det-${o.id}" onclick="shipToBosta('${o.id}')" style="width:100%; padding: 15px; background: linear-gradient(135deg, #e20613, #ff4444); border: none; color: #fff; font-weight: 900; font-size: 1.1rem; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(226, 6, 19, 0.3);">
+                        <i class="fas fa-shipping-fast"></i> ارسل لشركة الشحن Bosta
+                    </button>
+                `}
             </div>
         </div>
 
@@ -1361,6 +1379,101 @@ window.deleteOrder = async (id) => {
         alert("خطأ في الحذف: " + e.message);
     }
 };
+
+// 🚚 BOSTA SHIPPING LOGIC (VIA CLOUDFLARE PROXY)
+async function shipToBosta(orderId) {
+    const btnTab = document.getElementById(`bosta-btn-tab-${orderId}`);
+    const btnDet = document.getElementById(`bosta-btn-det-${orderId}`);
+    
+    const setBtnLoading = (loading) => {
+        const text = loading ? '<i class="fas fa-spinner fa-spin"></i> جاري...' : '<i class="fas fa-shipping-fast"></i> ارسل لبوسطة';
+        if (btnTab) { btnTab.disabled = loading; btnTab.innerHTML = text; }
+        if (btnDet) { btnDet.disabled = loading; btnDet.innerHTML = text; }
+    };
+
+    if (!confirm("هل تريد إرسال هذا الطلب لشركة بوسطة فعلاً؟")) return;
+
+    setBtnLoading(true);
+
+    try {
+        const doc = await db.collection('orders').doc(orderId).get();
+        if (!doc.exists) throw new Error("الطلب غير موجود");
+        const order = doc.data();
+
+        const nameParts = (order.customerName || "عميل").split(" ");
+        const payload = {
+            type: 10,
+            specs: { 
+                packageDetails: { 
+                    itemsCount: (order.items || []).reduce((s, i) => s + (i.quantity || 1), 0), 
+                    description: (order.items || []).map(i => i.name).join(", ") 
+                } 
+            },
+            notes: order.notes || "",
+            cod: order.total,
+            dropOffAddress: {
+                city: mapToBostaCity(order.gov),
+                firstLine: order.address || "غير محدد",
+                district: order.district || "",
+                buildingNumber: "1"
+            },
+            receiver: {
+                firstName: nameParts[0] || "عميل",
+                lastName: nameParts.slice(1).join(" ") || "icloth",
+                phone: order.phone
+            }
+        };
+
+        const response = await fetch(BOSTA_PROXY_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.message || result.error || "فشل الاتصال بوسطة");
+        }
+
+        const trackingNumber = result.trackingNumber || (result.data ? result.data.trackingNumber : null);
+        
+        if (!trackingNumber) {
+            throw new Error("لم يتم استلام رقم تتبع من بوسطة");
+        }
+
+        await db.collection('orders').doc(orderId).update({
+            trackingNumber: trackingNumber,
+            status: "shipping",
+            shippedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
+        
+        if (typeof loadOrders === 'function') loadOrders();
+
+    } catch (err) {
+        console.error("Bosta Error:", err);
+        alert(`❌ خطأ في الشحن:\n${err.message}`);
+        setBtnLoading(false);
+    }
+}
+
+function mapToBostaCity(city) {
+    const map = {
+        'القاهرة': 'Cairo', 'الجيزة': 'Giza', 'الإسكندرية': 'Alexandria',
+        'الدقهلية': 'Dakahlia', 'البحر الأحمر': 'Red Sea', 'البحيرة': 'Beheira',
+        'الفيوم': 'Faiyum', 'الغربية': 'Gharbia', 'الإسماعيلية': 'Ismailia',
+        'المنوفية': 'Monufia', 'المنيا': 'Minya', 'القليوبية': 'Qalyubia',
+        'الوادي الجديد': 'New Valley', 'السويس': 'Suez', 'الشرقية': 'Sharqia',
+        'دمياط': 'Damietta', 'بورسعيد': 'Port Said', 'جنوب سيناء': 'South Sinai',
+        'كفر الشيخ': 'Kafr El Sheikh', 'مطروح': 'Matrouh', 'الأقصر': 'Luxor',
+        'قنا': 'Qena', 'شمال سيناء': 'North Sinai', 'سوهاج': 'Sohag',
+        'Beni Suef': 'بني سويف', 'Beni-Suef': 'بني سويف', 'بني سويف': 'Beni Suef', 
+        'أسيوط': 'Asyut', 'أسوان': 'Aswan'
+    };
+    return map[city] || city;
+}
 
 window.deleteAllOrders = async () => {
     if (!confirm("🚨 تحذير: سيتم حذف كافة الطلبات نهائياً! هل أنت متأكد؟")) return;
