@@ -707,7 +707,21 @@ async function loadOrders() {
                                 </select>
                                 <button onclick="deleteOrder('${id}')" class="btn-status" style="background:#f44336; border-color:#f44336;"><i class="fas fa-trash"></i></button>
                             </div>
-                            
+
+                            <!-- 🚚 زرار الشحن ببوسطة -->
+                            <div style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 12px;">
+                                ${order.trackingNumber ? `
+                                    <div style="background: rgba(76,175,80,0.1); border: 1px solid #4CAF50; padding: 10px; border-radius: 10px; text-align: center;">
+                                        <p style="color:#4CAF50; font-weight:bold; margin-bottom:5px;">✅ تم الشحن بوسطة</p>
+                                        <p style="font-family:monospace; font-size:0.95rem; letter-spacing:1px;">${order.trackingNumber}</p>
+                                        <a href="https://bosta.co/tracking-requests/${order.trackingNumber}" target="_blank" style="color:#2196F3; font-size:0.8rem; text-decoration:underline;">📦 تتبع الشحنة</a>
+                                    </div>
+                                ` : `
+                                    <button id="bosta-btn-${id}" onclick="shipToBosta('${id}')" style="width:100%; padding: 12px; background: linear-gradient(135deg, #e20613, #ff4444); border: none; color: #fff; font-weight: 900; font-size: 1rem; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.3s;">
+                                        <i class="fas fa-shipping-fast"></i> ارسل لبوسطة Bosta
+                                    </button>
+                                `}
+                            </div>
                         </div>
                     </div>`;
         });
@@ -719,6 +733,76 @@ async function loadOrders() {
 
 function getStatusClass(status) { return status === 'جديد' ? 'new' : status === 'جاري التجهيز' ? 'preparing' : status === 'تم الشحن' ? 'shipped' : status === 'تم التسليم' ? 'delivered' : 'default'; }
 async function deleteOrder(id) { if (!isFirebaseReady) return; if (!confirm("هل تريد حذف هذا الطلب؟")) return; try { await db.collection('orders').doc(id).delete(); alert("تم حذف الطلب 🗑️"); } catch (err) { alert("خطأ في الحذف!"); } }
+
+// 🚚 BOSTA SHIPPING VIA CLOUDFLARE WORKER
+async function shipToBosta(orderId) {
+    const btn = document.getElementById(`bosta-btn-${orderId}`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...'; }
+
+    try {
+        const doc = await db.collection('orders').doc(orderId).get();
+        if (!doc.exists) throw new Error('الطلب غير موجود');
+        const order = doc.data();
+
+        const nameParts = (order.customerName || 'عميل').split(' ');
+        const payload = {
+            type: 10,
+            specs: { packageDetails: { itemsCount: order.items.reduce((s, i) => s + i.quantity, 0), description: order.items.map(i => i.name).join(', ') } },
+            notes: order.notes || '',
+            cod: order.total,
+            dropOffAddress: {
+                city: mapToBostaCity(order.gov),
+                firstLine: order.address || 'غير محدد',
+                district: order.district || '',
+                buildingNumber: '1'
+            },
+            receiver: {
+                firstName: nameParts[0] || 'عميل',
+                lastName: nameParts.slice(1).join(' ') || 'icloth',
+                phone: order.phone
+            }
+        };
+
+        const response = await fetch(BOSTA_PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'فشل الإرسال لبوسطة');
+
+        const trackingNumber = result.trackingNumber || result.data?.trackingNumber;
+        await db.collection('orders').doc(orderId).update({
+            trackingNumber,
+            status: 'تم الشحن',
+            shippedAt: new Date().toISOString()
+        });
+
+        alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
+
+    } catch (err) {
+        console.error('Bosta Error:', err);
+        alert(`❌ خطأ في الشحن:\n${err.message}`);
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-shipping-fast"></i> ارسل لبوسطة Bosta'; }
+    }
+}
+
+// خريطة تحويل المحافظات من العربية لإنجليزية بوسطة
+function mapToBostaCity(city) {
+    const map = {
+        'القاهرة': 'Cairo', 'الجيزة': 'Giza', 'الإسكندرية': 'Alexandria',
+        'الدقهلية': 'Dakahlia', 'البحر الأحمر': 'Red Sea', 'البحيرة': 'Beheira',
+        'الفيوم': 'Faiyum', 'الغربية': 'Gharbia', 'الإسماعيلية': 'Ismailia',
+        'المنوفية': 'Monufia', 'المنيا': 'Minya', 'القليوبية': 'Qalyubia',
+        'الوادي الجديد': 'New Valley', 'السويس': 'Suez', 'الشرقية': 'Sharqia',
+        'دمياط': 'Damietta', 'بورسعيد': 'Port Said', 'جنوب سيناء': 'South Sinai',
+        'كفر الشيخ': 'Kafr El Sheikh', 'مطروح': 'Matrouh', 'الأقصر': 'Luxor',
+        'قنا': 'Qena', 'شمال سيناء': 'North Sinai', 'سوهاج': 'Sohag',
+        'بني سويف': 'Beni Suef', 'أسيوط': 'Asyut', 'أسوان': 'Aswan'
+    };
+    return map[city] || city;
+}
 
 
 async function deleteAllOrders() {
