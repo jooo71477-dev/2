@@ -1319,12 +1319,12 @@ window.openOrderDetails = (id) => {
             </div>
             ${o.paymentMethod === 'cod' ? `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; color: #4CAF50;">
-                    <span>رسوم الشحن (مدفوعة):</span>
-                    <span>-${o.shippingCost || 0} ج.م</span>
+                    <span>عربون جدية (مدفوع):</span>
+                    <span>-100 ج.م</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px; color: gold; font-size: 1.1rem; margin-top: 5px;">
                     <span>المطلوب تحصيله (COD):</span>
-                    <span>${(o.total || 0) - (Number(o.shippingCost) || 0)} ج.م</span>
+                    <span>${Math.max(0, (o.total || 0) - 100)} ج.م</span>
                 </div>
             ` : `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; color: #4CAF50;">
@@ -1437,7 +1437,7 @@ async function shipToBosta(orderId) {
                 } 
             },
             notes: order.notes || "",
-            cod: order.paymentMethod === 'cod' ? (Math.max(0, (order.total || 0) - (Number(order.shippingCost) || 0))) : 0,
+            cod: order.paymentMethod === 'cod' ? (Math.max(0, (order.total || 0) - 100)) : 0,
             dropOffAddress: {
                 city: mapToBostaCity(order.gov),
                 firstLine: order.address || "غير محدد",
