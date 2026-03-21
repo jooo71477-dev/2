@@ -732,15 +732,13 @@ function attachRealTimeListeners() {
             
             // Store numbers for checkout
             window._transferNumbers = {
-                vodafone: s.transferVodafone || '',
-                vodafoneName: s.transferVodafoneName || '',
-                orange: s.transferOrange || '',
-                orangeName: s.transferOrangeName || '',
+                wallet: s.transferWallet || s.transferVodafone || '',
+                walletName: s.transferWalletName || s.transferVodafoneName || '',
                 instapay: s.transferInstapay || '',
                 instapayName: s.transferInstapayName || '',
                 instapayLink: s.transferInstapayLink || '',
-                cod: s.transferVodafone || s.transferOrange || s.transferInstapay || '',
-                codName: s.transferVodafoneName || s.transferOrangeName || s.transferInstapayName || ''
+                cod: s.transferWallet || s.transferVodafone || s.transferOrange || s.transferInstapay || '',
+                codName: s.transferWalletName || s.transferVodafoneName || s.transferOrangeName || s.transferInstapayName || ''
             };
             // Update the displayed number based on currently selected payment
             const currentMethod = document.getElementById('selected-payment')?.value || 'cod';
