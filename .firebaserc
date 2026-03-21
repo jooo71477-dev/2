@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "ic12-e6ad7"
+  },
+  "targets": {
+    "ic12-e6ad7": {
+      "hosting": {
+        "main-site": [
+          "icloth-fashion"
+        ]
+      }
+    }
+  }
+}

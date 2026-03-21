@@ -1,0 +1,95 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1️⃣ دالة الأدمن: أضفت إيميلاتك المحددة
+    function isAdmin() {
+      return request.auth != null && 
+             (request.auth.token.email in ["jooo714777@gmail.com", "jooo71477@gmail.com", "yousef.diesel.2023@gmail.com"]);
+    }
+
+    // 2️⃣ دالة للتأكد من تسجيل الدخول
+    function isUser() {
+      return request.auth != null;
+    }
+
+    // 3️⃣ التحقق من صحة بيانات الطلب عند الإنشاء (تم تبسيطها للزوار)
+    function isValidOrder() {
+      let data = request.resource.data;
+      // يسمح بالطلب لو المسجل هو صاحب الـ ID أو لو زائر (userId == null)
+      let userAuthOk = (request.auth == null && data.userId == null) || (request.auth != null && data.userId == request.auth.uid);
+      
+      return userAuthOk
+        && data.status == "verifying"
+        && data.items is list
+        && data.items.size() > 0
+        && data.total is number 
+        && data.customerName is string
+        && data.customerName.size() >= 2
+        && data.phone is string
+        && data.phone.size() >= 10; // تقليل الحد الأدنى للهاتف لزيادة المرونة
+    }
+
+    // 4️⃣ منع تغيير الحقول الحساسة في الطلبات
+    function isNotTouchingSensitiveFields() {
+      let affected = request.resource.data.diff(resource.data).affectedKeys();
+      return !affected.hasAny(['total', 'items', 'userId', 'createdAt', 'receiptUrl']);
+    }
+
+    // ==========================================
+    // 🛍️ الطلبات (Orders)
+    // ==========================================
+    match /orders/{orderId} {
+      allow create: if isValidOrder();
+      allow read: if isAdmin() || (isUser() && resource.data.userId == request.auth.uid);
+      allow update: if (isUser() 
+                        && resource.data.userId == request.auth.uid 
+                        && request.resource.data.status == "cancelled" 
+                        && isNotTouchingSensitiveFields())
+                    || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // 👥 المستخدمين (User Accounts)
+    // ==========================================
+    match /users/{userId} {
+      allow read: if isAdmin() || (isUser() && request.auth.uid == userId);
+      allow create: if isUser() && request.auth.uid == userId;
+      allow update: if isUser() 
+                    && request.auth.uid == userId 
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin']);
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // 📦 المنتجات والكوبونات والاقسام واإعدادات
+    // ==========================================
+    match /products/{id} { 
+      allow read: if true; 
+      allow write: if isAdmin(); 
+    }
+    
+    match /categories/{id} { 
+      allow read: if true; 
+      allow write: if isAdmin(); 
+    }
+    
+    match /coupons/{id} { 
+      allow read: if true; 
+      // السماح بتحديث عداد الاستخدام فقط لأي مستخدم (بما في ذلك الزوار)
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedCount']) || isAdmin();
+      allow create, delete: if isAdmin(); 
+    }
+    
+    match /settings/{id} { 
+      allow read: if true; 
+      allow write: if isAdmin(); 
+    }
+
+    // ❌ منع أي وصول آخر غير مصرح به
+    match /{document=**} { 
+      allow read, write: if false; 
+    }
+  }
+}

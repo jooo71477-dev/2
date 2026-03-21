@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>icloth | وضع الصيانة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Cairo', sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            animation: fadeIn 1s ease;
+        }
+        .logo {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #d4af37;
+            margin-bottom: 20px;
+        }
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            color: #fff;
+            animation: pulse 2s infinite;
+        }
+        h1 { font-size: 2rem; margin-bottom: 15px; }
+        p { opacity: 0.7; font-size: 1.1rem; line-height: 1.8; margin-bottom: 30px; }
+        .social { display: flex; justify-content: center; gap: 20px; }
+        .social a { color: #fff; font-size: 1.5rem; transition: 0.3s; }
+        .social a:hover { color: #d4af37; transform: translateY(-5px); }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="m-logo-container">
+            <div class="logo" id="m-logo-text">icloth</div>
+            <img id="m-logo-img" src="" style="max-height: 100px; display: none; margin: 0 auto 20px;">
+        </div>
+        <div class="icon"><i class="fas fa-tools"></i></div>
+        <h1 id="m-title">الموقع قيد الصيانة</h1>
+        <p id="m-msg">نحن نقوم ببعض التحديثات الرائعة لنقدم لكم تجربة تسوق أفضل. سنعود قريباً جداً، ترقبوا المفاجآت!</p>
+        <div id="m-duration" style="background: rgba(212, 175, 55, 0.1); color: #d4af37; padding: 10px 20px; border-radius: 10px; display: inline-block; margin-bottom: 30px; font-weight: bold; border: 1px solid rgba(212, 175, 55, 0.2); display: none;">
+            الموعد المتوقع: <span id="m-duration-text">يوم كامل</span>
+        </div>
+        <div class="social">
+            <a href="https://www.facebook.com/share/1GjUAHqaq9/?mibextid=wwXIfr" target="_blank" title="فيسبوك"><i class="fab fa-facebook"></i></a>
+            <a href="https://www.instagram.com/icloth___?igsh=MWduemx1bDNrZ3Izcg%3D%3D&utm_source=qr" target="_blank" title="انستجرام"><i class="fab fa-instagram"></i></a>
+            <a id="m-wa-link" href="https://wa.me/201224553486" target="_blank" title="واتساب"><i class="fab fa-whatsapp"></i></a>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyByPZP1qo0sQN26xTwzpT0vnw_BTguXvSI",
+            authDomain: "ic12-e6ad7.firebaseapp.com",
+            projectId: "ic12-e6ad7",
+            storageBucket: "ic12-e6ad7.firebasestorage.app",
+            messagingSenderId: "849964207533",
+            appId: "1:849964207533:web:8a6669e5c453ca08ba2524",
+            measurementId: "G-H7S7W0CB7Q"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 1. Get Logo from CMS
+        db.collection('settings').doc('cms').get().then(doc => {
+            if (doc.exists && doc.data().logoUrl) {
+                document.getElementById('m-logo-text').style.display = 'none';
+                const img = document.getElementById('m-logo-img');
+                img.src = doc.data().logoUrl;
+                img.style.display = 'block';
+            }
+        });
+
+        // 2. Real-time Status & Messages
+        db.collection('settings').doc('site').onSnapshot(doc => {
+            if (doc.exists) {
+                const s = doc.data();
+                
+                // If maintenance ended, go back home
+                if (!s.maintenanceMode) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // Update text
+                if (s.maintenanceReason) document.getElementById('m-title').innerText = s.maintenanceReason;
+                if (s.maintenanceMsg) document.getElementById('m-msg').innerText = s.maintenanceMsg;
+                
+                // Update duration
+                const durationCont = document.getElementById('m-duration');
+                if (s.maintenanceDuration) {
+                    document.getElementById('m-duration-text').innerText = s.maintenanceDuration;
+                    durationCont.style.display = 'inline-block';
+                } else {
+                    durationCont.style.display = 'none';
+                }
+
+                // Update WhatsApp link
+                if (s.whatsapp) {
+                    document.getElementById('m-wa-link').href = `https://wa.me/${s.whatsapp}`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
