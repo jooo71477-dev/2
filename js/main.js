@@ -188,312 +188,30 @@ const translations = {
     }
 };
 
-const dynamicTranslations = {
-    // Categories & Sections
-    "الكل": "All",
-    "رجالي": "Men",
-    "حريمي": "Women",
-    "حريمى": "Women",
-    "اطفال": "Kids",
-    "أطفال": "Kids",
-    "أولاد": "Boys",
-    "بنات": "Girls",
-    "أحذية": "Shoes",
-    "اكسسوارات": "Accessories",
-    "جينز": "Jeans",
-    "قميص": "Shirt",
-    "تيشرت": "T-Shirt",
-    "تي شيرت": "T-Shirt",
-    "هودي": "Hoodie",
-    "هوديز": "Hoodies",
-    "جاكيت": "Jacket",
-    "جواكت": "Jackets",
-    "بنطلون": "Pants",
-    "بناطيل": "Pants",
-    "سويت بانتس": "Sweatpants",
-    "بلوفر": "Pullover",
-    "بالطو": "Coat",
-    "بولو": "Polo",
-    "فستان": "Dress",
-    "فساتين": "Dresses",
-    "جونلة": "Skirt",
-    "جيبة": "Skirt",
-    "بلوزة": "Blouse",
-    "قميص": "Shirt",
-    "قمصان": "Shirts",
-    "قماش": "Fabric",
-    "صيفي": "Summer",
-    "شتوي": "Winter",
-    "خريفي": "Autumn",
-    "ربيعي": "Spring",
-    "مجموعة": "Collection",
-    "ملابس شارع": "Street wear",
-    "ستريت وير": "Street wear",
-    "ملابس منزلية": "Home wear",
-    "هوم وير": "Home wear",
-    "اكسسوارات": "Accessories",
-    "إكسسوارات": "Accessories",
-    
-    // Marketing & Announcements
-    "خصم": "Discount",
-    "عروض": "Offers",
-    "عرض": "Offer",
-    "مجاني": "Free",
-    "مجاناً": "Free",
-    "شحن": "Shipping",
-    "فترة": "Period",
-    "محدودة": "Limited",
-    "حصري": "Exclusive",
-    "الآن": "Now",
-    "كل": "All",
-    "جميع": "All",
-    "منتجات": "Products",
-    "تخفيضات": "Sales",
-    "تخفيض": "Sale",
-    "هدايا": "Gifts",
-    "هدية": "Gift",
-    
-    // Status & Badges
-    "عرض الكل": "Shop All",
-    "غير متوفر": "Unavailable",
-    "جديد": "New",
-    "خصم": "Sale",
-    "الأكثر مبيعاً": "Best Seller",
-    "وصل حديثاً": "New Arrival",
-    
-    // Colors
-    "أساسي": "Standard",
-    "أبيض": "White",
-    "أسود": "Black",
-    "أحمر": "Red",
-    "أزرق": "Blue",
-    "أخضر": "Green",
-    "أصفر": "Yellow",
-    "كحلي": "Navy",
-    "رمادي": "Grey",
-    "بني": "Brown",
-    "بيج": "Beige",
-    "برتقالي": "Orange",
-    "بنفسجي": "Purple",
-    "روز": "Pink",
-    "زيتي": "Olive",
-    "زيتوني": "Olive",
-    "أوف وايت": "Off White",
-    "سكري": "Sugar",
-    "عاجي": "Ivory",
-    "شامبين": "Champagne",
-    "لؤلؤي": "Pearl",
-    "رصاصي": "Lead",
-    "فحمي": "Charcoal",
-    "هافان": "Havana",
-    "جملي": "Camel",
-    "كافيه": "Cafe",
-    "طحيني": "Tahini",
-    "رملي": "Sandy",
-    "خردلي": "Mustard",
-    "أزرق ملكي": "Royal Blue",
-    "سماوي": "Sky Blue",
-    "لبني": "Light Blue",
-    "تركواز": "Turquoise",
-    "بترولي": "Petrol",
-    "جنزاري": "Teal",
-    "زيتوني": "Olive Green",
-    "بستاج": "Pistachio",
-    "مينت جرين": "Mint Green",
-    "فسفوري": "Neon Green",
-    "نبيتي": "Burgundy",
-    "طوبي": "Brick Red",
-    "خمري": "Wine",
-    "سيمون": "Salmon",
-    "مشمشي": "Apricot",
-    "خوخي": "Peach",
-    "وردي": "Rose",
-    "بينك": "Pink",
-    "فوشيا": "Fuchsia",
-    "ليلكي": "Lilac",
-    "أرجواني": "Purple",
-    "لافندر": "Lavender",
-    "مستردة": "Mustard",
-    "ذهبي": "Gold",
-    "فضي": "Silver",
-    "فيروزي": "Turquoise",
-    "مرجاني": "Coral",
-    "بصلي": "Onion",
-    "عسلي": "Honey",
-    "ليموني": "Lemon",
-    "تلجي": "Ice Blue",
-    "برونزي": "Bronze",
-    "نحاسي": "Copper",
-    "كاكي": "Khaki",
-    "مارون": "Maroon",
-    "ياقوتي": "Ruby",
-    "زمردي": "Emerald",
-    "نيلي": "Indigo",
-    "بنى محروق": "Dark Brown",
-    "ذهبي وردي": "Rose Gold",
-    "فضة معتقة": "Antique Silver",
-    "أخضر عسكري": "Army Green",
-    "أزرق كبالت": "Cobalt Blue",
-    "برقوقي": "Plum",
-    "توتي": "Berry",
-
-    // Reverse Mappings (English -> Arabic)
-    "Pant": "بنطلون",
-    "Pants": "بنطلون",
-    "Shirt": "قميص",
-    "T-Shirt": "تيشرت",
-    "Shoes": "أحذية",
-    "Jacket": "جاكيت",
-    "Hoodie": "هودي",
-    "Olive": "زيتوني",
-    "olive": "زيتوني",
-    "Black": "أسود",
-    "White": "أبيض",
-    "Red": "أحمر",
-    "Blue": "أزرق",
-    "Yellow": "أصفر",
-    "Green": "أخضر",
-    "Grey": "رمادي",
-    "Brown": "بني",
-    "Beige": "بيج",
-    "BNTLWN": "بنطلون",
-    "STREET WEAR": "ملابس شارع",
-    "HOME WEAR": "ملابس منزلية",
-    "ACCESSORIES": "اكسسوارات"
-};
-
-// 🤖 AUTOMATIC TRANSLITERATION (Arabic -> English Phonics)
-// This handles names or words not in the dictionary (e.g., "Ahmed", "Mohamed")
-function transliterateArabic(text) {
-    const map = {
-        'أ': 'A', 'ا': 'A', 'ب': 'B', 'ت': 'T', 'ث': 'Th', 'ج': 'J', 'ح': 'H', 'خ': 'Kh', 'د': 'D', 'ذ': 'Z',
-        'ر': 'R', 'ز': 'Z', 'س': 'S', 'ش': 'Sh', 'ص': 'S', 'ض': 'D', 'ط': 'T', 'ظ': 'Z', 'ع': 'A', 'غ': 'Gh',
-        'ف': 'F', 'ق': 'Q', 'ك': 'K', 'ل': 'L', 'م': 'M', 'ن': 'N', 'ه': 'H', 'و': 'W', 'ي': 'Y', 'ى': 'A',
-        'ة': 'a', 'ئ': 'e', 'ؤ': 'o', 'لا': 'La', ' ': ' '
-    };
-    
-    // Special common names mapping
-    const commonNames = {
-        "احمد": "Ahmed",
-        "أحمد": "Ahmed",
-        "محمد": "Mohamed",
-        "محمود": "Mahmoud",
-        "علي": "Ali",
-        "يوسف": "Youssef",
-        "إبراهيم": "Ibrahim"
-    };
-
-    if (commonNames[text]) return commonNames[text];
-
-    return text.split('').map(char => map[char] || char).join('')
-               .replace(/AA/g, 'A').replace(/EE/g, 'I');
-}
+// 🏁 Modern Translation System (Google Powered)
+const dynamicTranslations = {}; // Removed manual dictionary as requested
 
 function translateText(text) {
     if (!text) return "";
     const cleanText = text.trim();
     
-    // 1. Check AI Cache First
-    if (aiTranslationCache[cleanText]) return aiTranslationCache[cleanText];
+    // Fallback to static mapping for super common terms if needed, 
+    // otherwise let Google Translate handle the DOM.
+    if (currentLang === 'en' && cleanText === "بنطلون") return "Pants";
+    if (currentLang === 'ar' && cleanText.toLowerCase() === "pants") return "بنطلون";
 
-    const keys = Object.keys(dynamicTranslations).sort((a, b) => b.length - a.length);
-
-    if (currentLang === 'ar') {
-        // If text is Arabic, return as is
-        if (/[أ-ي]/.test(cleanText)) return cleanText;
-
-        // If text is English, look for Arabic equivalent in dictionary values
-        for (const arKey of keys) {
-            if (dynamicTranslations[arKey].toLowerCase() === cleanText.toLowerCase()) {
-                return arKey;
-            }
-        }
-        
-        // Direct value mapping check
-        if (dynamicTranslations[cleanText.toUpperCase()]) return dynamicTranslations[cleanText.toUpperCase()];
-        if (dynamicTranslations[cleanText]) return dynamicTranslations[cleanText];
-
-        // Trigger AI if it looks like English
-        triggerAITranslation(cleanText, 'ar');
-        return cleanText;
-    }
-
-    // --- English Mode ---
-    let translated = cleanText;
-    let foundInDict = false;
-
-    // Direct match check first (Case-insensitive)
-    for (const arKey of keys) {
-        if (arKey === cleanText) {
-            return dynamicTranslations[arKey];
-        }
-    }
-
-    // Deep search (includes)
-    for (const ar of keys) {
-        if (translated.includes(ar)) {
-            const regex = new RegExp(ar, "g");
-            translated = translated.replace(regex, dynamicTranslations[ar]);
-            foundInDict = true;
-        }
-    }
-
-    // If still has Arabic letters, try transliteration or AI
-    if (/[أ-ي]/.test(translated)) {
-        if (!foundInDict) {
-            triggerAITranslation(cleanText, 'en');
-            return transliterateArabic(translated);
-        }
-        // Fallback for remaining Arabic characters
-        return translated.split('').map(char => /[أ-ي]/.test(char) ? transliterateArabic(char) : char).join('');
-    }
-
-    return translated;
+    return cleanText;
 }
 
-// 🤖 Background AI Translation
+// 🤖 Background AI Translation (Optional fallback for specific strings)
 async function triggerAITranslation(text, targetLang) {
-    if (activeAITranslations.has(text) || aiTranslationCache[text]) return;
-    
-    activeAITranslations.add(text);
-    console.log(`🤖 AI: Translating "${text}" to ${targetLang}...`);
-
-    try {
-        const response = await fetch('/api/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, targetLang })
-        });
-        
-        const data = await response.json();
-        if (data.translated) {
-            aiTranslationCache[text] = data.translated;
-            localStorage.setItem('icloth_ai_cache', JSON.stringify(aiTranslationCache));
-            console.log(`✅ AI: "${text}" -> "${data.translated}"`);
-            
-            // Refresh UI safely by updating all matching text nodes
-            updateUIText(text, data.translated);
-        }
-    } catch (e) {
-        console.error("❌ AI Error:", e);
-    } finally {
-        activeAITranslations.delete(text);
-    }
+    // We can keep this for specific backend strings if needed, but Google handles the UI.
+    return;
 }
 
 function updateUIText(original, translated) {
-    // Find all elements that might be displaying this text
-    const elements = document.querySelectorAll('h3, .color-btn, .card-color-dot, .badge-label, .cart-item h4, .cart-item-details');
-    elements.forEach(el => {
-        if (el.innerText === original || el.innerText && el.innerText.includes(original)) {
-             el.innerText = el.innerText.replace(original, translated);
-        }
-        if (el.title === original) el.title = translated;
-        if (el.dataset.colorName === original) el.dataset.colorName = translated;
-    });
+    // Google Translate handles the DOM naturally.
 }
-
-
 
 let currentLang = localStorage.getItem('icloth_lang') || 'en';
 
@@ -764,13 +482,32 @@ function renderAuthUI(name) {
 // Language Logic
 function initLanguage() {
     updateLanguageUI();
+    // Synchronize Google Translate after a short delay to ensure widget is ready
+    setTimeout(() => {
+        setGoogleTranslate(currentLang);
+    }, 2000);
+}
+
+function setGoogleTranslate(lang) {
+    const el = document.querySelector('.goog-te-combo');
+    if (el) {
+        el.value = lang;
+        el.dispatchEvent(new Event('change'));
+    }
 }
 
 function toggleLanguage() {
     currentLang = currentLang === 'en' ? 'ar' : 'en';
     localStorage.setItem('icloth_lang', currentLang);
+    
+    // Update Static UI
     updateLanguageUI();
-    location.reload(); 
+    
+    // Update Dynamic Content (Google Translate)
+    setGoogleTranslate(currentLang);
+    
+    // Optional: No reload for smoothness
+    // location.reload(); 
 }
 
 function updateLanguageUI() {
