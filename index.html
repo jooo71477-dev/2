@@ -505,9 +505,8 @@
                     <label data-i18n="payment_method">Payment Method</label>
                     <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px; text-align: center;">
                         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button type="button" class="btn-payment active" onclick="window.selectPayment('cod', this)" data-i18n="cod_btn">COD (Transfer Shipping)</button>
-                            <button type="button" class="btn-payment" onclick="window.selectPayment('vodafone', this)" data-i18n="vodafone_btn">Vodafone</button>
-                            <button type="button" class="btn-payment" onclick="window.selectPayment('orange', this)" data-i18n="orange_btn">Orange</button>
+                            <button type="button" class="btn-payment active" onclick="window.selectPayment('cod', this)" data-i18n="cod_btn">COD (Deposit 100 EGP)</button>
+                            <button type="button" class="btn-payment" onclick="window.selectPayment('wallet', this)" data-i18n="wallet_btn">Mobile Wallet</button>
                             <button type="button" class="btn-payment" onclick="window.selectPayment('instapay', this)" data-i18n="instapay_btn">InstaPay</button>
                         </div>
                         <input type="hidden" id="selected-payment" name="payment-method" value="cod">
@@ -518,9 +517,8 @@
                             
                             <!-- Sub-methods for shipping transfer when COD is selected -->
                             <div id="shipping-options-container" style="display: none; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; justify-content: center;">
-                                <button type="button" class="btn-payment btn-shipping-sub active" onclick="window.selectShippingSubMethod('vodafone', this)" style="padding: 10px; font-size: 0.8rem;">Vodafone</button>
-                                <button type="button" class="btn-payment btn-shipping-sub" onclick="window.selectShippingSubMethod('orange', this)" style="padding: 10px; font-size: 0.8rem;">Orange</button>
-                                <button type="button" class="btn-payment btn-shipping-sub" onclick="window.selectShippingSubMethod('instapay', this)" style="padding: 10px; font-size: 0.8rem;">InstaPay</button>
+                                <button type="button" class="btn-payment btn-shipping-sub active" onclick="window.selectShippingSubMethod('wallet', this)" style="padding: 10px; font-size: 0.8rem;" data-i18n="wallet_btn">Mobile Wallet</button>
+                                <button type="button" class="btn-payment btn-shipping-sub" onclick="window.selectShippingSubMethod('instapay', this)" style="padding: 10px; font-size: 0.8rem;" data-i18n="instapay_btn">InstaPay</button>
                             </div>
                             <div style="display: flex; align-items: center; justify-content: center; background: var(--bg-color); padding:12px; border-radius:14px; border: 1px dashed var(--card-border);">
                                 <div id="checkout-transfer-number" style="font-weight:bold; font-size: 1.2rem; letter-spacing:1px; color: var(--text-main);">01224553486</div>
@@ -651,7 +649,7 @@
 
     <!-- App Scripts -->
     <script defer src="./js/products.js"></script>
-    <script src="./js/main.js?v=5.11"></script>
+    <script src="./js/main.js?v=5.12"></script>
 
     <script>
         // PWA Service Worker Registration

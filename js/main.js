@@ -79,8 +79,7 @@ const translations = {
         standard_color: "",
         unavailable: "Currently Unavailable",
         cod_btn: "COD (Deposit 100 EGP)",
-        vodafone_btn: "Vodafone",
-        orange_btn: "Orange",
+        wallet_btn: "Mobile Wallet",
         instapay_btn: "InstaPay",
         transfer_shipping: "Confirm your order (Deposit 100 EGP)",
         transfer_shipping_desc: "Please transfer 100 EGP as a deposit to confirm your order, you will pay the remaining amount on delivery.",
@@ -160,8 +159,7 @@ const translations = {
         standard_color: "",
         unavailable: "غير متوفر حالياً",
         cod_btn: "دفع عند الاستلام (عربون 100ج)",
-        vodafone_btn: "فودافون كاش",
-        orange_btn: "أورانج كاش",
+        wallet_btn: "محفظة إلكترونية",
         instapay_btn: "إنستاباي",
         transfer_shipping: "تأكيد الدفع (دفع العربون فقط)",
         transfer_shipping_desc: "قم بتحويل 100 جنيه عربون جدية لتأكيد طلبك، وسيتم دفع باقي المبلغ (للمنتجات والشحن) عند الاستلام.",
@@ -845,7 +843,17 @@ window.updateCheckoutTotal = () => {
     const finalTotal = itemsTotal - discountAmount + shipCost;
 
     const shipEl = document.getElementById('checkout-shipping-cost');
-    if (shipEl) shipEl.innerText = `${shipCost} ${translations[currentLang].currency}`;
+    if (shipEl) {
+        if (shipCost === 0) {
+            shipEl.innerText = currentLang === 'ar' ? "مجاناً" : "Free";
+            shipEl.style.color = "#4CAF50";
+            shipEl.style.fontWeight = "bold";
+        } else {
+            shipEl.innerText = `${shipCost} ${translations[currentLang].currency}`;
+            shipEl.style.color = "";
+            shipEl.style.fontWeight = "normal";
+        }
+    }
     
     const totalEl = document.getElementById('form-total-price');
     if (totalEl) totalEl.innerText = `${finalTotal} ${translations[currentLang].currency}`;
@@ -1118,9 +1126,9 @@ window.selectPayment = (method, btn) => {
         title.innerText = translations[currentLang].transfer_shipping;
         desc.innerText = translations[currentLang].transfer_shipping_desc;
         if (shipOptions) shipOptions.style.display = 'flex';
-        // Reset sub-method to vodafone by default
+        // Reset sub-method to wallet by default
         const firstSub = document.querySelector('.btn-shipping-sub');
-        if (firstSub) window.selectShippingSubMethod('vodafone', firstSub);
+        if (firstSub) window.selectShippingSubMethod('wallet', firstSub);
     } else {
         title.innerText = translations[currentLang].transfer_full;
         desc.innerText = translations[currentLang].transfer_full_desc;
@@ -1148,19 +1156,20 @@ function updateTransferNumberDisplay(method) {
     let name = '';
     let link = '';
     
-    if (method === 'vodafone') {
-        num = nums.vodafone || '';
-        name = nums.vodafoneName || '';
-    } else if (method === 'orange') {
-        num = nums.orange || '';
-        name = nums.orangeName || '';
+    if (method === 'cod') {
+        method = document.querySelector('.btn-shipping-sub.active')?.getAttribute('onclick')?.match(/'([^']+)'/)[1] || 'wallet';
+    }
+
+    if (method === 'wallet') {
+        num = nums.wallet || '';
+        name = nums.walletName || '';
     } else if (method === 'instapay') {
         num = nums.instapay || '';
         name = nums.instapayName || '';
         link = nums.instapayLink || '';
     } else {
-        num = nums.cod || nums.vodafone || nums.orange || nums.instapay || '';
-        name = nums.codName || nums.vodafoneName || nums.orangeName || nums.instapayName || '';
+        num = nums.wallet || nums.instapay || '';
+        name = nums.walletName || nums.instapayName || '';
     }
     
     el.innerText = num || 'يرجى التواصل معنا عبر الواتساب';

@@ -1637,15 +1637,10 @@ async function loadSettings() {
         if (settingWa1) settingWa1.value = s.whatsapp || '';
         const settingWa2 = document.getElementById('setting-wa-2');
         if (settingWa2) settingWa2.value = s.whatsapp2 || '';
-        const settingTransferVodafone = document.getElementById('setting-transfer-vodafone');
-        if (settingTransferVodafone) settingTransferVodafone.value = s.transferVodafone || '';
-        const settingTransferVodafoneName = document.getElementById('setting-transfer-vodafone-name');
-        if (settingTransferVodafoneName) settingTransferVodafoneName.value = s.transferVodafoneName || '';
-
-        const settingTransferOrange = document.getElementById('setting-transfer-orange');
-        if (settingTransferOrange) settingTransferOrange.value = s.transferOrange || '';
-        const settingTransferOrangeName = document.getElementById('setting-transfer-orange-name');
-        if (settingTransferOrangeName) settingTransferOrangeName.value = s.transferOrangeName || '';
+        const settingTransferWallet = document.getElementById('setting-transfer-wallet');
+        if (settingTransferWallet) settingTransferWallet.value = s.transferWallet || s.transferVodafone || '';
+        const settingTransferWalletName = document.getElementById('setting-transfer-wallet-name');
+        if (settingTransferWalletName) settingTransferWalletName.value = s.transferWalletName || s.transferVodafoneName || '';
 
         const settingTransferInstapay = document.getElementById('setting-transfer-instapay');
         if (settingTransferInstapay) settingTransferInstapay.value = s.transferInstapay || '';
@@ -1701,21 +1696,17 @@ document.getElementById('whatsapp-numbers-form').onsubmit = async (e) => {
     e.preventDefault();
     const wa1El = document.getElementById('setting-wa-1');
     const wa2El = document.getElementById('setting-wa-2');
-    const vodafoneEl = document.getElementById('setting-transfer-vodafone');
-    const orangeEl = document.getElementById('setting-transfer-orange');
+    const walletEl = document.getElementById('setting-transfer-wallet');
     const instapayEl = document.getElementById('setting-transfer-instapay');
 
-    const vodafoneNameEl = document.getElementById('setting-transfer-vodafone-name');
-    const orangeNameEl = document.getElementById('setting-transfer-orange-name');
+    const walletNameEl = document.getElementById('setting-transfer-wallet-name');
     const instapayNameEl = document.getElementById('setting-transfer-instapay-name');
     const instapayLinkEl = document.getElementById('setting-transfer-instapay-link');
 
     const wa1 = wa1El ? wa1El.value : '';
     const wa2 = wa2El ? wa2El.value : '';
-    const vodafone = vodafoneEl ? vodafoneEl.value : '';
-    const vodafoneName = vodafoneNameEl ? vodafoneNameEl.value : '';
-    const orange = orangeEl ? orangeEl.value : '';
-    const orangeName = orangeNameEl ? orangeNameEl.value : '';
+    const wallet = walletEl ? walletEl.value : '';
+    const walletName = walletNameEl ? walletNameEl.value : '';
     const instapay = instapayEl ? instapayEl.value : '';
     const instapayName = instapayNameEl ? instapayNameEl.value : '';
     const instapayLink = instapayLinkEl ? instapayLinkEl.value : '';
@@ -1724,10 +1715,8 @@ document.getElementById('whatsapp-numbers-form').onsubmit = async (e) => {
         await db.collection('settings').doc('site').set({
             whatsapp: wa1,
             whatsapp2: wa2,
-            transferVodafone: vodafone,
-            transferVodafoneName: vodafoneName,
-            transferOrange: orange,
-            transferOrangeName: orangeName,
+            transferWallet: wallet,
+            transferWalletName: walletName,
             transferInstapay: instapay,
             transferInstapayName: instapayName,
             transferInstapayLink: instapayLink
