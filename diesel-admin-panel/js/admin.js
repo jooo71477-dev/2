@@ -15,9 +15,6 @@ let isFirebaseReady = false;
 let messaging = null;
 let adminRole = localStorage.getItem('adminRole') || 'none';
 
-// 🚚 BOSTA CONFIGURATION (Place your API Key here)
-const BOSTA_API_KEY = "YOUR_BOSTA_API_KEY_HERE";
-const BOSTA_BASE_URL = "https://api.bosta.co/api/v2"; // use "https://stg-api.bosta.co/api/v2" for testing
 
 const governorates = [
     "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "البحر الأحمر", "البحيرة", "الفيوم", "الغربية", "الإسماعيلية", "المنوفية", "المنيا", "القليوبية", "الوادي الجديد", "السويس", "الشرقية", "دمياط", "بورسعيد", "جنوب سيناء", "كفر الشيخ", "مطروح", "الأقصر", "قنا", "شمال سيناء", "سوهاج", "بني سويف", "أسيوط", "أسوان"
@@ -189,51 +186,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             if (adminRole === 'products' || adminRole === 'all') { showTab('products'); loadProducts(); }
             else if (adminRole === 'orders') { showTab('orders'); loadOrders(); }
-            else if (adminRole === 'shipping') { showTab('shipping'); loadShippingCosts(); }
         }, 500);
     }
 });
 
-async function loadShippingCosts() {
-    const container = document.getElementById('shipping-list-container');
-    if (!container) return;
-
-    showLoader(true);
-    let currentCosts = {};
-    try {
-        const doc = await db.collection('settings').doc('shipping').get();
-        if (doc.exists) currentCosts = doc.data().costs || {};
-    } catch (e) { console.error(e); }
-
-    container.innerHTML = governorates.map(gov => `
-        <div class="stat-card" style="padding: 15px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.02);">
-            <label style="display:block; margin-bottom:10px; font-weight:bold;">${gov}</label>
-            <div style="display:flex; align-items:center; gap:5px;">
-                <input type="number" class="shipping-input" data-gov="${gov}" value="${currentCosts[gov] || 0}" style="width:100%; padding:8px; background:rgba(0,0,0,0.3); border:1px solid #444; color:#fff; border-radius:8px;">
-                <span>ج.م</span>
-            </div>
-        </div>
-    `).join('');
-    showLoader(false);
-}
-
-async function saveShippingCosts() {
-    const inputs = document.querySelectorAll('.shipping-input');
-    const costs = {};
-    inputs.forEach(input => {
-        costs[input.dataset.gov] = Number(input.value) || 0;
-    });
-
-    showLoader(true);
-    try {
-        await db.collection('settings').doc('shipping').set({ costs, updatedAt: new Date().toISOString() });
-        alert("تم حفظ تكاليف الشحن بنجاح! 🚚✅");
-    } catch (e) {
-        console.error("Save error:", e);
-        alert("حدث خطأ أثناء الحفظ! ❌\n" + (e.message || "تأكد من صلاحيات الأدمن"));
-    }
-    showLoader(false);
-}
 
 function logout() {
     firebase.auth().signOut();
@@ -255,14 +211,10 @@ function applyRoleRestrictions() {
         if (tabProducts) tabProducts.style.display = 'none';
         if (tabOrders) tabOrders.style.display = 'flex';
         if (tabShipping) tabShipping.style.display = 'none';
-    } else if (adminRole === 'shipping') {
-        if (tabProducts) tabProducts.style.display = 'none';
-        if (tabOrders) tabOrders.style.display = 'none';
-        if (tabShipping) tabShipping.style.display = 'flex';
     } else if (adminRole === 'all') {
         if (tabProducts) tabProducts.style.display = 'flex';
         if (tabOrders) tabOrders.style.display = 'flex';
-        if (tabShipping) tabShipping.style.display = 'flex';
+        if (tabShipping) tabShipping.style.display = 'none';
     } else {
         if (tabProducts) tabProducts.style.display = 'none';
         if (tabOrders) tabOrders.style.display = 'none';
@@ -298,11 +250,6 @@ function showTab(tab) {
         document.getElementById('orders-section').style.display = 'block';
         document.getElementById('shipping-section').style.display = 'none';
         loadOrders();
-    } else if (tab === 'shipping') {
-        document.getElementById('products-section').style.display = 'none';
-        document.getElementById('orders-section').style.display = 'none';
-        document.getElementById('shipping-section').style.display = 'block';
-        loadShippingCosts();
     }
 }
 
@@ -761,20 +708,6 @@ async function loadOrders() {
                                 <button onclick="deleteOrder('${id}')" class="btn-status" style="background:#f44336; border-color:#f44336;"><i class="fas fa-trash"></i></button>
                             </div>
                             
-                            <!-- 🚚 BOSTA SHIPPING BUTTON -->
-                            <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px;">
-                                ${order.trackingNumber ? `
-                                    <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; padding: 10px; border-radius: 8px; text-align: center;">
-                                        <p style="color: #4CAF50; font-weight: bold; font-size: 0.85rem; margin-bottom: 5px;">✅ تم الشحن بوسطة</p>
-                                        <p style="font-family: monospace; font-size: 0.9rem;">${order.trackingNumber}</p>
-                                        <a href="https://bosta.co/tracking-requests/${order.trackingNumber}" target="_blank" style="color: #2196F3; font-size: 0.75rem; text-decoration: underline;">تتبع الشحنة</a>
-                                    </div>
-                                ` : `
-                                    <button id="bosta-btn-${id}" onclick="shipToBosta('${id}')" class="btn-status" style="width: 100%; height: 45px; background: #e20613; border: 1px solid #e20613; color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; cursor: pointer;">
-                                        <i class="fas fa-shipping-fast"></i> ارسل لبوسطة Bosta
-                                    </button>
-                                `}
-                            </div>
                         </div>
                     </div>`;
         });
@@ -787,97 +720,6 @@ async function loadOrders() {
 function getStatusClass(status) { return status === 'جديد' ? 'new' : status === 'جاري التجهيز' ? 'preparing' : status === 'تم الشحن' ? 'shipped' : status === 'تم التسليم' ? 'delivered' : 'default'; }
 async function deleteOrder(id) { if (!isFirebaseReady) return; if (!confirm("هل تريد حذف هذا الطلب؟")) return; try { await db.collection('orders').doc(id).delete(); alert("تم حذف الطلب 🗑️"); } catch (err) { alert("خطأ في الحذف!"); } }
 
-// 🚚 BOSTA INTEGRATION LOGIC
-async function shipToBosta(orderId) {
-    if (BOSTA_API_KEY === "YOUR_BOSTA_API_KEY_HERE") {
-        return alert("⚠️ يرجى إدخال API Key الخاص ببوسطة في ملف admin.js أولاً!");
-    }
-
-    const btn = document.getElementById(`bosta-btn-${orderId}`);
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
-    }
-
-    try {
-        const doc = await db.collection('orders').doc(orderId).get();
-        if (!doc.exists) throw new Error("الطلب غير موجود");
-        const order = doc.data();
-
-        // 1. Prepare Bosta Delivery Payload
-        const payload = {
-            type: 10, // Package
-            specs: {
-                packageDetails: {
-                    itemsCount: order.items.reduce((s, i) => s + i.quantity, 0),
-                    description: `Order from icloth: ${order.items.map(i => i.name).join(', ')}`
-                }
-            },
-            notes: order.notes || "No notes",
-            cod: order.total, // Cash on delivery amount
-            dropOffAddress: {
-                city: mapToBostaCity(order.gov), // Mapping function for cities
-                firstLine: order.address || "No address provided",
-                district: order.district || "",
-                buildingNumber: "1" // Default if missing
-            },
-            receiver: {
-                firstName: order.customerName.split(' ')[0],
-                lastName: order.customerName.split(' ').slice(1).join(' ') || "Client",
-                phone: order.phone
-            }
-        };
-
-        // 2. Call Bosta API
-        const response = await fetch(`${BOSTA_BASE_URL}/deliveries`, {
-            method: 'POST',
-            headers: {
-                'Authorization': BOSTA_API_KEY,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-            throw new Error(result.message || "فشل الاتصال بسيستم بوسطة");
-        }
-
-        // 3. Update Firestore on Success
-        const trackingNumber = result.trackingNumber;
-        await db.collection('orders').doc(orderId).update({
-            trackingNumber: trackingNumber,
-            status: "تم الشحن",
-            shippedAt: new Date().toISOString()
-        });
-
-        alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
-    } catch (err) {
-        console.error("Bosta Error:", err);
-        alert(`❌ خطأ في الشحن: ${err.message}`);
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-shipping-fast"></i> ارسل لبوسطة Bosta';
-        }
-    }
-}
-
-// 🌍 Helper to map website city names to Bosta compatible names
-function mapToBostaCity(city) {
-    const maps = {
-        "القاهرة": "Cairo", "الجيزة": "Giza", "الإسكندرية": "Alexandria",
-        "الدقهلية": "Dakahlia", "البحر الأحمر": "Red Sea", "البحيرة": "Beheira",
-        "الفيوم": "Faiyum", "الغربية": "Gharbia", "الإسماعيلية": "Ismailia",
-        "المنوفية": "Monufia", "المنيا": "Minya", "القليوبية": "Qalyubia",
-        "الوادي الجديد": "New Valley", "السويس": "Suez", "الشرقية": "Sharqia",
-        "دمياط": "Damietta", "بورسعيد": "Port Said", "جنوب سيناء": "South Sinai",
-        "كفر الشيخ": "Kafr El Sheikh", "مطروح": "Matrouh", "الأقصر": "Luxor",
-        "قنا": "Qena", "شمال سيناء": "North Sinai", "سوهاج": "Sohag",
-        "بني سويف": "Beni Suef", "أسيوط": "Asyut", "أسوان": "Aswan"
-    };
-    return maps[city] || city;
-}
 
 async function deleteAllOrders() {
     if (!isFirebaseReady) return;

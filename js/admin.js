@@ -16,41 +16,9 @@ if (!firebase.apps.length) {
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// Config & Lists (Will be moved below for cleaner top section later)
+// --- APP CONFIGURATION ---
 const ADMIN_EMAIL = "jooo71477@gmail.com";
-
-// 📦 BOSTA SHIPPING CONFIGURATION (SECURED VIA GOOGLE APPS SCRIPT - FREE & NO CARD)
-const BOSTA_PROXY_URL = "https://script.google.com/macros/s/AKfycbyxMfJGhogtFyK1f5kkYd6cY_cX0OWxvGl-UIVpqJxU16U8KxTlKVuyZm3hMyws7SmmaA/exec";
-
-const bostaCityMap = {
-    "القاهرة": "Cairo",
-    "الجيزة": "Giza",
-    "الإسكندرية": "Alexandria",
-    "الدقهلية": "Dakahlia",
-    "البحر الأحمر": "Red Sea",
-    "البحيرة": "Beheira",
-    "الفيوم": "Faiyum",
-    "الغربية": "Gharbia",
-    "الإسماعيلية": "Ismailia",
-    "المنوفية": "Monufia",
-    "المنيا": "Minya",
-    "القليوبية": "Qalyubia",
-    "الوادي الجديد": "New Valley",
-    "السويس": "Suez",
-    "الشرقية": "Sharqia",
-    "دمياط": "Damietta",
-    "بورسعيد": "Port Said",
-    "جنوب سيناء": "South Sinai",
-    "كفر الشيخ": "Kafr el-Sheikh",
-    "مطروح": "Matrouh",
-    "الأقصر": "Luxor",
-    "قنا": "Qena",
-    "شمال سيناء": "North Sinai",
-    "سوهاج": "Sohag",
-    "بني سويف": "Beni Suef",
-    "أسيوط": "Asyut",
-    "أسوان": "Aswan"
-};
+const ADMIN_EMAILS = ["jooo714777@gmail.com", "jooo71477@gmail.com", "products@icloth-fashion-store.com"];
 
 const governorates = [
     "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "البحر الأحمر", "البحيرة", "الفيوم", "الغربية", "الإسماعيلية", "المنوفية", "المنيا", "القليوبية", "الوادي الجديد", "السويس", "الشرقية", "دمياط", "بورسعيد", "جنوب سيناء", "كفر الشيخ", "مطروح", "الأقصر", "قنا", "شمال سيناء", "سوهاج", "بني سويف", "أسيوط", "أسوان"
@@ -168,7 +136,6 @@ let users = [];
 let currentAdmin = null;
 
 // Auth System
-const ADMIN_EMAILS = ["jooo714777@gmail.com", "jooo71477@gmail.com", "products@icloth-fashion-store.com"];
 
 auth.onAuthStateChanged(async (user) => {
     const loginOverlay = document.getElementById('login-overlay');
@@ -1241,12 +1208,6 @@ function renderOrders(data = orders) {
                     <button onclick="deleteOrder('${o.id}')" style="color:#f44336; background:none; border:none; cursor:pointer; font-size:1.1rem;" title="حذف">
                         <i class="fas fa-trash-alt"></i>
                     </button>
-                    ${o.trackingNumber ? 
-                        `<span style="color:#4CAF50; font-size:0.8rem; font-weight:bold;"><i class="fas fa-check-circle"></i> مشحون</span>` : 
-                        `<button onclick="shipToBosta('${o.id}')" style="color:#2196F3; background:none; border:none; cursor:pointer; font-size:1.1rem;" title="ارسل لبوسطة Bosta">
-                            <i class="fas fa-truck-fast"></i>
-                        </button>`
-                    }
                 </div>
             </td>
         </tr>
@@ -1352,21 +1313,6 @@ window.openOrderDetails = (id) => {
             </div>
         </div>
 
-        <!-- 7. Bosta Shipping Action -->
-        <div class="details-card" style="border-color: rgba(33, 150, 243, 0.3);">
-            <div class="details-label" style="color: #2196F3;"><i class="fas fa-truck-fast"></i> شحن الطلب:</div>
-            ${o.trackingNumber ? `
-                <div style="background: rgba(76,175,80,0.1); padding: 15px; border-radius: 12px; border: 1px solid rgba(76,175,80,0.2);">
-                    <p style="color: #4CAF50; font-weight: bold; margin-bottom: 5px;">✅ تم إرسال الطلب لشركة بوسطة</p>
-                    <p style="font-size: 0.9rem; opacity: 0.8;">رقم التتبع: <span style="color: #d4af37; font-family: monospace;">${o.trackingNumber}</span></p>
-                    <a href="https://tracking.bosta.co/${o.trackingNumber}" target="_blank" style="display: inline-block; margin-top: 10px; color: #2196F3; text-decoration: none; font-size: 0.85rem;"><i class="fas fa-external-link-alt"></i> تتبع الشحنة الآن</a>
-                </div>
-            ` : `
-                <button onclick="shipToBosta('${o.id}')" style="width: 100%; padding: 12px; background: #2196F3; color: #fff; border: none; border-radius: 12px; font-weight: bold; font-family: 'Cairo'; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <i class="fas fa-paper-plane"></i> إرسال البيانات لشركة بوسطة (Bosta)
-                </button>
-            `}
-        </div>
 
         <!-- 6. Timestamp -->
         <div style="text-align: center; opacity: 0.5; font-size: 0.85rem; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -1425,86 +1371,6 @@ window.deleteAllOrders = async () => {
     alert("تم مسح كافة الطلبات بنجاح");
 };
 
-// --- BOSTA API INTEGRATION ---
-window.shipToBosta = async (orderId) => {
-    const order = orders.find(o => o.id === orderId);
-    if (!order) return;
-
-    if (!confirm(`هل أنت متأكد من إرسال الطلب #${orderId.substring(0, 8)} لشركة بوسطة عبر السيرفر الآمن؟`)) return;
-
-    const btn = event.currentTarget;
-    const originalContent = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال الآمن...';
-
-    try {
-        const bostaCity = bostaCityMap[order.gov] || "Cairo";
-        
-        const payload = {
-            type: 10, // Forward shipment
-            specs: { packageDetails: { itemsCount: order.items?.length || 1, description: "Clothing" } },
-            notes: "Please call before delivery",
-            cod: Number(order.paymentMethod === 'cod' ? order.total : 0),
-            dropOffAddress: {
-                city: bostaCity,
-                firstLine: order.address,
-                buildingNumber: "N/A",
-                floor: "N/A",
-                apartment: "N/A"
-            },
-            receiver: {
-                firstName: order.customerName,
-                lastName: ".",
-                phone: order.phone,
-                email: order.userEmail || "guest@icloth.com"
-            }
-        };
-
-        console.log("📡 Sending to Secure Google Proxy:", payload);
-
-        // --- التغيير النهائي: نرسل للبروكسي المجاني في جوجل شيتس ---
-        const response = await fetch(BOSTA_PROXY_URL, {
-            method: 'POST',
-            redirect: 'follow', // ضروري جداً لروابط جوجل سكريبت
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8' // جوجل سكريبت يفضل هذا النوع أحياناً في الـ POST
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            const trackingNumber = result.trackingNumber;
-            const deliveryId = result._id;
-
-            // Update Firestore
-            await db.collection('orders').doc(orderId).update({
-                status: 'shipping',
-                trackingNumber: trackingNumber,
-                bostaDeliveryId: deliveryId,
-                shippedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
-            
-            // Re-load orders to update UI
-            loadOrders();
-            if (document.getElementById('order-details-modal')?.style.display === 'flex') {
-                openOrderDetails(orderId);
-            }
-        } else {
-            console.error("❌ Cloud Function Error:", result);
-            alert(`خطأ: ${result.message || 'فشل إنشاء الشحنة'}`);
-        }
-    } catch (err) {
-        console.error("❌ Network Error:", err);
-        alert("حدث خطأ في الاتصال بالسيرفر. تأكد من تفعيل خطة Blaze.");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalContent;
-    }
-};
 
 
 
@@ -2081,7 +1947,7 @@ showSection = (id) => {
     if (id === 'users') renderUsers();
     if (id === 'coupons') loadCoupons();
     if (id === 'settings') loadSettings();
-    if (id === 'shipping') loadShippingRates();
+    if (id === 'shipping') { /* Removed */ }
     if (id === 'cms') loadCMS();
     if (id === 'categories') loadCategories();
     if (id === 'inventory') renderInventory();
@@ -2094,40 +1960,6 @@ showSection = (id) => {
     }
 };
 
-// --- Shipping Management ---
-let shippingRates = {};
-async function loadShippingRates() {
-    try {
-        const doc = await db.collection('settings').doc('shipping').get();
-        if (doc.exists) shippingRates = doc.data().rates || {};
-        renderShippingRates();
-    } catch (e) { console.error("Error loading shipping:", e); }
-}
-
-function renderShippingRates() {
-    const container = document.getElementById('shipping-rates-grid');
-    if (!container) return;
-    container.innerHTML = governorates.map(gov => `
-        <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
-            <label style="font-size: 0.9rem; margin-bottom: 8px; display: block;">${gov}</label>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <input type="number" class="shipping-input" data-gov="${gov}" value="${shippingRates[gov] || 0}" style="padding: 10px; border-radius: 8px; width: 90px; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid var(--border);">
-                <span>ج.م</span>
-            </div>
-        </div>
-    `).join('');
-}
-
-window.saveShippingRates = async () => {
-    const inputs = document.querySelectorAll('.shipping-input');
-    const newRates = {};
-    inputs.forEach(input => { newRates[input.dataset.gov] = Number(input.value); });
-    try {
-        await db.collection('settings').doc('shipping').set({ rates: newRates }, { merge: true });
-        shippingRates = newRates;
-        alert("✅ تم حفظ مصاريف الشحن بنجاح!");
-    } catch (e) { alert("❌ خطأ في حفظ البيانات"); }
-};
 
 // --- Inventory Management ---
 function renderInventory(data = products) {
