@@ -209,15 +209,30 @@ const dynamicTranslations = {
     "جاكيت": "Jacket",
     "جواكت": "Jackets",
     "بنطلون": "Pants",
+    "بناطيل": "Pants",
     "سويت بانتس": "Sweatpants",
     "بلوفر": "Pullover",
     "بالطو": "Coat",
     "بولو": "Polo",
+    "فستان": "Dress",
+    "فساتين": "Dresses",
+    "جونلة": "Skirt",
+    "جيبة": "Skirt",
+    "بلوزة": "Blouse",
+    "قميص": "Shirt",
+    "قمصان": "Shirts",
+    "قماش": "Fabric",
     "صيفي": "Summer",
     "شتوي": "Winter",
     "خريفي": "Autumn",
     "ربيعي": "Spring",
     "مجموعة": "Collection",
+    "ملابس شارع": "Street wear",
+    "ستريت وير": "Street wear",
+    "ملابس منزلية": "Home wear",
+    "هوم وير": "Home wear",
+    "اكسسوارات": "Accessories",
+    "إكسسوارات": "Accessories",
     
     // Marketing & Announcements
     "خصم": "Discount",
@@ -340,7 +355,11 @@ const dynamicTranslations = {
     "Green": "أخضر",
     "Grey": "رمادي",
     "Brown": "بني",
-    "Beige": "بيج"
+    "Beige": "بيج",
+    "BNTLWN": "بنطلون",
+    "STREET WEAR": "ملابس شارع",
+    "HOME WEAR": "ملابس منزلية",
+    "ACCESSORIES": "اكسسوارات"
 };
 
 // 🤖 AUTOMATIC TRANSLITERATION (Arabic -> English Phonics)
@@ -372,30 +391,45 @@ function transliterateArabic(text) {
 
 function translateText(text) {
     if (!text) return "";
+    const cleanText = text.trim();
     
     // 1. Check AI Cache First
-    if (aiTranslationCache[text]) return aiTranslationCache[text];
+    if (aiTranslationCache[cleanText]) return aiTranslationCache[cleanText];
 
-    let translated = text;
     const keys = Object.keys(dynamicTranslations).sort((a, b) => b.length - a.length);
-    
+
     if (currentLang === 'ar') {
-        if (/[a-zA-Z]/.test(text)) {
-            for (const arKey of keys) {
-                if (dynamicTranslations[arKey].toLowerCase() === text.toLowerCase()) {
-                    return arKey;
-                }
+        // If text is Arabic, return as is
+        if (/[أ-ي]/.test(cleanText)) return cleanText;
+
+        // If text is English, look for Arabic equivalent in dictionary values
+        for (const arKey of keys) {
+            if (dynamicTranslations[arKey].toLowerCase() === cleanText.toLowerCase()) {
+                return arKey;
             }
-            if (dynamicTranslations[text]) return dynamicTranslations[text];
-            
-            // Trigger AI if it looks like English Fashion term
-            triggerAITranslation(text, 'ar');
         }
-        return text;
+        
+        // Direct value mapping check
+        if (dynamicTranslations[cleanText.toUpperCase()]) return dynamicTranslations[cleanText.toUpperCase()];
+        if (dynamicTranslations[cleanText]) return dynamicTranslations[cleanText];
+
+        // Trigger AI if it looks like English
+        triggerAITranslation(cleanText, 'ar');
+        return cleanText;
     }
 
-    // English Mode
+    // --- English Mode ---
+    let translated = cleanText;
     let foundInDict = false;
+
+    // Direct match check first (Case-insensitive)
+    for (const arKey of keys) {
+        if (arKey === cleanText) {
+            return dynamicTranslations[arKey];
+        }
+    }
+
+    // Deep search (includes)
     for (const ar of keys) {
         if (translated.includes(ar)) {
             const regex = new RegExp(ar, "g");
@@ -404,12 +438,13 @@ function translateText(text) {
         }
     }
 
-    if (!foundInDict && /[أ-ي]/.test(translated)) {
-        triggerAITranslation(text, 'en');
-        return transliterateArabic(translated);
-    }
-
+    // If still has Arabic letters, try transliteration or AI
     if (/[أ-ي]/.test(translated)) {
+        if (!foundInDict) {
+            triggerAITranslation(cleanText, 'en');
+            return transliterateArabic(translated);
+        }
+        // Fallback for remaining Arabic characters
         return translated.split('').map(char => /[أ-ي]/.test(char) ? transliterateArabic(char) : char).join('');
     }
 
