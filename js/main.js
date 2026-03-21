@@ -973,12 +973,15 @@ function renderSidebarCategories() {
     const bestSellerRootIds = [...new Set(bestSellerProducts.map(p => getRootId(p.category)))];
     const bsCats = mainCats.filter(c => bestSellerRootIds.includes(c.id));
 
-    bestSellerCats.innerHTML = bsCats.map(c => `
-        <a href="#" class="menu-item" onclick="applyBestSellerFilter('${c.id}'); return false;" data-translate-cache="${c.name}">
-            ${translateText(c.name)}
-            <i class="fas fa-fire" style="font-size: 0.8rem; opacity: 0.5; color: #ff4d4d;"></i>
-        </a>
-    `).join('');
+    bestSellerCats.innerHTML = bsCats.map(c => {
+        const translatedCat = (currentLang === 'ar' && c.name_ar) ? c.name_ar : translateText(c.name);
+        return `
+            <a href="#" class="menu-item" onclick="applyBestSellerFilter('${c.id}'); return false;" data-translate-cache="${c.name}">
+                ${translatedCat}
+                <i class="fas fa-fire" style="font-size: 0.8rem; opacity: 0.5; color: #ff4d4d;"></i>
+            </a>
+        `;
+    }).join('');
 }
 
 function renderSidebarBranch(cat, forceExpand = false) {
@@ -987,11 +990,13 @@ function renderSidebarBranch(cat, forceExpand = false) {
     const isMain = !cat.parentId;
     const className = isMain ? "menu-item" : "sub-menu-item";
     
+    const translatedCat = (currentLang === 'ar' && cat.name_ar) ? cat.name_ar : translateText(cat.name);
+    
     if (hasSubs) {
         return `
             <div class="menu-item-wrap ${forceExpand ? 'expanded' : ''}">
                 <a href="#" class="${className}" onclick="toggleMenuBranch(this, event); return false;" data-translate-cache="${cat.name}">
-                    ${translateText(cat.name)}
+                    ${translatedCat}
                     <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.3;"></i>
                 </a>
                 <div class="sub-menu-list">
@@ -1013,7 +1018,7 @@ function renderSidebarBranch(cat, forceExpand = false) {
 
         return `
             <a href="#" class="${className}" onclick="applySideFilter('${topParent}', '${cat.id}'); return false;" data-translate-cache="${cat.name}">
-                ${translateText(cat.name)}
+                ${translatedCat}
                 ${isMain ? '<i class="fas fa-arrow-right" style="font-size: 0.8rem; opacity: 0.2;"></i>' : ''}
             </a>
         `;
@@ -1142,7 +1147,10 @@ function renderSubFilters(parentId, level = 0) {
     row.style.width = '100%';
 
     row.innerHTML = `<button class="sub-btn active" onclick="applySubFilter('${parentId}', 'all', this, ${level})" data-i18n="all">${translations[currentLang].all}</button>` +
-        subs.map(s => `<button class="sub-btn" onclick="applySubFilter('${parentId}', '${s.id}', this, ${level})" data-translate-cache="${s.name}">${translateText(s.name)}</button>`).join('');
+        subs.map(s => {
+            const translatedCat = (currentLang === 'ar' && s.name_ar) ? s.name_ar : translateText(s.name);
+            return `<button class="sub-btn" onclick="applySubFilter('${parentId}', '${s.id}', this, ${level})" data-translate-cache="${s.name}">${translatedCat}</button>`;
+        }).join('');
 
     subFiltersContainer.appendChild(row);
     subFiltersContainer.classList.add('active');
