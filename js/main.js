@@ -186,29 +186,65 @@ const translations = {
     }
 };
 
-// 🏁 Modern Translation System (Google Powered)
-const dynamicTranslations = {}; // Removed manual dictionary as requested
-
+// 🏁 Modern Hybrid Translation System (AI + Dictionary Helper)
 function translateText(text) {
     if (!text) return "";
     const cleanText = text.trim();
+    const cleanKey = cleanText.toLowerCase().replace(/\s+/g, '_');
     
-    // Fallback to static mapping for super common terms if needed, 
-    // otherwise let Google Translate handle the DOM.
-    if (currentLang === 'en' && cleanText === "بنطلون") return "Pants";
-    if (currentLang === 'ar' && cleanText.toLowerCase() === "pants") return "بنطلون";
+    // 1. Check Dictionary Helper (Static UI terms)
+    if (translations[currentLang]) {
+        if (translations[currentLang][cleanKey]) return translations[currentLang][cleanKey];
+        if (translations[currentLang][cleanText.toLowerCase()]) return translations[currentLang][cleanText.toLowerCase()];
+    }
+    
+    // 2. If English, return as is
+    if (currentLang === 'en') return cleanText;
 
-    return cleanText;
+    // 3. AI Translation (For dynamic content like product names/descriptions)
+    if (aiTranslationCache[cleanText]) return aiTranslationCache[cleanText];
+
+    // Trigger background AI translation if not in cache
+    getSmartTranslation(cleanText);
+
+    return cleanText; // Return original while waiting for AI
 }
 
-// 🤖 Background AI Translation (Optional fallback for specific strings)
-async function triggerAITranslation(text, targetLang) {
-    // We can keep this for specific backend strings if needed, but Google handles the UI.
-    return;
-}
+// 🤖 Background AI Translation with Caching
+async function getSmartTranslation(text) {
+    if (!text || currentLang === 'en') return text;
+    const cleanText = text.trim();
 
-function updateUIText(original, translated) {
-    // Google Translate handles the DOM naturally.
+    // Prevent multiple calls for same text
+    if (activeAITranslations.has(cleanText)) return cleanText;
+    activeAITranslations.add(cleanText);
+
+    try {
+        const response = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: cleanText, targetLang: 'ar' })
+        });
+        const data = await response.json();
+        
+        if (data.translated && data.translated !== cleanText) {
+            aiTranslationCache[cleanText] = data.translated;
+            localStorage.setItem('icloth_ai_cache', JSON.stringify(aiTranslationCache));
+            
+            // ⚡ Instant DOM Update (Self-healing UI)
+            document.querySelectorAll(`[data-translate-cache="${cleanText}"]`).forEach(el => {
+                el.innerText = data.translated;
+                el.style.opacity = '0';
+                setTimeout(() => el.style.opacity = '1', 10);
+            });
+        }
+        return data.translated || cleanText;
+    } catch (e) {
+        console.warn("AI Translation Error:", e);
+        return cleanText;
+    } finally {
+        activeAITranslations.delete(cleanText);
+    }
 }
 
 let currentLang = localStorage.getItem('icloth_lang') || 'en';
@@ -513,6 +549,7 @@ function updateLanguageUI() {
     document.documentElement.setAttribute('lang', lang);
     document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
     
+    // 1. Update Elements with [data-i18n] using Helper Dictionary
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (translations[lang] && translations[lang][key]) {
@@ -527,9 +564,18 @@ function updateLanguageUI() {
         }
     });
 
+    // 2. Update Toggle Button
     const langBtn = document.getElementById('lang-toggle');
     if (langBtn) {
         langBtn.innerText = lang === 'en' ? 'AR' : 'EN';
+    }
+
+    // 3. Trigger Google Translate Widget for the whole page
+    setGoogleTranslate(lang);
+
+    // 4. Force Re-render Products to pick up AI translations
+    if (remoteProducts.length > 0) {
+        filterAndRender('men', activeCategory, 'all');
     }
 
     if (window.populateGovernorates) window.populateGovernorates();
@@ -886,8 +932,8 @@ function renderDynamicFilters() {
     if (!container) return;
     
     const mainCats = dynamicCategories.filter(c => !c.parentId);
-    container.innerHTML = `<button class="main-filter-btn active" data-parent="all" onclick="applyMainFilter('all', this)">${translations[currentLang].all}</button>` +
-        mainCats.map(c => `<button class="main-filter-btn" data-parent="${c.id}" onclick="applyMainFilter('${c.id}', this)">${translateText(c.name)}</button>`).join('');
+    container.innerHTML = `<button class="main-filter-btn active" data-parent="all" onclick="applyMainFilter('all', this)" data-i18n="all">${translations[currentLang].all}</button>` +
+        mainCats.map(c => `<button class="main-filter-btn" data-parent="${c.id}" onclick="applyMainFilter('${c.id}', this)" data-translate-cache="${c.name}">${translateText(c.name)}</button>`).join('');
     
     renderSidebarCategories();
 }
@@ -925,7 +971,7 @@ function renderSidebarCategories() {
     const bsCats = mainCats.filter(c => bestSellerRootIds.includes(c.id));
 
     bestSellerCats.innerHTML = bsCats.map(c => `
-        <a href="#" class="menu-item" onclick="applyBestSellerFilter('${c.id}'); return false;">
+        <a href="#" class="menu-item" onclick="applyBestSellerFilter('${c.id}'); return false;" data-translate-cache="${c.name}">
             ${translateText(c.name)}
             <i class="fas fa-fire" style="font-size: 0.8rem; opacity: 0.5; color: #ff4d4d;"></i>
         </a>
@@ -941,7 +987,7 @@ function renderSidebarBranch(cat, forceExpand = false) {
     if (hasSubs) {
         return `
             <div class="menu-item-wrap ${forceExpand ? 'expanded' : ''}">
-                <a href="#" class="${className}" onclick="toggleMenuBranch(this, event); return false;">
+                <a href="#" class="${className}" onclick="toggleMenuBranch(this, event); return false;" data-translate-cache="${cat.name}">
                     ${translateText(cat.name)}
                     <i class="fas fa-chevron-down" style="font-size: 0.8rem; opacity: 0.3;"></i>
                 </a>
@@ -963,7 +1009,7 @@ function renderSidebarBranch(cat, forceExpand = false) {
         }
 
         return `
-            <a href="#" class="${className}" onclick="applySideFilter('${topParent}', '${cat.id}'); return false;">
+            <a href="#" class="${className}" onclick="applySideFilter('${topParent}', '${cat.id}'); return false;" data-translate-cache="${cat.name}">
                 ${translateText(cat.name)}
                 ${isMain ? '<i class="fas fa-arrow-right" style="font-size: 0.8rem; opacity: 0.2;"></i>' : ''}
             </a>
@@ -1092,8 +1138,8 @@ function renderSubFilters(parentId, level = 0) {
     row.style.marginTop = '15px';
     row.style.width = '100%';
 
-    row.innerHTML = `<button class="sub-btn active" onclick="applySubFilter('${parentId}', 'all', this, ${level})">${translations[currentLang].all}</button>` +
-        subs.map(s => `<button class="sub-btn" onclick="applySubFilter('${parentId}', '${s.id}', this, ${level})">${translateText(s.name)}</button>`).join('');
+    row.innerHTML = `<button class="sub-btn active" onclick="applySubFilter('${parentId}', 'all', this, ${level})" data-i18n="all">${translations[currentLang].all}</button>` +
+        subs.map(s => `<button class="sub-btn" onclick="applySubFilter('${parentId}', '${s.id}', this, ${level})" data-translate-cache="${s.name}">${translateText(s.name)}</button>`).join('');
 
     subFiltersContainer.appendChild(row);
     subFiltersContainer.classList.add('active');
@@ -1519,15 +1565,17 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
             : '';
 
         const mainImg = firstImages[0] || '';
+        const translatedName = translateText(p.name);
+        const translatedBadge = p.badge ? translateText(p.badge) : '';
 
         return `
         <div class="product-card" data-product-id="${p.id}" data-current-img="0" data-color-idx="${p.explicitMainImage ? '-1' : '0'}" onclick="openSizeModal('${p.id}')">
             <div class="product-img-wrap" style="position:relative; overflow:hidden;">
-                ${p.badge ? `<span class="badge-label">${translateText(p.badge)}</span>` : ''}
+                ${p.badge ? `<span class="badge-label" data-translate-cache="${p.badge}">${translatedBadge}</span>` : ''}
                 ${p.isBestSeller ? `<div class="best-seller-badge" title="${translations[currentLang].best_seller}"><i class="fas fa-fire"></i></div>` : ''}
-                <img class="product-card-main-img" src="${mainImg}" loading="lazy" alt="${translateText(p.name)}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'400\\'><rect width=\\'400\\' height=\\'400\\' fill=\\'%23222\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-family=\\'Arial\\' font-size=\\'24\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>No Image</text></svg>'">
+                <img class="product-card-main-img" src="${mainImg}" loading="lazy" alt="${translatedName}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'400\\'><rect width=\\'400\\' height=\\'400\\' fill=\\'%23222\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-family=\\'Arial\\' font-size=\\'24\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>No Image</text></svg>'">
                 
-                <div class="card-overlay-name">${translateText(p.name)}</div>
+                <div class="card-overlay-name" data-translate-cache="${p.name}">${translatedName}</div>
 
                 ${hasMultipleImages ? `
                     <button class="img-nav-btn prev" onclick="event.stopPropagation(); cardPrevImg('${p.id}')"><i class="fas fa-chevron-left"></i></button>
@@ -1538,7 +1586,7 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
             <div class="product-info">
                 <div class="product-info-stack">
                     <div class="name-row">
-                        <h3>${translateText(p.name)}</h3>
+                        <h3 data-translate-cache="${p.name}">${translatedName}</h3>
                         <div class="add-plus-btn">+</div>
                     </div>
                     <div class="price-color-row">
@@ -1844,8 +1892,13 @@ window.openSizeModal = (id) => {
     selectedColor = firstVariant ? firstVariant.name : '';
 
     modalProductName.innerText = translateText(p.name);
+    modalProductName.setAttribute('data-translate-cache', p.name);
+    
     const colorLabelSpan = document.getElementById('selected-color-name');
-    if (colorLabelSpan) colorLabelSpan.innerText = translateText(selectedColor);
+    if (colorLabelSpan) {
+        colorLabelSpan.innerText = translateText(selectedColor);
+        colorLabelSpan.setAttribute('data-translate-cache', selectedColor);
+    }
     
     // Set Product Ref
     const refEl = document.getElementById('modal-product-ref');
@@ -1862,7 +1915,9 @@ window.openSizeModal = (id) => {
 
     const modalDesc = document.getElementById('modal-product-desc');
     if (modalDesc) {
-        modalDesc.innerHTML = (p.description || '').replace(/\n/g, '<br>');
+        const translatedDesc = translateText(p.description || '');
+        modalDesc.innerHTML = translatedDesc.replace(/\n/g, '<br>');
+        modalDesc.setAttribute('data-translate-cache', p.description || '');
         modalDesc.style.display = 'none'; 
         const icon = document.getElementById('desc-accordion-icon');
         if (icon) {
@@ -1966,7 +2021,7 @@ function renderRelatedProducts(targetCatId, currentProdId) {
     list.innerHTML = related.map(p => `
         <div class="related-item" onclick="openSizeModal('${p.id}')" style="min-width: 140px; cursor: pointer; transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
             <img src="${p.image}" style="width: 100%; height: 180px; object-fit: cover; margin-bottom: 8px;">
-            <div style="font-size: 0.72rem; font-weight: 300; text-transform: uppercase; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${translateText(p.name)}</div>
+            <div style="font-size: 0.72rem; font-weight: 300; text-transform: uppercase; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" data-translate-cache="${p.name}">${translateText(p.name)}</div>
             <div style="font-size: 0.8rem; font-weight: 950; color: var(--primary);">${p.price} ${translations[currentLang].currency}</div>
         </div>
     `).join('');
@@ -2137,8 +2192,8 @@ function updateCartUI() {
             <div class="cart-item">
                 <img src="${i.image}" alt="${translateText(i.name)}">
                 <div class="cart-item-info">
-                    <h4>${translateText(i.name)}</h4>
-                    <div class="cart-item-details">${i.size} | ${translateText(i.color)}</div>
+                    <h4 data-translate-cache="${i.name}">${translateText(i.name)}</h4>
+                    <div class="cart-item-details">${i.size} | <span data-translate-cache="${i.color}">${translateText(i.color)}</span></div>
                     <div class="qty-control">
                         <button class="qty-btn" onclick="updateCartQuantity('${i.cartId}', 1)">+</button>
                         <span>${i.quantity}</span>
