@@ -402,6 +402,7 @@
             <li><a href="#inventory"><i class="fas fa-warehouse"></i> المخزون</a></li>
             <li><a href="#analytics"><i class="fas fa-chart-pie"></i> التحليلات</a></li>
             <li><a href="#coupons"><i class="fas fa-ticket-alt"></i> الكوبونات</a></li>
+            <li><a href="#shipping"><i class="fas fa-truck"></i> أسعار الشحن</a></li>
             <li><a href="#announcements"><i class="fas fa-bullhorn"></i> التنبيهات</a></li>
             <li><a href="#cms"><i class="fas fa-file-alt"></i> المحتوى</a></li>
             <li><a href="#settings"><i class="fas fa-cog"></i> الإعدادات</a></li>
@@ -668,6 +669,23 @@
                             <i class="fas fa-save"></i> حفظ جميع الأرقام
                         </button>
                     </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Shipping -->
+        <div id="shipping" class="section">
+            <div class="section-header">
+                <h2>أعدادات وأسعار الشحن</h2>
+                <button class="btn-primary" onclick="saveShippingRates()"><i class="fas fa-save"></i> حفظ التعديلات</button>
+            </div>
+            
+            <div class="table-container">
+                <p style="margin-bottom: 20px; font-size: 0.9rem; color: var(--text-dim);">
+                    قم بتعديل تكلفة الشحن لكل محافظة. هذه الأسعار سيتم تطبيقها في صفحة إتمام الطلب للعملاء.
+                </p>
+                <div id="shipping-rates-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px;">
+                    <!-- JS -->
                 </div>
             </div>
         </div>

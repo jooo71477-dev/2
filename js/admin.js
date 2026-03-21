@@ -2087,7 +2087,7 @@ showSection = (id) => {
     if (id === 'users') renderUsers();
     if (id === 'coupons') loadCoupons();
     if (id === 'settings') loadSettings();
-    if (id === 'shipping') { /* Removed */ }
+    if (id === 'shipping') loadShippingRates();
     if (id === 'cms') loadCMS();
     if (id === 'categories') loadCategories();
     if (id === 'inventory') renderInventory();
@@ -2385,3 +2385,65 @@ document.addEventListener('click', (e) => {
         document.querySelectorAll('.color-picker-grid').forEach(p => p.style.display = 'none');
     }
 });
+
+// --- Shipping Rates Management ---
+let shippingRates = {};
+
+async function loadShippingRates() {
+    console.log("🚚 Loading Shipping Rates...");
+    const doc = await db.collection('settings').doc('shipping').get();
+    if (doc.exists) {
+        shippingRates = doc.data().rates || {};
+    } else {
+        governorates.forEach(g => shippingRates[g] = 50);
+    }
+    renderShippingRates();
+}
+
+function renderShippingRates() {
+    const grid = document.getElementById('shipping-rates-grid');
+    if (!grid) return;
+
+    grid.innerHTML = governorates.map(gov => `
+        <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+            <label style="color: var(--primary); font-weight: bold; margin-bottom: 8px;">${gov}</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="number" id="ship-rate-${gov.replace(/\s+/g, '-')}" value="${shippingRates[gov] !== undefined ? shippingRates[gov] : 50}" style="flex: 1;" min="0">
+                <span style="color: var(--text-dim); font-size: 0.8rem;">ج.م</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.saveShippingRates = async () => {
+    const btn = document.querySelector('#shipping .btn-primary');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+    btn.disabled = true;
+
+    const newRates = {};
+    governorates.forEach(gov => {
+        const input = document.getElementById(`ship-rate-${gov.replace(/\s+/g, '-')}`);
+        if (input) {
+            newRates[gov] = Number(input.value) || 0;
+        }
+    });
+
+    try {
+        await db.collection('settings').doc('shipping').set({
+            rates: newRates,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        alert('✅ تم حفظ أسعار الشحن بنجاح!');
+        shippingRates = newRates;
+        
+        // Also update standard window layout 
+    } catch (err) {
+        console.error(err);
+        alert('❌ خطأ في الحفظ: ' + err.message);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+};
