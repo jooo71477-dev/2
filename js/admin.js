@@ -2284,7 +2284,8 @@ window.openCategoryModal = (id = null) => {
     if (id) {
         const cat = categories.find(c => c.id === id);
         idInput.value = cat.id;
-        document.getElementById('cat-name').value = cat.name;
+        document.getElementById('cat-name').value = cat.name || "";
+        document.getElementById('cat-name-ar').value = cat.name_ar || "";
         parentSelect.value = cat.parentId || "";
         title.innerText = "تعديل القسم";
     } else {
@@ -2304,6 +2305,7 @@ document.getElementById('category-form').onsubmit = async (e) => {
     const id = document.getElementById('cat-id').value;
     const data = {
         name: document.getElementById('cat-name').value,
+        name_ar: document.getElementById('cat-name-ar').value,
         parentId: document.getElementById('cat-parent').value || null
     };
     try {
