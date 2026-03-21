@@ -442,6 +442,29 @@ if (saveProductForm) {
             data.status = 'active';
         }
 
+        // --- 🤖 AUTO-TRANSLATE TO ARABIC (FOR MAIN SITE) ---
+        try {
+            console.log("🤖 Auto-translating fields to Arabic...");
+            const [arName, arBadge] = await Promise.all([
+                smartTranslate(data.name),
+                data.badge ? smartTranslate(data.badge) : Promise.resolve("")
+            ]);
+            data.name_ar = arName;
+            data.badge_ar = arBadge;
+            
+            // Translate Color Names
+            if (data.colorVariants && data.colorVariants.length > 0) {
+                const translatedVariants = await Promise.all(data.colorVariants.map(async v => ({
+                    ...v,
+                    name_ar: await smartTranslate(v.name)
+                })));
+                data.colorVariants = translatedVariants;
+            }
+            console.log("✅ Auto-translation complete.");
+        } catch (translationErr) {
+            console.warn("⚠️ Auto-translation failed, saving English only.", translationErr);
+        }
+
         // SANITIZE DATA
         const finalData = sanitizeFirestoreData(data);
 
@@ -869,4 +892,21 @@ function sanitizeFirestoreData(obj) {
         return newObj;
     }
     return obj;
+}
+
+// 🤖 Smart Translation Helper for Admin
+async function smartTranslate(text) {
+    if (!text || !/[a-zA-Z]/.test(text)) return text; // Skip if empty or already non-English
+    try {
+        const response = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text, targetLang: 'ar' })
+        });
+        const data = await response.json();
+        return data.translated || text;
+    } catch (e) {
+        console.error("Translation API Error:", e);
+        return text;
+    }
 }

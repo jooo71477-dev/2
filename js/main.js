@@ -933,7 +933,10 @@ function renderDynamicFilters() {
     
     const mainCats = dynamicCategories.filter(c => !c.parentId);
     container.innerHTML = `<button class="main-filter-btn active" data-parent="all" onclick="applyMainFilter('all', this)" data-i18n="all">${translations[currentLang].all}</button>` +
-        mainCats.map(c => `<button class="main-filter-btn" data-parent="${c.id}" onclick="applyMainFilter('${c.id}', this)" data-translate-cache="${c.name}">${translateText(c.name)}</button>`).join('');
+        mainCats.map(c => {
+            const translatedCat = (currentLang === 'ar' && c.name_ar) ? c.name_ar : translateText(c.name);
+            return `<button class="main-filter-btn" data-parent="${c.id}" onclick="applyMainFilter('${c.id}', this)" data-translate-cache="${c.name}">${translatedCat}</button>`;
+        }).join('');
     
     renderSidebarCategories();
 }
@@ -1565,8 +1568,8 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
             : '';
 
         const mainImg = firstImages[0] || '';
-        const translatedName = translateText(p.name);
-        const translatedBadge = p.badge ? translateText(p.badge) : '';
+        const translatedName = (currentLang === 'ar' && p.name_ar) ? p.name_ar : translateText(p.name);
+        const translatedBadge = (currentLang === 'ar' && p.badge_ar) ? p.badge_ar : (p.badge ? translateText(p.badge) : '');
 
         return `
         <div class="product-card" data-product-id="${p.id}" data-current-img="0" data-color-idx="${p.explicitMainImage ? '-1' : '0'}" onclick="openSizeModal('${p.id}')">
