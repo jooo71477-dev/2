@@ -1307,8 +1307,35 @@ window.openOrderDetails = (id) => {
             </div>
             <div class="details-card" style="text-align: center;">
                 <div class="details-label" style="justify-content: center;">💳 الدفع:</div>
-                <h3 class="details-val" style="font-size: 1.1rem;">${o.paymentMethod === 'cod' ? '💵 عند الاستلام' : '📲 تحويل بنكي'}</h3>
+                <h3 class="details-val" style="font-size: 1.1rem;">${o.paymentMethod === 'cod' ? '💵 عند الاستلام (شحن مدفوع)' : '📲 تحويل بنكي (مدفوع بالكامل)'}</h3>
             </div>
+        </div>
+
+        <!-- Breakdown of Payment Status -->
+        <div class="details-card" style="background: rgba(212,175,55, 0.05); border: 1px dashed var(--primary); padding: 15px; border-radius: 12px; margin-top: -10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem;">
+                <span opacity: 0.7;>إجمالي الطلب:</span>
+                <span>${o.total} ج.م</span>
+            </div>
+            ${o.paymentMethod === 'cod' ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; color: #4CAF50;">
+                    <span>رسوم الشحن (مدفوعة):</span>
+                    <span>-${o.shippingCost || 0} ج.م</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px; color: gold; font-size: 1.1rem; margin-top: 5px;">
+                    <span>المطلوب تحصيله (COD):</span>
+                    <span>${(o.total || 0) - (Number(o.shippingCost) || 0)} ج.م</span>
+                </div>
+            ` : `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; color: #4CAF50;">
+                    <span>تم الدفع بالكامل سلفاً:</span>
+                    <span>-${o.total} ج.م</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px; color: #888; font-size: 1.1rem; margin-top: 5px;">
+                    <span>المطلوب تحصيله عند الاستلام:</span>
+                    <span>0 ج.م</span>
+                </div>
+            `}
         </div>
 
         </div>
@@ -1410,7 +1437,7 @@ async function shipToBosta(orderId) {
                 } 
             },
             notes: order.notes || "",
-            cod: order.total,
+            cod: order.paymentMethod === 'cod' ? (Math.max(0, (order.total || 0) - (Number(order.shippingCost) || 0))) : 0,
             dropOffAddress: {
                 city: mapToBostaCity(order.gov),
                 firstLine: order.address || "غير محدد",

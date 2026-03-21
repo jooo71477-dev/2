@@ -1347,6 +1347,7 @@ function setupEventListeners() {
                     address: document.getElementById('customer-address').value,
                     items: cart,
                     total: finalTotal,
+                    shippingCost: shipCost,
                     discount: discountAmount,
                     couponCode: appliedCoupon ? appliedCoupon.code : null,
                     status: "verifying",
