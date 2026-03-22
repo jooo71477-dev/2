@@ -18,7 +18,7 @@ messaging.onBackgroundMessage((payload) => {
         body: payload.notification.body,
         icon: '/images/logo/logo.png',
         badge: '/images/logo/logo.png',
-        data: { url: '/jkjJKCJQWH38H877-UGJj-Pjkhwnj.html' }
+        data: { url: 'https://jfndsjksknsnd-qwnmn-ddnqdajajd.web.app/' }
     };
 
     self.registration.showNotification(notificationTitle, notificationOptions);

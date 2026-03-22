@@ -2,39 +2,60 @@
   "firestore": {
     "rules": "firestore.rules"
   },
-  "hosting": {
-    "target": "main-site",
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**",
-      "**/*.exe",
-      "**/*.bat",
-      "**/*.vbs",
-      "**/*.sh",
-      "firebase-debug.log"
-    ],
-    "rewrites": [
-      {
-        "source": "/api/**",
-        "destination": "/api/translate.js"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "**/*.@(js|css|png|jpg|webp|svg|woff2)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public,max-age=31536000,immutable"
-          }
-        ]
-      }
-    ]
-  }
+  "hosting": [
+    {
+      "target": "main-site",
+      "public": ".",
+      "ignore": [
+        "jkjJKCJQWH38H877-UGJj-Pjkhwnj.html",
+        "js/admin.js", 
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**",
+        "**/*.exe",
+        "**/*.bat",
+        "**/*.vbs",
+        "**/*.sh",
+        "firebase-debug.log"
+      ],
+      "rewrites": [
+        {
+          "source": "/api/**",
+          "destination": "/api/translate.js"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.@(js|css|png|jpg|webp|svg|woff2)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public,max-age=31536000,immutable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "admin-site",
+      "public": ".",
+      "ignore": [
+        "index.html",
+        "maintenance.html",
+        "js/main.js",
+        "firebase.json",
+        "**/.*"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/jkjJKCJQWH38H877-UGJj-Pjkhwnj.html"
+        }
+      ]
+    }
+  ]
 }

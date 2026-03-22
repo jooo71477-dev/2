@@ -757,7 +757,7 @@ function attachRealTimeListeners() {
             const s = doc.data();
             settingsCache = s; // Update cache for audit
             console.log("⚙️ Site settings updated:", s);
-            const isMainSite = !window.location.pathname.includes('jkjJKCJQWH38H877-UGJj-Pjkhwnj.html') && !window.location.pathname.includes('maintenance.html');
+            const isMainSite = !document.getElementById('admin-panel-portal') && !window.location.pathname.includes('maintenance.html');
             
             // 🛡️ Fail-safe: Only redirect if maintenanceMode is explicitly TRUE (or "true" string)
             const inMaintenance = (s.maintenanceMode === true || s.maintenanceMode === "true");
