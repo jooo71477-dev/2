@@ -10,10 +10,9 @@ mkdir "deployment"
 
 echo [1/5] نسخ الملفات الأساسية...
 copy "index.html" "deployment\" >nul
-copy "admin.html" "deployment\" >nul
+copy "jkjJKCJQWH38H877-UGJj-Pjkhwnj.html" "deployment\" >nul
 copy "firebase-messaging-sw.js" "deployment\" >nul
 copy "robots.txt" "deployment\" >nul
-copy "sitemap.xml" "deployment\" >nul
 copy ".htaccess" "deployment\" >nul
 copy ".nojekyll" "deployment\" >nul 2>nul
 
@@ -27,14 +26,14 @@ echo [4/5] نسخ مجلد الصور...
 xcopy "images" "deployment\images\" /E /I /Y >nul
 
 echo [5/5] إنشاء ملف ZIP...
-powershell -command "Compress-Archive -Path 'deployment\*' -DestinationPath 'موقع_ديزل_جاهز_للرفع.zip' -Force"
+powershell -command "Compress-Archive -Path 'deployment\*' -DestinationPath 'موقع_icloth_جاهز_للرفع.zip' -Force"
 
 echo.
 echo ========================================
 echo   ✅ تم التحضير بنجاح!
 echo ========================================
 echo.
-echo الملف الجاهز: موقع_ديزل_جاهز_للرفع.zip
+echo الملف الجاهز: موقع_icloth_جاهز_للرفع.zip
 echo.
 echo خطوات الرفع:
 echo 1. افتح لوحة تحكم الاستضافة (cPanel)

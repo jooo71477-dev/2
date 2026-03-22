@@ -1,6 +1,2 @@
 User-agent: *
 Allow: /
-Disallow: /admin.html
-Disallow: /js/admin.js
-
-Sitemap: https://dieselkafrshukr.netlify.app/sitemap.xml
