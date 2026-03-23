@@ -48,7 +48,13 @@
         "maintenance.html",
         "js/main.js",
         "firebase.json",
-        "**/.*"
+        "**/.*",
+        "**/node_modules/**",
+        "**/*.exe",
+        "**/*.bat",
+        "**/*.vbs",
+        "**/*.sh",
+        "firebase-debug.log"
       ],
       "rewrites": [
         {

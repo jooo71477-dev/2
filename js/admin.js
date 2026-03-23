@@ -27,107 +27,107 @@ const governorates = [
     "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "البحر الأحمر", "البحيرة", "الفيوم", "الغربية", "الإسماعيلية", "المنوفية", "المنيا", "القليوبية", "الوادي الجديد", "السويس", "الشرقية", "دمياط", "بورسعيد", "جنوب سيناء", "كفر الشيخ", "مطروح", "الأقصر", "قنا", "شمال سيناء", "سوهاج", "بني سويف", "أسيوط", "أسوان"
 ];
 const commonColors = [
-    { name: "أسود", color: "#000000" },
-    { name: "أبيض", color: "#FFFFFF" },
-    { name: "أوف وايت", color: "#F5F5F5" },
-    { name: "سكري", color: "#FFFDD0" },
-    { name: "كريمي", color: "#FFF8DC" },
-    { name: "عاجي", color: "#FFFFF0" },
-    { name: "شامبين", color: "#F7E7CE" },
-    { name: "لؤلؤي", color: "#EAE0C8" },
-    { name: "رمادي", color: "#808080" },
-    { name: "رصاصي", color: "#A9A9A9" },
-    { name: "فحمي", color: "#36454F" },
-    { name: "رصاصي فاتح", color: "#D3D3D3" },
-    { name: "رصاصي غامق", color: "#696969" },
-    { name: "بني", color: "#5C4033" },
-    { name: "هافان", color: "#8B4513" },
-    { name: "جملي", color: "#C19A6B" },
-    { name: "كافيه", color: "#D2B48C" },
-    { name: "طحيني", color: "#E3D5B8" },
-    { name: "بيج", color: "#F5F5DC" },
-    { name: "رملي", color: "#C2B280" },
-    { name: "خردلي", color: "#E1AD01" },
-    { name: "كحلي", color: "#000080" },
-    { name: "أزرق", color: "#0000FF" },
-    { name: "أزرق ملكي", color: "#4169E1" },
-    { name: "سماوي", color: "#87CEEB" },
-    { name: "لبني", color: "#ADD8E6" },
-    { name: "تركواز", color: "#40E0D0" },
-    { name: "بترولي", color: "#005F6B" },
-    { name: "جنزاري", color: "#2F4F4F" },
-    { name: "أزرق فاتح", color: "#B0E0E6" },
-    { name: "أزرق غامق", color: "#00008B" },
-    { name: "أخضر", color: "#008000" },
-    { name: "زيتي", color: "#4B5320" },
-    { name: "زيتوني", color: "#808000" },
-    { name: "بستاج", color: "#DAF7A6" },
-    { name: "مينت جرين", color: "#98FF98" },
-    { name: "فسفوري", color: "#00FF00" },
-    { name: "أخضر فاتح", color: "#90EE90" },
-    { name: "أخضر غامق", color: "#006400" },
-    { name: "أخضر نعناعي", color: "#AAF0D1" },
-    { name: "أخضر تفاحي", color: "#8DB600" },
-    { name: "أحمر", color: "#FF0000" },
-    { name: "نبيتي", color: "#800000" },
-    { name: "طوبي", color: "#B22222" },
-    { name: "خمري", color: "#673147" },
-    { name: "برتقالي", color: "#FFA500" },
-    { name: "سيمون", color: "#FFA07A" },
-    { name: "مشمشي", color: "#FBCEB1" },
-    { name: "خوخي", color: "#FFDAB9" },
-    { name: "وردي", color: "#FFC0CB" },
-    { name: "بينك", color: "#FF69B4" },
-    { name: "فوشيا", color: "#FF00FF" },
-    { name: "موف", color: "#E0B0FF" },
-    { name: "بنفسجي", color: "#800080" },
-    { name: "ليلكي", color: "#C8A2C8" },
-    { name: "أرجواني", color: "#9932CC" },
-    { name: "لافندر", color: "#E6E6FA" },
-    { name: "أصفر", color: "#FFFF00" },
-    { name: "مستردة", color: "#FFDB58" },
-    { name: "ذهبي", color: "#D4AF37" },
-    { name: "فضي", color: "#C0C0C0" },
-    { name: "فيروزي", color: "#00CED1" },
-    { name: "مرجاني", color: "#FF7F50" },
-    { name: "بصلي", color: "#FF8C69" },
-    { name: "عسلي", color: "#FFBF00" },
-    { name: "ليموني", color: "#FFF44F" },
-    { name: "تلجي", color: "#F0F8FF" },
-    { name: "برونزي", color: "#CD7F32" },
-    { name: "نحاسي", color: "#B87333" },
-    { name: "كاكي", color: "#F0E68C" },
-    { name: "مارون", color: "#800000" },
-    { name: "سيينا", color: "#A0522D" },
-    { name: "ياقوتي", color: "#E0115F" },
-    { name: "زمردي", color: "#50C878" },
-    { name: "نيلي", color: "#4B0082" },
-    { name: "بني محروق", color: "#3D2B1F" },
-    { name: "بترولي فاتح", color: "#008B8B" },
-    { name: "أزرق بترولي", color: "#005F6B" },
-    { name: "رمادي أزرق", color: "#607D8B" },
-    { name: "لبني فاتح", color: "#E0F7FA" },
-    { name: "ذهبي وردي", color: "#B76E79" },
-    { name: "فضة معتقة", color: "#8E8E8E" },
-    { name: "أخضر عسكري", color: "#4B5320" },
-    { name: "برتقالي محروق", color: "#CC5500" },
-    { name: "أصفر كناري", color: "#FFEF00" },
-    { name: "أزرق كبالت", color: "#0047AB" },
-    { name: "نيلي غامق", color: "#000080" },
-    { name: "بنفسجي باهت", color: "#D8BFD8" },
-    { name: "أحمر مرجاني", color: "#FF4040" },
-    { name: "أخضر بحري", color: "#2E8B57" },
-    { name: "رصاصي مزرق", color: "#708090" },
-    { name: "بني فاتح", color: "#D2B48C" },
-    { name: "بني غامق", color: "#3E2723" },
-    { name: "ورد جوري", color: "#E91E63" },
-    { name: "سماوي صافي", color: "#00BFFF" },
-    { name: "أخضر نيون", color: "#39FF14" },
-    { name: "أصفر نيون", color: "#FFFF33" },
-    { name: "برتقالي نيون", color: "#FF5F1F" },
-    { name: "بينك نيون", color: "#FF44CC" },
-    { name: "برقوقي", color: "#8E4585" },
-    { name: "توتي", color: "#8B0000" }
+    { name: "أسود", nameEn: "Black", color: "#000000" },
+    { name: "أبيض", nameEn: "White", color: "#FFFFFF" },
+    { name: "أوف وايت", nameEn: "Off-White", color: "#F5F5F5" },
+    { name: "سكري", nameEn: "Creamy", color: "#FFFDD0" },
+    { name: "كريمي", nameEn: "Creamy", color: "#FFF8DC" },
+    { name: "عاجي", nameEn: "Ivory", color: "#FFFFF0" },
+    { name: "شامبين", nameEn: "Champagne", color: "#F7E7CE" },
+    { name: "لؤلؤي", nameEn: "Pearl", color: "#EAE0C8" },
+    { name: "رمادي", nameEn: "Grey", color: "#808080" },
+    { name: "رصاصي", nameEn: "Grey", color: "#A9A9A9" },
+    { name: "فحمي", nameEn: "Charcoal", color: "#36454F" },
+    { name: "رصاصي فاتح", nameEn: "Light Grey", color: "#D3D3D3" },
+    { name: "رصاصي غامق", nameEn: "Dark Grey", color: "#696969" },
+    { name: "بني", nameEn: "Brown", color: "#5C4033" },
+    { name: "هافان", nameEn: "Havana", color: "#8B4513" },
+    { name: "جملي", nameEn: "Camel", color: "#C19A6B" },
+    { name: "كافيه", nameEn: "Cafe", color: "#D2B48C" },
+    { name: "طحيني", nameEn: "Tahini", color: "#E3D5B8" },
+    { name: "بيج", nameEn: "Beige", color: "#F5F5DC" },
+    { name: "رملي", nameEn: "Sand", color: "#C2B280" },
+    { name: "خردلي", nameEn: "Mustard", color: "#E1AD01" },
+    { name: "كحلي", nameEn: "Navy", color: "#000080" },
+    { name: "أزرق", nameEn: "Blue", color: "#0000FF" },
+    { name: "أزرق ملكي", nameEn: "Royal Blue", color: "#4169E1" },
+    { name: "سماوي", nameEn: "Sky Blue", color: "#87CEEB" },
+    { name: "لبني", nameEn: "Light Blue", color: "#ADD8E6" },
+    { name: "تركواز", nameEn: "Turquoise", color: "#40E0D0" },
+    { name: "بترولي", nameEn: "Petrol", color: "#005F6B" },
+    { name: "جنزاري", nameEn: "Teal", color: "#2F4F4F" },
+    { name: "أزرق فاتح", nameEn: "Light Blue", color: "#B0E0E6" },
+    { name: "أزرق غامق", nameEn: "Dark Blue", color: "#00008B" },
+    { name: "أخضر", nameEn: "Green", color: "#008000" },
+    { name: "زيتي", nameEn: "Olive", color: "#4B5320" },
+    { name: "زيتوني", nameEn: "Olive", color: "#808000" },
+    { name: "بستاج", nameEn: "Pistachio", color: "#DAF7A6" },
+    { name: "مينت جرين", nameEn: "Mint Green", color: "#98FF98" },
+    { name: "فسفوري", nameEn: "Neon Green", color: "#00FF00" },
+    { name: "أخضر فاتح", nameEn: "Light Green", color: "#90EE90" },
+    { name: "أخضر غامق", nameEn: "Dark Green", color: "#006400" },
+    { name: "أخضر نعناعي", nameEn: "Mint Green", color: "#AAF0D1" },
+    { name: "أخضر تفاحي", nameEn: "Apple Green", color: "#8DB600" },
+    { name: "أحمر", nameEn: "Red", color: "#FF0000" },
+    { name: "نبيتي", nameEn: "Burgundy", color: "#800000" },
+    { name: "طوبي", nameEn: "Brick", color: "#B22222" },
+    { name: "خمري", nameEn: "Wine", color: "#673147" },
+    { name: "برتقالي", nameEn: "Orange", color: "#FFA500" },
+    { name: "سيمون", nameEn: "Salmon", color: "#FFA07A" },
+    { name: "مشمشي", nameEn: "Apricot", color: "#FBCEB1" },
+    { name: "خوخي", nameEn: "Peach", color: "#FFDAB9" },
+    { name: "وردي", nameEn: "Pink", color: "#FFC0CB" },
+    { name: "بينك", nameEn: "Pink", color: "#FF69B4" },
+    { name: "فوشيا", nameEn: "Fuchsia", color: "#FF00FF" },
+    { name: "موف", nameEn: "Mauve", color: "#E0B0FF" },
+    { name: "بنفسجي", nameEn: "Purple", color: "#800080" },
+    { name: "ليلكي", nameEn: "Lilac", color: "#C8A2C8" },
+    { name: "أرجواني", nameEn: "Purple", color: "#9932CC" },
+    { name: "لافندر", nameEn: "Lavender", color: "#E6E6FA" },
+    { name: "أصفر", nameEn: "Yellow", color: "#FFFF00" },
+    { name: "مستردة", nameEn: "Mustard", color: "#FFDB58" },
+    { name: "ذهبي", nameEn: "Gold", color: "#D4AF37" },
+    { name: "فضي", nameEn: "Silver", color: "#C0C0C0" },
+    { name: "فيروزي", nameEn: "Turquoise", color: "#00CED1" },
+    { name: "مرجاني", nameEn: "Coral", color: "#FF7F50" },
+    { name: "بصلي", nameEn: "Onion", color: "#FF8C69" },
+    { name: "عسلي", nameEn: "Honey", color: "#FFBF00" },
+    { name: "ليموني", nameEn: "Lemon", color: "#FFF44F" },
+    { name: "تلجي", nameEn: "Ice", color: "#F0F8FF" },
+    { name: "برونزي", nameEn: "Bronze", color: "#CD7F32" },
+    { name: "نحاسي", nameEn: "Copper", color: "#B87333" },
+    { name: "كاكي", nameEn: "Khaki", color: "#F0E68C" },
+    { name: "مارون", nameEn: "Maroon", color: "#800000" },
+    { name: "سيينا", nameEn: "Sienna", color: "#A0522D" },
+    { name: "ياقوتي", nameEn: "Ruby", color: "#E0115F" },
+    { name: "زمردي", nameEn: "Emerald", color: "#50C878" },
+    { name: "نيلي", nameEn: "Indigo", color: "#4B0082" },
+    { name: "بني محروق", nameEn: "Dark Brown", color: "#3D2B1F" },
+    { name: "بترولي فاتح", nameEn: "Light Petrol", color: "#008B8B" },
+    { name: "أزرق بترولي", nameEn: "Petrol Blue", color: "#005F6B" },
+    { name: "رمادي أزرق", nameEn: "Blue Grey", color: "#607D8B" },
+    { name: "لبني فاتح", nameEn: "Pale Blue", color: "#E0F7FA" },
+    { name: "ذهبي وردي", nameEn: "Rose Gold", color: "#B76E79" },
+    { name: "فضة معتقة", nameEn: "Antique Silver", color: "#8E8E8E" },
+    { name: "أخضر عسكري", nameEn: "Army Green", color: "#4B5320" },
+    { name: "برتقالي محروق", nameEn: "Burnt Orange", color: "#CC5500" },
+    { name: "أصفر كناري", nameEn: "Canary Yellow", color: "#FFEF00" },
+    { name: "أزرق كبالت", nameEn: "Cobalt Blue", color: "#0047AB" },
+    { name: "نيلي غامق", nameEn: "Dark Indigo", color: "#000080" },
+    { name: "بنفسجي باهت", nameEn: "Pale Purple", color: "#D8BFD8" },
+    { name: "أحمر مرجاني", nameEn: "Coral Red", color: "#FF4040" },
+    { name: "أخضر بحري", nameEn: "Sea Green", color: "#2E8B57" },
+    { name: "رصاصي مزرق", nameEn: "Slate Grey", color: "#708090" },
+    { name: "بني فاتح", nameEn: "Light Brown", color: "#D2B48C" },
+    { name: "بني غامق", nameEn: "Dark Brown", color: "#3E2723" },
+    { name: "ورد جوري", nameEn: "Rose", color: "#E91E63" },
+    { name: "سماوي صافي", nameEn: "Clear Sky", color: "#00BFFF" },
+    { name: "أخضر نيون", nameEn: "Neon Green", color: "#39FF14" },
+    { name: "أصفر نيون", nameEn: "Neon Yellow", color: "#FFFF33" },
+    { name: "برتقالي نيون", nameEn: "Neon Orange", color: "#FF5F1F" },
+    { name: "بينك نيون", nameEn: "Neon Pink", color: "#FF44CC" },
+    { name: "برقوقي", nameEn: "Plum", color: "#8E4585" },
+    { name: "توتي", nameEn: "Berry", color: "#8B0000" }
 ];
 
 
@@ -1889,6 +1889,10 @@ async function loadCMS() {
         if (promoEl) promoEl.value = c.promoText || 'أحدث صيحات الموضة والملابس الرجالي والشبابي';
         const footerEl = document.getElementById('cms-footer-text');
         if (footerEl) footerEl.value = c.footerText || '© 2026 icloth Store. جميع الحقوق محفوظة.';
+        const shippingEl = document.getElementById('cms-shipping-policy');
+        if (shippingEl) shippingEl.value = c.shippingPolicy || '';
+        const returnsEl = document.getElementById('cms-returns-policy');
+        if (returnsEl) returnsEl.value = c.returnsPolicy || '';
     }
 }
 
@@ -2054,6 +2058,8 @@ document.getElementById('cms-form').onsubmit = async (e) => {
             bannerTitle: banners.length > 0 ? banners[0].title : 'icloth FASHION',
             promoText: promoEl ? promoEl.value : '',
             footerText: footerEl ? footerEl.value : '',
+            shippingPolicy: document.getElementById('cms-shipping-policy')?.value || '',
+            returnsPolicy: document.getElementById('cms-returns-policy')?.value || '',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
@@ -2132,46 +2138,89 @@ document.getElementById('inventory-search')?.addEventListener('input', (e) => {
     renderInventory(filtered);
 });
 
-// --- Analytics Logic ---
+// --- Hyper-Professional Analytics Logic ---
 let salesChart = null;
 let categoryChart = null;
 
 function initAnalytics() {
     if (!orders.length) return;
 
-    // 1. Sales Growth Chart (Last 7 days)
-    const salesData = {};
+    // 1. Core Financial Metrics
+    const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+    const totalOrders = orders.length;
+    
+    // Count unique customers (by email or phone)
+    const uniqueUsers = new Set(orders.map(o => o.email || o.phone)).size;
+    const avgOrder = totalOrders ? totalRevenue / totalOrders : 0;
+
+    // Update Metric Cards
+    document.getElementById('stat-total-revenue').innerText = `${totalRevenue.toLocaleString()} ج.م`;
+    document.getElementById('stat-total-orders').innerText = totalOrders.toLocaleString();
+    document.getElementById('stat-total-users').innerText = uniqueUsers.toLocaleString();
+    document.getElementById('stat-avg-order').innerText = `${Math.round(avgOrder).toLocaleString()} ج.م`;
+
+    // 2. Sales Timeline (Last 30 Days)
+    const salesTimeline = {};
+    const last30Days = [];
+    for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dayStr = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+        last30Days.push(dayStr);
+        salesTimeline[dayStr] = 0;
+    }
+
     orders.forEach(o => {
         if (!o.createdAt) return;
-        const date = o.createdAt.toDate().toLocaleDateString('en-US');
-        salesData[date] = (salesData[date] || 0) + (Number(o.total) || 0);
+        const d = o.createdAt.toDate();
+        const dayStr = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+        if (salesTimeline.hasOwnProperty(dayStr)) {
+            salesTimeline[dayStr] += (Number(o.total) || 0);
+        }
     });
 
-    const labels = Object.keys(salesData).slice(-7);
-    const values = labels.map(l => salesData[l]);
-
     const ctx = document.getElementById('salesChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(212, 175, 55, 0.4)');
+    gradient.addColorStop(1, 'rgba(212, 175, 55, 0)');
+
     if (salesChart) salesChart.destroy();
     salesChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels,
+            labels: last30Days,
             datasets: [{
                 label: 'المبيعات اليومية',
-                data: values,
-                borderColor: '#e20613',
+                data: last30Days.map(d => salesTimeline[d]),
+                borderColor: '#d4af37',
+                borderWidth: 4,
+                pointBackgroundColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 7,
                 tension: 0.4,
                 fill: true,
-                backgroundColor: 'rgba(226, 6, 19, 0.1)'
+                backgroundColor: gradient
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, border: { display: false } },
+                x: { grid: { display: false }, border: { display: false } }
+            }
+        }
     });
 
-    // 2. Category Distribution
-    const catCounts = {};
-    products.forEach(p => {
-        catCounts[p.category] = (catCounts[p.category] || 0) + 1;
+    // 3. Category Intelligence (Based on Inventory & Orders)
+    const catOrders = {};
+    orders.forEach(o => {
+        (o.items || []).forEach(item => {
+            const cat = item.category || 'غير مصنف';
+            catOrders[cat] = (catOrders[cat] || 0) + (item.quantity || 1);
+        });
     });
 
     const ctx2 = document.getElementById('categoryChart').getContext('2d');
@@ -2179,22 +2228,351 @@ function initAnalytics() {
     categoryChart = new Chart(ctx2, {
         type: 'doughnut',
         data: {
-            labels: Object.keys(catCounts).map(id => categories.find(c => c.id === id)?.name || id),
+            labels: Object.keys(catOrders),
             datasets: [{
-                data: Object.values(catCounts),
-                backgroundColor: ['#e20613', '#2196F3', '#4CAF50', '#FF9800', '#9C27B0']
+                data: Object.values(catOrders),
+                backgroundColor: ['#d4af37', '#00d2ff', '#ff007a', '#4caf50', '#9c27b0', '#ffffff'],
+                borderWidth: 0,
+                hoverOffset: 20
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#fff', padding: 20, font: { family: 'Cairo' } } }
+            },
+            cutout: '70%'
+        }
     });
 
-    // 3. Extra Stats
-    const avgOrder = orders.length ? orders.reduce((s, o) => s + (Number(o.total) || 0), 0) / orders.length : 0;
-    const maxSales = Math.max(...Object.values(salesData), 0);
+    // 4. Top Selling Products
+    const productStats = {};
+    orders.forEach(o => {
+        (o.items || []).forEach(item => {
+            if (!productStats[item.id]) {
+                productStats[item.id] = { name: item.name, count: 0, revenue: 0 };
+            }
+            productStats[item.id].count += (item.quantity || 1);
+            productStats[item.id].revenue += (item.price * (item.quantity || 1));
+        });
+    });
 
-    document.getElementById('stat-avg-order').innerText = `${Math.round(avgOrder)} ج.م`;
-    document.getElementById('stat-max-sales').innerText = `${maxSales.toLocaleString()} ج.م`;
+    const topProducts = Object.values(productStats).sort((a,b) => b.count - a.count).slice(0, 5);
+    const topListEl = document.getElementById('top-products-list');
+    if (topListEl) {
+        topListEl.innerHTML = topProducts.map(p => `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.02);">
+                <td style="padding: 15px; font-weight: 700;">${p.name}</td>
+                <td style="padding: 15px; color: var(--primary); font-weight: 900;">${p.count}</td>
+                <td style="padding: 15px; opacity: 0.6;">${p.revenue.toLocaleString()} ج.م</td>
+            </tr>
+        `).join('');
+    }
+
+    // 5. Geographic Distribution
+    const geoStats = {};
+    orders.forEach(o => {
+        const gov = o.governorate || 'غير معروف';
+        geoStats[gov] = (geoStats[gov] || 0) + 1;
+    });
+
+    const geoListEl = document.getElementById('geo-distribution-list');
+    if (geoListEl) {
+        const sortedGeo = Object.entries(geoStats).sort((a,b) => b[1] - a[1]).slice(0, 6);
+        geoListEl.innerHTML = sortedGeo.map(([gov, count]) => {
+            const percentage = Math.round((count / totalOrders) * 100);
+            return `
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px;">
+                        <span><i class="fas fa-location-dot" style="margin-left: 10px; color: var(--primary);"></i> ${gov}</span>
+                        <span style="font-weight: 900;">${count} طلباً (${percentage}%)</span>
+                    </div>
+                    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+                        <div style="width: ${percentage}%; height: 100%; background: var(--primary); border-radius: 10px; box-shadow: 0 0 10px var(--gold-glow);"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // 6. Operation Pulse (Status Monitor)
+    let delivered = 0, pending = 0, cancelled = 0;
+    orders.forEach(o => {
+        const s = (o.status || '').toLowerCase();
+        if (s === 'delivered' || s === 'completed' || s === 'تم التوصيل') delivered++;
+        else if (s === 'cancelled' || s === 'canceled' || s === 'ملغي') cancelled++;
+        else pending++;
+    });
+    document.getElementById('stat-delivered-count').innerText = delivered;
+    document.getElementById('stat-pending-count').innerText = pending;
+    document.getElementById('stat-cancelled-count').innerText = cancelled;
+
+    // 7. Brand Loyalty Pulse (Repeat Customers)
+    const userOrderCounts = {};
+    orders.forEach(o => {
+        const key = (o.email || o.phone || 'anon').toLowerCase();
+        userOrderCounts[key] = (userOrderCounts[key] || 0) + 1;
+    });
+    const totalUnique = Object.keys(userOrderCounts).length;
+    const repeatUsers = Object.values(userOrderCounts).filter(c => c > 1).length;
+    const repeatRate = totalUnique ? Math.round((repeatUsers / totalUnique) * 100) : 0;
+    document.getElementById('stat-repeat-rate').innerText = `${repeatRate}%`;
+
+    // 8. Basket Analysis
+    let totalItemsInAllOrders = 0;
+    orders.forEach(o => {
+        (o.items || []).forEach(i => totalItemsInAllOrders += (i.quantity || 1));
+    });
+    const basketAvg = totalOrders ? (totalItemsInAllOrders / totalOrders).toFixed(1) : '0.0';
+    document.getElementById('stat-basket-avg').innerText = basketAvg;
+
+    // 9. Payment Intelligence
+    const paymentStats = {};
+    orders.forEach(o => {
+        const p = o.paymentMethod || 'كاش';
+        paymentStats[p] = (paymentStats[p] || 0) + 1;
+    });
+    
+    // Find favorite
+    const favoritePayment = Object.entries(paymentStats).sort((a,b) => b[1] - a[1])[0]?.[0] || '-';
+    document.getElementById('stat-fav-payment').innerText = favoritePayment;
+
+    // New Payment Chart
+    const ctx3 = document.getElementById('paymentChart').getContext('2d');
+    if (window.paymentChartObj) window.paymentChartObj.destroy();
+    window.paymentChartObj = new Chart(ctx3, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(paymentStats),
+            datasets: [{
+                data: Object.values(paymentStats),
+                backgroundColor: ['#00d2ff', '#d4af37', '#ff007a', '#4caf50'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { color: '#fff', font: { family: 'Cairo' } } }
+            }
+        }
+    });
 }
+
+// --- Excel Export Engine ---
+window.exportOrdersToExcel = function() {
+    if (!orders || orders.length === 0) {
+        alert("لا توجد طلبات لتصديرها!");
+        return;
+    }
+
+    try {
+        const EXCEL_LIMIT = 30000; // Lowered for extra safety with Arabic/Multi-byte chars
+        const safeStr = (val) => {
+            if (val === null || val === undefined) return '---';
+            let s = String(val);
+            if (s.startsWith('data:image')) return "[صورة Base64 - طويلة جداً للإكسل]";
+            if (s.length > EXCEL_LIMIT) return s.substring(0, EXCEL_LIMIT) + "... [تم تقليص النص لطوله الزائد]";
+            return s;
+        };
+
+        const data = orders.map(o => {
+            // Formatting Items summary with all details
+            const itemsSummary = (o.items || []).map(i => 
+                `${i.name} - ${i.color || '---'} - ${i.size || '---'} (كود: ${i.code || '---'}) [${i.quantity || 1} x ${i.price || 0} ج.م]`
+            ).join("\n");
+
+            const orderDate = o.createdAt ? o.createdAt.toDate() : null;
+            
+            return {
+                "رقم الطلب": safeStr(o.id),
+                "تاريخ الطلب": orderDate ? orderDate.toLocaleDateString('ar-EG') : '---',
+                "وقت الطلب": orderDate ? orderDate.toLocaleTimeString('ar-EG') : '---',
+                "اسم العميل": safeStr(o.customerName),
+                "رقم الهاتف الأساسي": safeStr(o.phone),
+                "رقم الهاتف الاحتياطي": safeStr(o.phone2),
+                "المحافظة": safeStr(o.gov || o.governorate),
+                "المنطقة/المركز": safeStr(o.district),
+                "العنوان التفصيلي": safeStr(o.address),
+                "رقم المبنى/الشقة": safeStr(o.buildingNumber),
+                "تفاصيل المنتجات": safeStr(itemsSummary),
+                "إجمالي عدد القطع": (o.items || []).reduce((sum, i) => sum + (i.quantity || 1), 0),
+                "إجمالي المبلغ (ج.م)": Number(o.total) || 0,
+                "تكلفة الشحن (ج.م)": o.shippingCost || 0,
+                "طريقة الدفع": o.paymentMethod === 'cod' ? 'عند الاستلام (Cash)' : 'تحويل مسبق (Prepaid)',
+                "حالة الطلب الحالية": getStatusLabel(o.status),
+                "رقم تتبع بوسطة (Tracking)": safeStr(o.trackingNumber),
+                "ملاحظات العميل": safeStr(o.notes)
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "تفاصيل الطلبات");
+
+        const colWidths = [
+            { wch: 15 }, { wch: 12 }, { wch: 10 }, { wch: 20 }, { wch: 15 }, 
+            { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 40 }, { wch: 15 }, 
+            { wch: 60 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 20 }, 
+            { wch: 15 }, { wch: 20 }, { wch: 30 }
+        ];
+        worksheet['!cols'] = colWidths;
+
+        if(!worksheet['!views']) worksheet['!views'] = [];
+        worksheet['!views'].push({ RTL: true });
+
+        const fileName = `icloth_Orders_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
+    } catch (err) {
+        console.error("Critical Export Error:", err);
+        alert("🚨 خطأ تقني في الإكسل: " + err.message + "\nيرجى محاولة رفع التعديلات مرة أخرى باستخدام firebase deploy");
+    }
+};
+
+window.exportAnalyticsToExcel = function() {
+    if (!orders || orders.length === 0) {
+        alert("لا توجد بيانات كافية للتحليل!");
+        return;
+    }
+
+    try {
+        const EXCEL_LIMIT = 30000;
+        const safeStr = (val) => {
+            if (val === null || val === undefined) return '---';
+            let s = String(val);
+            if (s.length > EXCEL_LIMIT) return s.substring(0, EXCEL_LIMIT) + "...";
+            return s;
+        };
+
+        const workbook = XLSX.utils.book_new();
+
+        // --- 1. KPI Dashboard Sheet ---
+        const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+        const totalOrders = orders.length;
+        const userOrderCounts = {};
+        let totalItemsInAllOrders = 0;
+        
+        orders.forEach(o => {
+            const key = (o.email || o.phone || 'anon').toLowerCase();
+            userOrderCounts[key] = (userOrderCounts[key] || 0) + 1;
+            (o.items || []).forEach(i => totalItemsInAllOrders += (i.quantity || 1));
+        });
+
+        const totalUnique = Object.keys(userOrderCounts).length;
+        const repeatUsers = Object.values(userOrderCounts).filter(c => c > 1).length;
+        const repeatRate = totalUnique ? ((repeatUsers / totalUnique) * 100).toFixed(1) : 0;
+        const avgOrder = totalOrders ? (totalRevenue / totalOrders).toFixed(0) : 0;
+        const basketAvg = totalOrders ? (totalItemsInAllOrders / totalOrders).toFixed(1) : 0;
+
+        const kpiData = [
+            ["المؤشر الاستراتيجي", "القيمة الإجمالية", "الوصف"],
+            ["إجمالي المبيعات", `${totalRevenue.toLocaleString()} ج.م`, "صافي قيمة جميع الطلبات"],
+            ["إجمالي عدد الطلبات", totalOrders, "إجمالي الطلبات المستلمة"],
+            ["قاعدة العملاء الفريدين", totalUnique, "عدد العملاء المسجلين بهواتف مختلفة"],
+            ["معدل تكرار الشراء", `${repeatRate}%`, "نسبة العملاء الذين اشتروا أكثر من مرة"],
+            ["متوسط قيمة السلة (AOV)", `${avgOrder} ج.م`, "متوسط ما ينفقه العميل لكل طلب"],
+            ["متوسط عدد القطع للطلب", basketAvg, "متوسط عدد المنتجات في السلة الواحدة"],
+            ["تاريخ استخراج التقرير", new Date().toLocaleString('ar-EG'), "وقت استخراج هذه البيانات"]
+        ];
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(kpiData), "المؤشرات العامة");
+
+        // --- 2. Daily Sales Performance ---
+        const salesTimeline = {};
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dayStr = d.toLocaleDateString('ar-EG');
+            salesTimeline[dayStr] = { rev: 0, count: 0 };
+        }
+        orders.forEach(o => {
+            if (!o.createdAt) return;
+            const dayStr = o.createdAt.toDate().toLocaleDateString('ar-EG');
+            if (salesTimeline[dayStr]) {
+                salesTimeline[dayStr].rev += (Number(o.total) || 0);
+                salesTimeline[dayStr].count += 1;
+            }
+        });
+        const salesData = [["التاريخ", "المبيعات (ج.م)", "عدد الطلبات (الزخم)"]].concat(
+            Object.entries(salesTimeline).map(([date, data]) => [date, data.rev, data.count])
+        );
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(salesData), "الأداء اليومي (30 يوم)");
+
+        // --- 3. Product & Inventory Intelligence ---
+        const productStats = {};
+        orders.forEach(o => {
+            (o.items || []).forEach(item => {
+                if (!productStats[item.id]) {
+                    const masterProd = products.find(p => p.id === item.id) || {};
+                    productStats[item.id] = { name: item.name, count: 0, revenue: 0, currentStock: masterProd.stock || 0 };
+                }
+                productStats[item.id].count += (item.quantity || 1);
+                productStats[item.id].revenue += (item.price * (item.quantity || 1));
+            });
+        });
+        const topProductsData = [["اسم المنتج", "عدد القطع المباحة", "إجمالي الإيرادات", "المخزون الحالي", "حالة الطلب"]].concat(
+            Object.values(productStats).sort((a,b) => b.revenue - a.revenue).map(p => [
+                safeStr(p.name), p.count, p.revenue, p.currentStock, (p.currentStock <= 5 ? 'عجز (تحت الـ 5)' : 'متوفر')
+            ])
+        );
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(topProductsData), "تحليل المنتجات");
+
+        // --- 4. Category Dominance ---
+        const catStats = {};
+        orders.forEach(o => {
+            (o.items || []).forEach(item => {
+                const catId = item.category || 'غير مصنف';
+                const catName = categories.find(c => c.id === catId)?.name || catId;
+                if (!catStats[catName]) catStats[catName] = { count: 0, rev: 0 };
+                catStats[catName].count += (item.quantity || 1);
+                catStats[catName].rev += (item.price * (item.quantity || 1));
+            });
+        });
+        const catData = [["التصنيف / الفئة", "عدد القطع المباعة", "الإيرادات الإجمالية"]].concat(
+            Object.entries(catStats).sort((a,b) => b[1].rev - a[1].rev).map(([name, d]) => [safeStr(name), d.count, d.rev])
+        );
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(catData), "أداء الأقسام");
+
+        // --- 5. Customer Loyalty (Top 30 VIPs) ---
+        const customerStats = {};
+        orders.forEach(o => {
+            const phone = o.phone || 'بدون هاتف';
+            if (!customerStats[phone]) customerStats[phone] = { name: o.customerName || '---', count: 0, rev: 0, gov: o.gov || '---' };
+            customerStats[phone].count += 1;
+            customerStats[phone].rev += (Number(o.total) || 0);
+        });
+        const vipData = [["اسم العميل", "رقم الهاتف", "المحافظة", "عدد الطلبات", "إجمالي المشتريات (ج.م)"]].concat(
+            Object.entries(customerStats).sort((a,b) => b[1].rev - a[1].rev).slice(0, 30).map(([phone, d]) => [safeStr(d.name), safeStr(phone), safeStr(d.gov), d.count, d.rev])
+        );
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(vipData), "كبار العملاء (VIP)");
+
+        // --- 6. Geographic & Logistics Split ---
+        const geoStats = {};
+        const payStats = {};
+        orders.forEach(o => {
+            const gov = o.gov || o.governorate || 'غير معروف';
+            geoStats[gov] = (geoStats[gov] || 0) + 1;
+            const pay = o.paymentMethod === 'cod' ? 'الدفع عند الاستلام' : 'تحويل مسبق';
+            payStats[pay] = (payStats[pay] || 0) + 1;
+        });
+
+        const geoTable = Object.entries(geoStats).sort((a,b) => b[1] - a[1]);
+        const lastSheetData = [["المحافظة", "الطلبات", "", "طريقة الدفع", "العدد"]].concat(
+            geoTable.map(([g, c], i) => {
+                const payEntry = Object.entries(payStats)[i] || ["", ""];
+                return [safeStr(g), c, "", safeStr(payEntry[0]), payEntry[1]];
+            })
+        );
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(lastSheetData), "الجغرافيا والشحن");
+
+        const fileName = `Professional_Analytics_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
+    } catch (err) {
+        console.error("Advanced Analytics Export Error:", err);
+        alert("🚨 خطأ في استخراج التحليلات: " + err.message);
+    }
+};
 // --- Dynamic Categories Logic ---
 let categories = [];
 async function loadCategories() {

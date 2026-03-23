@@ -102,7 +102,9 @@ const translations = {
         maintenance_contact: "Maintenance Contact",
         add_to_basket: "ADD TO BASKET",
         collection_free: "Collection in-store FREE",
-        you_may_also_like: "YOU MAY ALSO LIKE"
+        you_may_also_like: "YOU MAY ALSO LIKE",
+        shipping_policy: "Shipping Policy",
+        returns_policy: "Returns & Exchange Policy"
     },
     ar: {
         home: "الرئيسية",
@@ -182,8 +184,41 @@ const translations = {
         maintenance_contact: "اتصال وقت صيانه",
         add_to_basket: "أضف للسلة",
         collection_free: "التجميع من المتجر مجاناً",
-        you_may_also_like: "منتجات قد تعجبك"
+        you_may_also_like: "منتجات قد تعجبك",
+        shipping_policy: "سياسة الشحن",
+        returns_policy: "سياسة الاستبدال والارجاع"
     }
+};
+
+const colorTranslations = {
+    'أسود': 'Black', 'أبيض': 'White', 'أوف وايت': 'Off-White', 'سكري': 'Creamy',
+    'كريمي': 'Creamy', 'عاجي': 'Ivory', 'شامبين': 'Champagne', 'لؤلؤي': 'Pearl',
+    'رمادي': 'Grey', 'رصاصي': 'Grey', 'فحمي': 'Charcoal', 'رصاصي فاتح': 'Light Grey',
+    'رصاصي غامق': 'Dark Grey', 'بني': 'Brown', 'هافان': 'Havana', 'جملي': 'Camel',
+    'كافيه': 'Cafe', 'طحيني': 'Tahini', 'بيج': 'Beige', 'رملي': 'Sand',
+    'خردلي': 'Mustard', 'كحلي': 'Navy', 'أزرق': 'Blue', 'أزرق ملكي': 'Royal Blue',
+    'سماوي': 'Sky Blue', 'لبني': 'Light Blue', 'تركواز': 'Turquoise', 'بترولي': 'Petrol',
+    'جنزاري': 'Teal', 'أزرق فاتح': 'Light Blue', 'أزرق غامق': 'Dark Blue',
+    'أخضر': 'Green', 'زيتي': 'Olive', 'زيتوني': 'Olive', 'بستاج': 'Pistachio',
+    'مينت جرين': 'Mint Green', 'فسفوري': 'Neon Green', 'أخضر فاتح': 'Light Green',
+    'أخضر غامق': 'Dark Green', 'أخضر نعناعي': 'Mint Green', 'أخضر تفاحي': 'Apple Green',
+    'أحمر': 'Red', 'نبيتي': 'Burgundy', 'طوبي': 'Brick', 'خمري': 'Wine',
+    'برتقالي': 'Orange', 'سيمون': 'Salmon', 'مشمشي': 'Apricot', 'خوخي': 'Peach',
+    'وردي': 'Pink', 'بينك': 'Pink', 'فوشيا': 'Fuchsia', 'موف': 'Mauve',
+    'بنفسجي': 'Purple', 'ليلكي': 'Lilac', 'أرجواني': 'Purple', 'لافندر': 'Lavender',
+    'أصفر': 'Yellow', 'مستردة': 'Mustard', 'ذهبي': 'Gold', 'فضي': 'Silver',
+    'فيروزي': 'Turquoise', 'مرجاني': 'Coral', 'بصلي': 'Onion', 'عسلي': 'Honey',
+    'ليموني': 'Lemon', 'تلجي': 'Ice', 'برونزي': 'Bronze', 'نحاسي': 'Copper',
+    'كاكي': 'Khaki', 'مارون': 'Maroon', 'ياقوتي': 'Ruby', 'زمردي': 'Emerald',
+    'نيلي': 'Indigo', 'بني محروق': 'Dark Brown', 'بترولي فاتح': 'Light Petrol',
+    'أزرق بترولي': 'Petrol Blue', 'رمادي أزرق': 'Blue Grey', 'لبني فاتح': 'Pale Blue',
+    'ذهبي وردي': 'Rose Gold', 'فضة معتقة': 'Antique Silver', 'أخضر عسكري': 'Army Green',
+    'برتقالي محروق': 'Burnt Orange', 'أصفر كناري': 'Canary Yellow', 'أزرق كبالت': 'Cobalt Blue',
+    'نيلي غامق': 'Dark Indigo', 'بنفسجي باهت': 'Pale Purple', 'أحمر مرجاني': 'Coral Red',
+    'أخضر بحري': 'Sea Green', 'رصاصي مزرق': 'Slate Grey', 'بني فاتح': 'Light Brown',
+    'بني غامق': 'Dark Brown', 'ورد جوري': 'Rose', 'سماوي صافي': 'Clear Sky',
+    'أخضر نيون': 'Neon Green', 'أصفر نيون': 'Neon Yellow', 'برتقالي نيون': 'Neon Orange',
+    'بينك نيون': 'Neon Pink', 'برقوقي': 'Plum', 'توتي': 'Berry'
 };
 
 // 🏁 Modern Hybrid Translation System (AI + Dictionary Helper)
@@ -197,11 +232,22 @@ function translateText(text) {
         if (translations[currentLang][cleanKey]) return translations[currentLang][cleanKey];
         if (translations[currentLang][cleanText.toLowerCase()]) return translations[currentLang][cleanText.toLowerCase()];
     }
+
+    // 2. Handle Color Transitions (Ar -> En or En -> Ar)
+    if (currentLang === 'en' && colorTranslations[cleanText]) {
+        return colorTranslations[cleanText];
+    }
+    if (currentLang === 'ar') {
+        // Find if English word exists in colorTranslations values and return Arabic key
+        for (const [ar, en] of Object.entries(colorTranslations)) {
+            if (en.toLowerCase() === cleanText.toLowerCase()) return ar;
+        }
+    }
     
-    // 2. If English, return as is
+    // 3. If English, return as is
     if (currentLang === 'en') return cleanText;
 
-    // 3. AI Translation (For dynamic content like product names/descriptions)
+    // 4. AI Translation (For dynamic content like product names/descriptions)
     if (aiTranslationCache[cleanText]) return aiTranslationCache[cleanText];
 
     // Trigger background AI translation if not in cache

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>icloth - Pure Luxury Policy</title>
+    <link rel="icon" type="image/png" href="images/logo/logo2..png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #d4af37;
+            --bg-deep: #000;
+            --glass: rgba(255, 255, 255, 0.02);
+            --gold-glow: rgba(212, 175, 55, 0.3);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-deep);
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Moving Background Magic */
+        .bg-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #111 0%, #000 100%);
+        }
+        .orb {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: float 20s infinite alternate;
+            opacity: 0.4;
+        }
+        @keyframes float {
+            0% { transform: translate(-20%, -20%) scale(1); }
+            100% { transform: translate(120%, 80%) scale(1.5); }
+        }
+
+        /* Ultra Premium Nav */
+        .luxury-nav {
+            padding: 50px 0;
+            text-align: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .luxury-nav img {
+            height: 70px;
+            letter-spacing: 10px;
+            filter: drop-shadow(0 0 20px var(--primary));
+            transition: 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .luxury-nav img:hover { transform: scale(1.15) rotate(5deg); }
+
+        .policy-container {
+            flex: 1;
+            max-width: 900px;
+            margin: 60px auto 120px;
+            padding: 0 25px;
+            z-index: 1;
+        }
+
+        /* Glassmorphism Evolution */
+        .glass-vault {
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            border-radius: 60px;
+            padding: 80px 60px;
+            position: relative;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8), inset 0 0 20px rgba(212,175,55,0.05);
+            animation: vaultIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .glass-vault::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border-radius: 62px;
+            background: linear-gradient(45deg, transparent, rgba(212,175,55,0.2), transparent);
+            z-index: -1;
+        }
+
+        @keyframes vaultIn {
+            from { opacity: 0; transform: scale(0.95) translateY(40px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .luxury-header {
+            text-align: center;
+            margin-bottom: 70px;
+        }
+        .luxury-badge {
+            font-size: 0.7rem;
+            letter-spacing: 6px;
+            color: var(--primary);
+            text-transform: uppercase;
+            font-weight: 900;
+            margin-bottom: 15px;
+            display: block;
+            opacity: 0.6;
+            animation: fadeIn 2s ease-in;
+        }
+        .luxury-title {
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(to bottom, #fff 40%, var(--primary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .luxury-content {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.2rem;
+            line-height: 2.6;
+            color: rgba(255,255,255,0.7);
+            white-space: pre-wrap;
+            animation: fadeIn 2s ease-in 0.5s backwards;
+        }
+
+        [dir="rtl"] .luxury-content { 
+            direction: rtl;
+            text-align: right; 
+        }
+
+        .back-btn {
+            margin-top: 80px;
+            display: inline-block;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 900;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 15px 40px;
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 100px;
+            transition: 0.5s;
+        }
+        .back-btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 30px var(--gold-glow);
+            transform: translateY(-5px);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .glass-vault { padding: 40px 30px; border-radius: 30px; }
+            .luxury-title { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-glow">
+        <div class="orb" style="top: -10%; left: -10%;"></div>
+        <div class="orb" style="bottom: -20%; right: -20%; animation-delay: -5s;"></div>
+    </div>
+
+    <nav class="luxury-nav">
+        <a href="index.html">
+            <img src="images/logo/logo2..png" alt="icloth Luxury Logo">
+        </a>
+    </nav>
+
+    <main class="policy-container">
+        <div class="glass-vault">
+            <div class="luxury-header">
+                <span class="luxury-badge" id="policy-type-badge">Authentic Service</span>
+                <h1 class="luxury-title" id="policy-display-title">Loading...</h1>
+            </div>
+            
+            <div id="policy-content-display" class="luxury-content">
+                <div style="text-align: center; padding: 50px;">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 2.5rem; color: var(--primary);"></i>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="index.html" class="back-btn">
+                    <i class="fas fa-chevron-left" style="margin-right: 10px;"></i> Exit to House
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer style="padding: 100px 20px; text-align: center; opacity: 0.4; letter-spacing: 5px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase;">
+        &copy; 2026 icloth DESIGN HAUS &bull; PURE LUXURY
+    </footer>
+
+    <!-- Firebase SDKs (Compat version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyByPZP1qo0sQN26xTwzpT0vnw_BTguXvSI",
+            authDomain: "ic12-e6ad7.firebaseapp.com",
+            projectId: "ic12-e6ad7",
+            storageBucket: "ic12-e6ad7.firebasestorage.app",
+            messagingSenderId: "849964207533",
+            appId: "1:849964207533:web:8a6669e5c453ca08ba2524",
+            measurementId: "G-H7S7W0CB7Q"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const type = urlParams.get('type') || 'shipping';
+            const lang = localStorage.getItem('icloth_lang') || 'ar';
+            
+            document.documentElement.setAttribute('lang', lang);
+            document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+
+            const titleEl = document.getElementById('policy-display-title');
+            const contentEl = document.getElementById('policy-content-display');
+            const badgeEl = document.getElementById('policy-type-badge');
+
+            if (type === 'shipping') {
+                titleEl.innerText = lang === 'ar' ? 'سياسة الشحن' : 'Shipping Mastery';
+                badgeEl.innerText = lang === 'ar' ? 'اللوجستيات والسرعة' : 'Logistics & Velocity';
+            } else {
+                titleEl.innerText = lang === 'ar' ? 'سياسة الاستبدال' : 'Refund Elegance';
+                badgeEl.innerText = lang === 'ar' ? 'ضمان الرضا الكامل' : 'Satisfaction Guarantee';
+            }
+
+            try {
+                const doc = await db.collection('settings').doc('cms').get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    const content = type === 'shipping' ? (data.shippingPolicy || "") : (data.returnsPolicy || "");
+                    contentEl.innerText = content || (lang === 'ar' ? 'سيتم إضافة المحتوى قريباً.' : 'Awaiting Luxury Content...');
+                }
+            } catch (e) {
+                contentEl.innerHTML = '<p style="text-align:center;">Network Error.</p>';
+            }
+        }
+        window.onload = init;
+    </script>
+</body>
+</html>
