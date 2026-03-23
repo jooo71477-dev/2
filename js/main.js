@@ -34,7 +34,7 @@ const translations = {
         login_with_google: "Login with Google",
         total: "Total:",
         checkout: "Checkout",
-        hero_title: "icloth <br><span>FASHION</span>",
+        hero_title: "iCloth <br><span>FASHION</span>",
         hero_subtitle: "Latest fashion trends and modern clothing for all tastes",
         hero_motto: "The Most Stylish <br> Youth & Street Wear",
         shop_now: "Shop Collection",
@@ -65,7 +65,7 @@ const translations = {
         order_total: "Order Total:",
         confirm_order: "Confirm Order Now ✨",
         order_success_title: "Order Placed Successfully!",
-        order_success_desc: "Thank you for trusting icloth. We will contact you soon to confirm the order.",
+        order_success_desc: "Thank you for trusting iCloth. We will contact you soon to confirm the order.",
         okay: "Okay",
         track_orders: "Track Orders",
         track_orders_desc: "Login with Google to follow your order status",
@@ -116,7 +116,7 @@ const translations = {
         login_with_google: "تسجيل الدخول بجوجل",
         total: "الإجمالي:",
         checkout: "إتمام الطلب",
-        hero_title: "icloth <br><span>FASHION</span>",
+        hero_title: "iCloth <br><span>FASHION</span>",
         hero_subtitle: "أحدث صيحات الموضة والملابس العصرية لكل الأذواق",
         hero_motto: "أرقى الملابس الشبابية والعصرية",
         shop_now: "تسوق المجموعة",
@@ -412,7 +412,7 @@ function applyCMS(data) {
         banners.push({
             desktopUrl: data.bannerUrl || '',
             mobileUrl: data.bannerUrl || '',
-            title: data.bannerTitle || 'icloth FASHION',
+            title: data.bannerTitle || 'iCloth FASHION',
             subtitle: data.promoText || ''
         });
     }

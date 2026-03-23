@@ -1,4 +1,4 @@
-// 🚀 icloth ADMIN ENGINE - COMPREHENSIVE VERSION
+// 🚀 iCloth ADMIN ENGINE - COMPREHENSIVE VERSION
 const firebaseConfig = {
     apiKey: "AIzaSyByPZP1qo0sQN26xTwzpT0vnw_BTguXvSI",
     authDomain: "ic12-e6ad7.firebaseapp.com",
@@ -1888,7 +1888,7 @@ async function loadCMS() {
         const promoEl = document.getElementById('cms-promo-text');
         if (promoEl) promoEl.value = c.promoText || 'أحدث صيحات الموضة والملابس الرجالي والشبابي';
         const footerEl = document.getElementById('cms-footer-text');
-        if (footerEl) footerEl.value = c.footerText || '© 2026 icloth Store. جميع الحقوق محفوظة.';
+        if (footerEl) footerEl.value = c.footerText || '© 2026 iCloth Store. جميع الحقوق محفوظة.';
         const shippingEl = document.getElementById('cms-shipping-policy');
         if (shippingEl) shippingEl.value = c.shippingPolicy || '';
         const returnsEl = document.getElementById('cms-returns-policy');
@@ -1932,7 +1932,7 @@ window.addBannerRow = (data = { desktopUrl: '', mobileUrl: '', title: '', subtit
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
             <div class="form-group">
                 <label style="font-size: 0.8rem;">العنوان (Title)</label>
-                <input type="text" class="banner-title" value="${data.title || ''}" placeholder="icloth FASHION" style="font-size: 0.85rem; padding: 8px;">
+                <input type="text" class="banner-title" value="${data.title || ''}" placeholder="iCloth FASHION" style="font-size: 0.85rem; padding: 8px;">
             </div>
             <div class="form-group">
                 <label style="font-size: 0.8rem;">النص الفرعي (Subtitle)</label>
@@ -2055,7 +2055,7 @@ document.getElementById('cms-form').onsubmit = async (e) => {
             banners,
             // Keep fields for backward compatibility if needed by older app versions
             bannerUrl: banners.length > 0 ? banners[0].desktopUrl : '',
-            bannerTitle: banners.length > 0 ? banners[0].title : 'icloth FASHION',
+            bannerTitle: banners.length > 0 ? banners[0].title : 'iCloth FASHION',
             promoText: promoEl ? promoEl.value : '',
             footerText: footerEl ? footerEl.value : '',
             shippingPolicy: document.getElementById('cms-shipping-policy')?.value || '',
@@ -2423,7 +2423,7 @@ window.exportOrdersToExcel = function() {
         if(!worksheet['!views']) worksheet['!views'] = [];
         worksheet['!views'].push({ RTL: true });
 
-        const fileName = `icloth_Orders_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+        const fileName = `iCloth_Orders_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
         XLSX.writeFile(workbook, fileName);
     } catch (err) {
         console.error("Critical Export Error:", err);
