@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://icloth.app/sitemap.xml
+Sitemap: https://icloth-fashion.web.app/sitemap.xml
