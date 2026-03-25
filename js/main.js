@@ -281,6 +281,13 @@ async function getSmartTranslation(text) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: cleanText, targetLang: 'ar' })
         });
+        
+        // Safety check: Ensure the response is actually JSON
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new Error("Invalid response from translation API (Server might not be configured for Node.js)");
+        }
+
         const data = await response.json();
         
         if (data.translated && data.translated !== cleanText) {
@@ -355,7 +362,7 @@ window.addEventListener('load', () => {
 // Modified Init to handle params
 requestIdleCallback(() => {
     initFirebase();
-    setTimeout(() => { if(window.handleUrlParams) window.handleUrlParams(); }, 2000);
+    setTimeout(() => { if(window.handleUrlParams) window.handleUrlParams(); }, 100);
 }, { timeout: 2000 });
     } else {
         setTimeout(initFirebase, 1000);
@@ -372,6 +379,22 @@ function getOptimizedImg(url, width = 600) {
 }
 
 function applyCMS(data) {
+    if (!data) return;
+    window.lastCMSData = data; // Cache for language toggle
+    
+    // 0. Update Announcement Bar
+    const announcementTxt = document.getElementById('announcement-text-display');
+    if (announcementTxt) {
+        let msg = data.promoText || data.announcement || '';
+        if (currentLang === 'ar' && (data.promoText_ar || data.announcement_ar)) {
+            msg = data.promoText_ar || data.announcement_ar;
+        } else {
+            msg = translateText(msg);
+        }
+        announcementTxt.innerText = msg;
+        announcementTxt.setAttribute('data-i18n-cache', data.promoText || data.announcement || '');
+    }
+
     // 1. Update Logo Images & Favicon
     if (data.logoUrl) {
         const logo = document.getElementById('main-logo-img');
@@ -597,10 +620,23 @@ function updateLanguageUI() {
     // 3. Trigger Google Translate Widget for the whole page
     setGoogleTranslate(lang);
 
-    // 4. Force Re-render Products to pick up AI translations
+    // 4. Force Re-render Products to pick up AI/Firestore translations
     if (remoteProducts.length > 0) {
         filterAndRender('men', activeCategory, 'all');
     }
+
+    // 5. Update Categories/Filters if they are dynamic
+    if (window.renderDynamicFilters) window.renderDynamicFilters();
+    if (window.renderSidebarCategories) window.renderSidebarCategories();
+
+    // 6. Refresh Modal if it's currently open to translate the open product
+    const sizeModal = document.getElementById('size-modal');
+    if (sizeModal && sizeModal.classList.contains('active') && selectedProductForSize) {
+        window.openSizeModal(selectedProductForSize.id);
+    }
+
+    // 7. Refresh CMS elements (Hero, Banners, etc.)
+    if (window.lastCMSData) applyCMS(window.lastCMSData);
 
     if (window.populateGovernorates) window.populateGovernorates();
 }
@@ -1109,15 +1145,22 @@ window.applyMainFilter = (parentId, btn) => {
     btn.classList.add('active');
     activeCategory = parentId;
     
-    // Update URL to allow sharing this specific category
-    const url = new URL(window.location.origin);
-    if (parentId === 'all') {
-        // Root
+    const isLocal = window.location.protocol === 'file:';
+    if (!isLocal) {
+        const url = new URL(window.location.origin + window.location.pathname);
+        if (url.pathname.endsWith('index.html')) {
+            url.pathname = url.pathname.replace('index.html', parentId === 'all' ? '' : `category/${toSlug(btn.innerText)}`);
+        } else {
+            url.pathname = parentId === 'all' ? '/' : `/category/${toSlug(btn.innerText)}`;
+        }
+        window.history.pushState({}, '', url);
+        updateCanonical(url.href);
     } else {
-        url.pathname = `/category/${toSlug(btn.innerText)}`;
+        const url = new URL(window.location);
+        if (parentId === 'all') url.searchParams.delete('cat');
+        else url.searchParams.set('cat', toSlug(btn.innerText));
+        window.history.pushState({}, '', url);
     }
-    window.history.pushState({}, '', url);
-    updateCanonical(url.href); // Using pushState for better sync
 ;
 
     if (subFiltersContainer) {
@@ -1600,7 +1643,9 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
             ? `<div class="card-color-swatches">${p.colorVariants.slice(0, 4).map((v, i) => `<button class="card-color-dot ${i === 0 && !p.explicitMainImage ? 'active' : ''}" title="${v.name}" onclick="event.stopPropagation(); cardSelectColor('${p.id}', ${i}, this)" style="background:${getColorHex(v.name)};"></button>`).join('')}${p.colorVariants.length > 4 ? `<span class="color-more-count">+${p.colorVariants.length - 4}</span>` : ''}</div>`
             : '';
 
-        const mainImg = firstImages[0] || '';
+        const mainImgRaw = firstImages[0] || '';
+        // Optimized Cloudinary image for Product Cards (400px is enough for grid)
+        const mainImg = mainImgRaw ? getOptimizedImg(mainImgRaw, 400) : '';
         const translatedName = (currentLang === 'ar' && p.name_ar) ? p.name_ar : translateText(p.name);
         const translatedBadge = (currentLang === 'ar' && p.badge_ar) ? p.badge_ar : (p.badge ? translateText(p.badge) : '');
         const catName = p.category || "";
@@ -2032,11 +2077,22 @@ window.openSizeModal = (id) => {
     // Render Related Products
     renderRelatedProducts(p.subCategory || p.category, p.id);
 
-    // Update URL to allow sharing this specific product
-    const url = new URL(window.location.origin);
-    url.pathname = `/product/${toSlug(p.name)}`;
-    window.history.pushState({ productId: id }, '', url);
-    updateCanonical(url.href);
+    // Update URL to allow sharing this specific product (Clean URL with relative fallback)
+    const isLocal = window.location.protocol === 'file:';
+    if (!isLocal) {
+        const url = new URL(window.location.origin + window.location.pathname);
+        if (url.pathname.endsWith('index.html')) {
+            url.pathname = url.pathname.replace('index.html', `product/${toSlug(p.name)}--${p.id}`);
+        } else {
+            url.pathname = `/product/${toSlug(p.name)}--${p.id}`;
+        }
+        window.history.pushState({ productId: id }, '', url);
+        updateCanonical(url.href);
+    } else {
+        const url = new URL(window.location);
+        url.searchParams.set('product', id);
+        window.history.pushState({}, '', url);
+    }
     
     // 🏷️ Inject Product Schema (Structured Data)
     injectProductSchema(p);
@@ -2518,7 +2574,7 @@ function closeSuccessModal() {
 
 // --- URL Parameter Handling (Deep Linking & Clean URLs) ---
 window.handleUrlParams = () => {
-    const path = window.location.pathname;
+    let path = decodeURIComponent(window.location.pathname).replace(/\/$/, ""); // Clear trailing slash
     const params = new URLSearchParams(window.location.search);
     
     // 1. Handle Legacy Query Params
@@ -2529,10 +2585,10 @@ window.handleUrlParams = () => {
     let catSlug = null;
     let productSlug = null;
 
-    if (path.startsWith('/category/')) {
-        catSlug = path.replace('/category/', '');
-    } else if (path.startsWith('/product/')) {
-        productSlug = path.replace('/product/', '');
+    if (path.includes('/category/')) {
+        catSlug = path.split('/category/')[1];
+    } else if (path.includes('/product/')) {
+        productSlug = path.split('/product/')[1];
     }
 
     const finalCat = catSlug || legacyCat;
@@ -2555,16 +2611,29 @@ window.handleUrlParams = () => {
     }
 
     if (finalProduct) {
+        console.log("🔍 [Routing] Searching for product:", finalProduct);
         const checkProducts = setInterval(() => {
-            if (window.remoteProducts && window.remoteProducts.length > 0) {
-                // Find by ID (legacy) or by Slug
-                const found = window.remoteProducts.find(x => x.id === finalProduct || toSlug(x.name) === finalProduct);
+            if (remoteProducts && remoteProducts.length > 0) {
+                // Smart Search: 1. Try to extract ID from URL (name--id format)
+                let targetId = finalProduct;
+                if (finalProduct.includes('--')) {
+                    const parts = finalProduct.split('--');
+                    targetId = parts[parts.length - 1]; // Assume ID is at the end
+                }
+
+                const found = remoteProducts.find(x => 
+                    x.id === targetId || 
+                    toSlug(x.name) === toSlug(finalProduct) ||
+                    (x.name_ar && toSlug(x.name_ar) === toSlug(finalProduct))
+                );
+                
                 if (found) {
+                    console.log("✅ [Routing] Product found! Opening modal:", found.name);
                     window.openSizeModal(found.id);
                     clearInterval(checkProducts);
                 }
             }
-        }, 500);
+        }, 100); // Check more frequently
         setTimeout(() => clearInterval(checkProducts), 8000);
     }
 };
