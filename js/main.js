@@ -352,42 +352,10 @@ function initFirebase() {
 // 🚀 Trigger Firebase after everything else is rendered
 window.addEventListener('load', () => {
     if ('requestIdleCallback' in window) {
-        // --- URL Parameter Handling (Deep Linking) ---
-window.handleUrlParams = () => {
-    const params = new URLSearchParams(window.location.search);
-    const cat = params.get('cat');
-    const product = params.get('product');
-
-    if (cat) {
-        // Translate or find matching category
-        const filterBtns = document.querySelectorAll('.main-filter-btn');
-        filterBtns.forEach(btn => {
-            if (btn.innerText.toUpperCase() === cat.toUpperCase()) {
-                btn.click();
-            }
-        });
-    }
-
-    if (product) {
-        // We might need to wait for products to be loaded from Firebase
-        const checkProducts = setInterval(() => {
-            if (remoteProducts && remoteProducts.length > 0) {
-                const p = remoteProducts.find(x => x.id === product);
-                if (p) {
-                    openSizeModal(product);
-                    clearInterval(checkProducts);
-                }
-            }
-        }, 500);
-        // Timeout after 5 seconds
-        setTimeout(() => clearInterval(checkProducts), 5000);
-    }
-};
-
 // Modified Init to handle params
 requestIdleCallback(() => {
     initFirebase();
-    setTimeout(handleUrlParams, 2000);
+    setTimeout(() => { if(window.handleUrlParams) window.handleUrlParams(); }, 2000);
 }, { timeout: 2000 });
     } else {
         setTimeout(initFirebase, 1000);
