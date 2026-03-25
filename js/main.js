@@ -584,11 +584,8 @@ function toggleLanguage() {
     // Update Static UI
     updateLanguageUI();
     
-    // Update Dynamic Content (Google Translate)
-    setGoogleTranslate(currentLang);
-    
-    // Optional: No reload for smoothness
-    // location.reload(); 
+    // Force reload for perfect synchronization across all components
+    location.reload(); 
 }
 
 function updateLanguageUI() {
