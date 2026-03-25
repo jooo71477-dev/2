@@ -440,6 +440,9 @@ if (saveProductForm) {
 
         if (!id) {
             data.status = 'active';
+            // Set initial sortOrder for new products to be at the end
+            const maxOrder = remoteProducts.reduce((max, p) => Math.max(max, p.sortOrder || 0), 0);
+            data.sortOrder = maxOrder + 1;
         }
 
         // --- 🤖 AUTO-TRANSLATE TO ARABIC (FOR MAIN SITE) ---
@@ -541,7 +544,12 @@ async function loadProducts() {
 
         // Ensure unique products after merging
         const uniqueProds = Array.from(new Map(allProducts.map(item => [item.id, item])).values());
-        uniqueProds.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+        // Sort by sortOrder (asc), items without sortOrder go to the end
+        uniqueProds.sort((a, b) => {
+            const orderA = a.sortOrder !== undefined ? a.sortOrder : 999999;
+            const orderB = b.sortOrder !== undefined ? b.sortOrder : 999999;
+            return orderA - orderB;
+        });
 
         let html = '';
         let cats = { clothes: 0, shoes: 0, pants: 0 };
@@ -551,7 +559,8 @@ async function loadProducts() {
             const isHidden = p.status === 'hidden' || p.active === false || p.active === "false";
 
             html += `
-                <tr style="${isHidden ? 'opacity: 0.6; background: rgba(0,0,0,0.1);' : ''}">
+                <tr data-id="${p.id}" style="${isHidden ? 'opacity: 0.6; background: rgba(0,0,0,0.1);' : ''}">
+                    <td class="drag-handle" style="cursor: move; padding-right: 15px; color: var(--accent);"><i class="fas fa-grip-vertical"></i></td>
                     <td><img src="${p.image || ''}" class="product-thumb" style="cursor:pointer" onclick="editProduct('${p.id}')"></td>
                     <td style="cursor:pointer" onclick="editProduct('${p.id}')">
                         <strong>${p.name || 'بدون اسم'}</strong>
@@ -578,7 +587,53 @@ async function loadProducts() {
         if (totalEl) totalEl.innerText = uniqueProds.length;
         if (clothesEl) clothesEl.innerText = cats.clothes;
         if (shoesEl) shoesEl.innerText = cats.shoes;
+
+        // --- Initialize Drag and Drop ---
+        if (window.Sortable && productsListBody) {
+            new Sortable(productsListBody, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: async function() {
+                    console.log("🔄 Order changed, syncing with DB...");
+                    await syncProductOrder();
+                }
+            });
+        }
     } catch (err) { console.error(err); }
+}
+
+async function syncProductOrder() {
+    const rows = document.querySelectorAll('#products-list-body tr');
+    const batch = db.batch();
+    
+    showLoader(true);
+    try {
+        rows.forEach((row, index) => {
+            const id = row.getAttribute('data-id');
+            if (id && !id.startsWith('L') && isFirebaseReady) {
+                const ref = productsCol.doc(id);
+                batch.update(ref, { sortOrder: index });
+            }
+            
+            // Sync local storage as well
+            let localProds = JSON.parse(localStorage.getItem('icloth_products') || '[]');
+            const idx = localProds.findIndex(p => p.id == id);
+            if (idx !== -1) {
+                localProds[idx].sortOrder = index;
+                localStorage.setItem('icloth_products', JSON.stringify(localProds));
+            }
+        });
+
+        if (isFirebaseReady) {
+            await batch.commit();
+            console.log("✅ Order updated in Firestore");
+        }
+        
+    } catch (err) {
+        console.error("❌ Failed to sync order:", err);
+        alert("فشل تحديث الترتيب في قاعدة البيانات");
+    }
+    showLoader(false);
 }
 
 async function toggleVisibility(id, currentlyHidden) {

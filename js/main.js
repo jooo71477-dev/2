@@ -1610,6 +1610,13 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
 
     console.log(`📦 [Render] FINAL RESULTS: ${filtered.length} products to display`);
     
+    // 🔥 NEW: Sort by sortOrder (asc)
+    filtered.sort((a, b) => {
+        const orderA = a.sortOrder !== undefined ? a.sortOrder : 999999;
+        const orderB = b.sortOrder !== undefined ? b.sortOrder : 999999;
+        return orderA - orderB;
+    });
+
     if (filtered.length === 0) {
         menContainer.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; opacity:0.5;">${translations[currentLang].no_results}</div>`;
         return;
