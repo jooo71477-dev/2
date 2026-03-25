@@ -445,7 +445,7 @@ function initHeroSlider(banners) {
         // Use optimized Cloudinary URL for hero + High Priority
         const optimizedUrl = getOptimizedImg(imgUrl, isMobile ? 800 : 1600);
         const bannerAlt = b.title ? `${b.title} - iCloth Fashion` : "iCloth Fashion Streetwear Banner";
-        
+        const priority = i === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
         slide.innerHTML = `<img src="${optimizedUrl}" ${priority} alt="${bannerAlt}" style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; z-index:0;">`;
         
         slider.appendChild(slide);
