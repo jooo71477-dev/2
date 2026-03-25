@@ -455,7 +455,7 @@ function renderProducts(data = products) {
             || '';
         return `
         <tr data-id="${p.id}">
-            <td class="drag-handle" style="cursor: move; padding-right: 15px; color: var(--primary);"><i class="fas fa-grip-vertical"></i></td>
+            <td class="drag-handle" style="cursor: move; text-align: center; width: 40px; color: var(--primary); font-size: 1.1rem; border-right: 1px solid rgba(255,255,255,0.05);"><i class="fas fa-bars"></i></td>
             <td>${displayImg ? `<img src="${displayImg}" class="product-img" onerror="this.style.display='none'">` : '<div style="width:40px;height:40px;background:rgba(255,255,255,0.05);border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="opacity:0.3;"></i></div>'}</td>
             <td>
                 <div style="display:flex; align-items:center; gap:5px;">
