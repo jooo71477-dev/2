@@ -221,6 +221,16 @@ const colorTranslations = {
     'بينك نيون': 'Neon Pink', 'برقوقي': 'Plum', 'توتي': 'Berry'
 };
 
+const toSlug = (text) => {
+    if (!text) return "";
+    return text.toString().toLowerCase().trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\u0621-\u064A-]+/g, '')
+        .replace(/--+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '');
+};
+
 // 🏁 Modern Hybrid Translation System (AI + Dictionary Helper)
 function translateText(text) {
     if (!text) return "";
@@ -466,9 +476,9 @@ function initHeroSlider(banners) {
         
         // Use optimized Cloudinary URL for hero + High Priority
         const optimizedUrl = getOptimizedImg(imgUrl, isMobile ? 800 : 1600);
-        const priority = i === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
+        const bannerAlt = b.title ? `${b.title} - iCloth Fashion` : "iCloth Fashion Streetwear Banner";
         
-        slide.innerHTML = `<img src="${optimizedUrl}" ${priority} alt="Fashion Banner" style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; z-index:0;">`;
+        slide.innerHTML = `<img src="${optimizedUrl}" ${priority} alt="${bannerAlt}" style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; z-index:0;">`;
         
         slider.appendChild(slide);
     });
@@ -1132,13 +1142,14 @@ window.applyMainFilter = (parentId, btn) => {
     activeCategory = parentId;
     
     // Update URL to allow sharing this specific category
-    const url = new URL(window.location);
+    const url = new URL(window.location.origin);
     if (parentId === 'all') {
-        url.searchParams.delete('cat');
+        // Root
     } else {
-        url.searchParams.set('cat', translateText(btn.innerText));
+        url.pathname = `/category/${toSlug(btn.innerText)}`;
     }
-    window.history.pushState({}, '', url); // Using pushState for better sync
+    window.history.pushState({}, '', url);
+    updateCanonical(url.href); // Using pushState for better sync
 ;
 
     if (subFiltersContainer) {
@@ -1330,10 +1341,10 @@ function setupEventListeners() {
     selectedProductForSize = null;
     if (window._modalCarouselInterval) clearInterval(window._modalCarouselInterval);
     
-    // Remove product from URL when modal closes
-    const url = new URL(window.location);
-    url.searchParams.delete('product');
-    window.history.pushState({}, '', url); // Using pushState for better sync
+    // Remove product from URL when modal closes (Clean URL Way)
+    const url = new URL(window.location.origin);
+    // If we're in a category, we could try to keep it, but reset to root is simpler
+    window.history.pushState({}, '', url);
 };
     if (closeModal) closeModal.onclick = () => {
         window.closeSizeModal();
@@ -1624,13 +1635,15 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
         const mainImg = firstImages[0] || '';
         const translatedName = (currentLang === 'ar' && p.name_ar) ? p.name_ar : translateText(p.name);
         const translatedBadge = (currentLang === 'ar' && p.badge_ar) ? p.badge_ar : (p.badge ? translateText(p.badge) : '');
+        const catName = p.category || "";
+        const seoAlt = `${translatedName} ${catName} - ${currentLang === 'ar' ? 'آي كلوث' : 'iCloth'}`;
 
         return `
         <div class="product-card" data-product-id="${p.id}" data-current-img="0" data-color-idx="${p.explicitMainImage ? '-1' : '0'}" onclick="openSizeModal('${p.id}')">
             <div class="product-img-wrap" style="position:relative; overflow:hidden;">
                 ${p.badge ? `<span class="badge-label" data-translate-cache="${p.badge}">${translatedBadge}</span>` : ''}
-                ${p.isBestSeller ? `<div class="best-seller-badge" title="${translations[currentLang].best_seller}"><i class="fas fa-fire"></i></div>` : ''}
-                <img class="product-card-main-img" src="${mainImg}" loading="lazy" alt="${translatedName}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'400\\'><rect width=\\'400\\' height=\\'400\\' fill=\\'%23222\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-family=\\'Arial\\' font-size=\\'24\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>No Image</text></svg>'">
+                ${p.isBestSeller ? `<div class="best-seller-badge" title="${translations[currentLang].best_seller || 'Best Seller'}"><i class="fas fa-fire"></i></div>` : ''}
+                <img class="product-card-main-img" src="${mainImg}" loading="lazy" alt="${seoAlt}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'400\\'><rect width=\\'400\\' height=\\'400\\' fill=\\'%23222\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-family=\\'Arial\\' font-size=\\'24\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>No Image</text></svg>'">
                 
                 <div class="card-overlay-name" data-translate-cache="${p.name}">${translatedName}</div>
 
@@ -1951,6 +1964,14 @@ window.openSizeModal = (id) => {
     modalProductName.innerText = translateText(p.name);
     modalProductName.setAttribute('data-translate-cache', p.name);
     
+    // 🧭 Update Breadcrumbs
+    const bCat = document.getElementById('breadcrumb-cat');
+    const bName = document.getElementById('breadcrumb-name');
+    if (bCat && bName) {
+        bCat.innerText = p.category || (currentLang === 'ar' ? 'عام' : 'General');
+        bName.innerText = translateText(p.name);
+    }
+    
     const colorLabelSpan = document.getElementById('selected-color-name');
     if (colorLabelSpan) {
         colorLabelSpan.innerText = translateText(selectedColor);
@@ -2044,10 +2065,54 @@ window.openSizeModal = (id) => {
     renderRelatedProducts(p.subCategory || p.category, p.id);
 
     // Update URL to allow sharing this specific product
-    const url = new URL(window.location);
-    url.searchParams.set('product', id);
-    window.history.pushState({}, '', url); // Using pushState
+    const url = new URL(window.location.origin);
+    url.pathname = `/product/${toSlug(p.name)}`;
+    window.history.pushState({ productId: id }, '', url);
+    updateCanonical(url.href);
+    
+    // 🏷️ Inject Product Schema (Structured Data)
+    injectProductSchema(p);
 };
+
+function updateCanonical(url) {
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        document.head.appendChild(canonical);
+    }
+    canonical.href = url;
+}
+
+function injectProductSchema(p) {
+    let script = document.getElementById('dynamic-product-schema');
+    if (!script) {
+        script = document.createElement('script');
+        script.id = 'dynamic-product-schema';
+        script.type = 'application/ld+json';
+        document.head.appendChild(script);
+    }
+    
+    const schema = {
+        "@context": "https://schema.org/",
+        "@type": "Product",
+        "name": p.name,
+        "image": p.image,
+        "description": p.description || p.name,
+        "brand": {
+            "@type": "Brand",
+            "name": "iCloth"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": p.price,
+            "priceCurrency": "EGP",
+            "availability": "https://schema.org/InStock",
+            "url": window.location.href
+        }
+    };
+    script.textContent = JSON.stringify(schema);
+}
 
 window.shareCurrentProduct = () => {
     const url = window.location.href;
@@ -2483,32 +2548,56 @@ function closeSuccessModal() {
     if (modal) modal.classList.remove('active');
 }
 
-// --- URL Parameter Handling (Deep Linking) ---
+// --- URL Parameter Handling (Deep Linking & Clean URLs) ---
 window.handleUrlParams = () => {
+    const path = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
-    const cat = params.get('cat');
-    const product = params.get('product');
+    
+    // 1. Handle Legacy Query Params
+    const legacyCat = params.get('cat');
+    const legacyProduct = params.get('product');
 
-    if (cat) {
-        const filterBtns = document.querySelectorAll('.main-filter-btn');
-        filterBtns.forEach(btn => {
-            if (translateText(btn.innerText).toUpperCase() === cat.toUpperCase()) {
-                btn.click();
-            }
-        });
+    // 2. Handle Clean URLs
+    let catSlug = null;
+    let productSlug = null;
+
+    if (path.startsWith('/category/')) {
+        catSlug = path.replace('/category/', '');
+    } else if (path.startsWith('/product/')) {
+        productSlug = path.replace('/product/', '');
     }
 
-    if (product) {
+    const finalCat = catSlug || legacyCat;
+    const finalProduct = productSlug || legacyProduct;
+
+    if (finalCat) {
+        const checkCats = setInterval(() => {
+            const filterBtns = document.querySelectorAll('.main-filter-btn');
+            if (filterBtns.length > 0) {
+                filterBtns.forEach(btn => {
+                    const btnTextSafe = btn.innerText.trim();
+                    if (toSlug(btnTextSafe) === toSlug(finalCat) || btnTextSafe.toUpperCase() === finalCat.toUpperCase()) {
+                        btn.click();
+                        clearInterval(checkCats);
+                    }
+                });
+            }
+        }, 500);
+        setTimeout(() => clearInterval(checkCats), 5000);
+    }
+
+    if (finalProduct) {
         const checkProducts = setInterval(() => {
             if (window.remoteProducts && window.remoteProducts.length > 0) {
-                const found = window.remoteProducts.find(x => x.id === product);
+                // Find by ID (legacy) or by Slug
+                const found = window.remoteProducts.find(x => x.id === finalProduct || toSlug(x.name) === finalProduct);
                 if (found) {
-                    window.openSizeModal(product);
+                    window.openSizeModal(found.id);
                     clearInterval(checkProducts);
                 }
             }
         }, 500);
-        setTimeout(() => clearInterval(checkProducts), 6000);
+        setTimeout(() => clearInterval(checkProducts), 8000);
     }
 };
 

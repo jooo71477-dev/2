@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iCloth - Latest Trendy Collections | iCloth Store</title>
+    <meta name="robots" content="index, follow">
+    <title>iCloth | Premium Men's Streetwear & Modern Fashion Store</title>
     <meta name="description"
-        content="iCloth - The premier destination for the latest fashion trends and modern clothing. Shop our unique collections now at the best prices.">
+        content="Discover the latest in premium men's streetwear at iCloth. Shop high-quality t-shirts, hoodies, and trendy collections with modern designs. Best prices in Egypt.">
     <meta name="keywords"
-        content="iCloth, clothing store, latest fashion, jeans, t-shirts, shoes">
+        content="iCloth, men fashion store, streetwear brand, buy t shirt online, hoodies for men, latest clothing trends, fashion store Egypt">
     <link rel="canonical" href="https://icloth.app/">
     <link rel="icon" type="image/png" href="images/logo/logo2..png">
     <link rel="preload" href="images/logo/logo2..png" as="image" fetchpriority="high">
@@ -18,18 +19,18 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://icloth.app/">
-    <meta property="og:title" content="iCloth - Modern Clothing Store">
+    <meta property="og:title" content="iCloth | Modern Streetwear & Fashion">
     <meta property="og:description"
-        content="Latest fashion trends and modern clothing. Shop our unique collections.">
-    <meta property="og:image" content="images/logo/logo2..png">
+        content="Shop the latest premium streetwear and modern clothing at iCloth. High quality, best prices, and unique designs.">
+    <meta property="og:image" content="https://icloth.app/images/logo/logo2..png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://icloth.app/">
-    <meta property="twitter:title" content="iCloth - iCloth Store">
+    <meta property="twitter:title" content="iCloth | Modern Clothing Store">
     <meta property="twitter:description"
-        content="Latest fashion trends and modern clothing. Shop our unique collections.">
-    <meta property="twitter:image" content="images/logo/logo2..png">
+        content="Discover the best in streetwear fashion. Shop our unique collections now at iCloth.">
+    <meta property="twitter:image" content="https://icloth.app/images/logo/logo2..png">
 
     <!-- Schema.org JSON-LD -->
     <script type="application/ld+json">
@@ -74,21 +75,11 @@
     <link rel="preload" href="./css/style.css?v=5.9" as="style">
     <link rel="stylesheet" href="./css/style.css?v=5.9">
 
-    <!-- DNS Prefetch for faster external resources -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com)@/ajax/libs">
-    <link rel="dns-prefetch" href="https://www.gstatic.com">
-
+    <!-- Optimized font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://www.gstatic.com">
-    <link rel="preconnect" href="https://firestore.googleapis.com">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-
-    <!-- Optimized font loading with display=swap -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Cairo:wght@400;700;900&family=Plus+Jakarta+Sans:wght@700;800&display=swap"
-        rel="stylesheet" media="print" onload="this.media='all'">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Cairo:wght@400;700;900&family=Plus+Jakarta+Sans:wght@700;800&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Cairo:wght@400;700;900&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
 
     <!-- Defer non-critical CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -165,7 +156,7 @@
     <!-- Premier Preloader (Splash Screen) -->
     <div id="loader" class="loader-wrapper">
         <div class="loader-content">
-            <h1 class="loader-text">iCloth <span>FASHION</span></h1>
+            <div class="loader-text" style="font-size: 2.5rem; font-weight: 900; color: #fff; margin-bottom: 20px;">iCloth <span>FASHION</span></div>
             <div class="loader-progress">
                 <div class="progress-fill"></div>
             </div>
@@ -492,6 +483,10 @@
             </div>
 
             <div class="modal-body-content">
+                <!-- Breadcrumb -->
+                <nav class="breadcrumb" style="font-size: 0.75rem; margin-bottom: 15px; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px;">
+                    <span onclick="closeSizeModal()">Home</span> &gt; <span id="breadcrumb-cat">Category</span> &gt; <span id="breadcrumb-name" style="color: var(--primary);">Product</span>
+                </nav>
                 <h2 id="modal-product-name" class="modal-title" data-i18n="product_name">Product Name</h2>
 
                 <div id="modal-product-price" class="modal-price">0 ج.م</div>
