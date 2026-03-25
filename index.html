@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="/">
     <meta name="robots" content="index, follow">
-    <title>iCloth | Premium Men's Streetwear & Modern Fashion Store</title>
+    <title>iCloth | Premium Streetwear & Modern Fashion Store</title>
     <meta name="description"
-        content="Discover the latest in premium men's streetwear at iCloth. Shop high-quality t-shirts, hoodies, and trendy collections with modern designs. Best prices in Egypt.">
+        content="Discover the latest in premium streetwear at iCloth. Shop high-quality t-shirts, hoodies, and trendy collections with modern designs. Best prices in Egypt.">
     <meta name="keywords"
-        content="iCloth, men fashion store, streetwear brand, buy t shirt online, hoodies for men, latest clothing trends, fashion store Egypt">
+        content="iCloth, streetwear fashion store, streetwear brand, buy t shirt online, hoodies, latest clothing trends, fashion store Egypt">
     <link rel="canonical" href="https://icloth.app/">
     <link rel="icon" type="image/png" href="images/logo/logo2..png">
     <link rel="preload" href="images/logo/logo2..png" as="image" fetchpriority="high">
@@ -79,15 +79,18 @@
     <!-- Optimized font loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Cairo:wght@400;700;900&family=Plus+Jakarta+Sans:wght@700;800&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Cairo:wght@400;700;900&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Cairo:wght@400;700;900&family=Plus+Jakarta+Sans:wght@700;800&display=swap">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&family=Cairo:wght@400;700;900&family=Plus+Jakarta+Sans:wght@700;800&display=swap"
+        rel="stylesheet">
 
     <!-- Defer non-critical CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         media="print" onload="this.media='all'">
 
     <link rel="manifest" href="manifest.json">
-    
+
     <!-- iOS PWA Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -109,18 +112,21 @@
             margin-left: 10px;
             font-family: 'Cairo', sans-serif;
         }
+
         .copy-btn:hover {
             background: var(--primary);
             color: #000;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
         }
+
         .copy-btn:active {
             transform: scale(0.95);
         }
+
         /* Google Translate Hider */
-        .goog-te-banner-frame.skiptranslate, 
-        .goog-te-gadget-icon, 
+        .goog-te-banner-frame.skiptranslate,
+        .goog-te-gadget-icon,
         #google_translate_element,
         .goog-te-gadget-simple span,
         .goog-te-menu-value span:nth-child(2),
@@ -128,14 +134,16 @@
         .goog-te-menu-value span:nth-child(5) {
             display: none !important;
         }
+
         body {
             top: 0 !important;
         }
+
         .goog-te-menu-frame {
             box-shadow: none !important;
         }
     </style>
-    
+
     <!-- Google Translate Script -->
     <script type="text/javascript">
         function googleTranslateElementInit() {
@@ -147,7 +155,8 @@
             }, 'google_translate_element');
         }
     </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script type="text/javascript"
+        src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 
 <body>
@@ -157,7 +166,8 @@
     <!-- Premier Preloader (Splash Screen) -->
     <div id="loader" class="loader-wrapper">
         <div class="loader-content">
-            <div class="loader-text" style="font-size: 2.5rem; font-weight: 900; color: #fff; margin-bottom: 20px;">iCloth <span>FASHION</span></div>
+            <div class="loader-text" style="font-size: 2.5rem; font-weight: 900; color: #fff; margin-bottom: 20px;">
+                iCloth <span>FASHION</span></div>
             <div class="loader-progress">
                 <div class="progress-fill"></div>
             </div>
@@ -167,34 +177,50 @@
     <div id="announcement-bar" class="announcement-bar">
         <div class="announcement-content">
             <span id="announcement-text-display">Loading...</span>
-            <button class="announcement-close" onclick="window.closeAnnouncement()" aria-label="Close Announcement">&times;</button>
+            <button class="announcement-close" onclick="window.closeAnnouncement()"
+                aria-label="Close Announcement">&times;</button>
         </div>
     </div>
 
     <!-- Navigation -->
     <nav class="navbar" style="transition: all 0.4s ease;">
-        <div class="nav-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; padding: 0 25px; max-width: 1400px; margin: 0 auto; height: 120px;">
-            
+        <div class="nav-container"
+            style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; padding: 0 25px; max-width: 1400px; margin: 0 auto; height: 120px;">
+
             <!-- Left Icons -->
-            <div class="nav-icons" style="display: flex; gap: 20px; align-items: center; flex: 1; justify-content: flex-start; z-index: 11;">
-                <a href="#" id="sidebar-toggle" onclick="window.toggleSidebarMenu(); return false;" title="Best Sellers" aria-label="Open Sidebar Menu" style="font-size: 1.6rem !important; color: var(--text);"><i class="fas fa-bars"></i></a>
-                <a href="#" id="lang-toggle" onclick="window.toggleLanguage(); return false;" title="Change Language" aria-label="Toggle Language" style="font-size: 1.2rem !important; font-weight: 900; color: var(--primary); text-decoration: none;">AR</a>
-                <a href="#" id="theme-toggle" onclick="toggleTheme(); return false;" title="Toggle Theme" aria-label="Toggle Dark/Light Mode" style="font-size: 1.6rem !important;"><i class="fas fa-sun"></i></a>
+            <div class="nav-icons"
+                style="display: flex; gap: 20px; align-items: center; flex: 1; justify-content: flex-start; z-index: 11;">
+                <a href="#" id="sidebar-toggle" onclick="window.toggleSidebarMenu(); return false;" title="Best Sellers"
+                    aria-label="Open Sidebar Menu" style="font-size: 1.6rem !important; color: var(--text);"><i
+                        class="fas fa-bars"></i></a>
+                <a href="#" id="lang-toggle" onclick="window.toggleLanguage(); return false;" title="Change Language"
+                    aria-label="Toggle Language"
+                    style="font-size: 1.2rem !important; font-weight: 900; color: var(--primary); text-decoration: none;">AR</a>
+                <a href="#" id="theme-toggle" onclick="toggleTheme(); return false;" title="Toggle Theme"
+                    aria-label="Toggle Dark/Light Mode" style="font-size: 1.6rem !important;"><i
+                        class="fas fa-sun"></i></a>
             </div>
-            
+
             <!-- Centered Logo -->
-            <div class="logo-center" style="position: absolute; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
-                <a href="#" style="display: flex; align-items: center; justify-content: center;" aria-label="Go to homepage">
-                    <img src="images/logo/logo2..png" alt="iCloth Logo" id="main-logo-img" width="115" height="115" fetchpriority="high" loading="eager" style="height: 115px; width: auto; max-height: 115px; filter: drop-shadow(0 0 15px rgba(212,175,55,0.3)); transition: all 0.3s ease;">
+            <div class="logo-center"
+                style="position: absolute; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; justify-content: center; height: 100%;">
+                <a href="#" style="display: flex; align-items: center; justify-content: center;"
+                    aria-label="Go to homepage">
+                    <img src="images/logo/logo2..png" alt="iCloth Logo" id="main-logo-img" width="115" height="115"
+                        fetchpriority="high" loading="eager"
+                        style="height: 115px; width: auto; max-height: 115px; filter: drop-shadow(0 0 15px rgba(212,175,55,0.3)); transition: all 0.3s ease;">
                 </a>
             </div>
 
             <!-- Right Icons -->
-            <div class="nav-icons" style="display: flex; gap: 20px; align-items: center; flex: 1; justify-content: flex-end; z-index: 11;">
-                <a href="#" id="my-orders-btn" onclick="window.openMyOrdersModal(); return false;" class="nav-login-btn" aria-label="View My Orders" style="font-size: 1.6rem !important;">
+            <div class="nav-icons"
+                style="display: flex; gap: 20px; align-items: center; flex: 1; justify-content: flex-end; z-index: 11;">
+                <a href="#" id="my-orders-btn" onclick="window.openMyOrdersModal(); return false;" class="nav-login-btn"
+                    aria-label="View My Orders" style="font-size: 1.6rem !important;">
                     <i class="fas fa-user-circle"></i>
                 </a>
-                <a href="#" id="cart-btn" onclick="window.toggleCart(); return false;" class="cart-icon" aria-label="View Shopping Cart" style="font-size: 1.6rem !important; position: relative;">
+                <a href="#" id="cart-btn" onclick="window.toggleCart(); return false;" class="cart-icon"
+                    aria-label="View Shopping Cart" style="font-size: 1.6rem !important; position: relative;">
                     <i class="fas fa-shopping-bag"></i>
                     <span class="cart-count">0</span>
                 </a>
@@ -203,76 +229,93 @@
     </nav>
     <main id="main-content">
 
-    <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="hero-slider-container" id="hero-slider">
-            <!-- Slides injected by JS -->
-        </div>
-        <div class="hero-content">
-            <h1 class="animate-text" id="hero-title" data-i18n="hero_title" style="text-shadow: 0 0 20px rgba(0,0,0,0.9);">iCloth <br><span>FASHION</span></h1>
-            <p class="animate-text" id="hero-subtitle" data-i18n="hero_subtitle"
-                style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.4rem; letter-spacing: 0; margin-bottom: 20px; text-shadow: 0 0 15px rgba(0,0,0,0.9);">
-                Latest fashion trends and modern clothing for all tastes</p>
-            <h2 class="animate-text" id="hero-motto" data-i18n="hero_motto"
-                style="letter-spacing: 4px; font-weight: 900; color: var(--primary); text-transform: uppercase; text-shadow: 0 0 10px rgba(0,0,0,0.7);">The
-                Most Stylish <br> Youth & Street Wear</h2>
-
-            <div class="hero-btns animate-text">
-                <a href="#men-section" id="hero-men-btn" class="btn btn-primary" data-i18n="shop_now">Shop Collection</a>
+        <!-- Hero Section -->
+        <section id="home" class="hero">
+            <div class="hero-slider-container" id="hero-slider">
+                <!-- Slides injected by JS -->
             </div>
-        </div>
-        <div class="scroll-indicator">
-            <span data-i18n="discover_more">Discover More</span>
-            <div class="mouse"></div>
-        </div>
-    </section>
+            <div class="hero-content">
+                <h1 class="animate-text" id="hero-title" data-i18n="hero_title"
+                    style="text-shadow: 0 0 20px rgba(0,0,0,0.9);">iCloth <br><span>FASHION</span></h1>
+                <p class="animate-text" id="hero-subtitle" data-i18n="hero_subtitle"
+                    style="font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.4rem; letter-spacing: 0; margin-bottom: 20px; text-shadow: 0 0 15px rgba(0,0,0,0.9);">
+                    Latest fashion trends and modern clothing for all tastes</p>
+                <h2 class="animate-text" id="hero-motto" data-i18n="hero_motto"
+                    style="letter-spacing: 4px; font-weight: 900; color: var(--primary); text-transform: uppercase; text-shadow: 0 0 10px rgba(0,0,0,0.7);">
+                    The
+                    Most Stylish <br> Youth & Street Wear</h2>
 
-
-
-    <!-- Categories Section -->
-    <section id="men-section" class="featured">
-        <div class="section-title">
-            <span data-i18n="available_categories">Available Categories</span>
-            <h2 data-i18n="featured_collection">Our Featured Collection</h2>
-            <div class="filter-wrapper">
-                <div class="main-filters" id="main-filters-container">
-                    <!-- Dynamic -->
+                <div class="hero-btns animate-text">
+                    <a href="#men-section" id="hero-men-btn" class="btn btn-primary" data-i18n="shop_now">Shop
+                        Collection</a>
                 </div>
-                <!-- Sub filters container (filled via JS) -->
-                <div class="sub-filters" id="sub-filters-container"></div>
             </div>
-        </div>
-        <div class="products-grid" id="men-products">
-            <!-- Men products via JS -->
-        </div>
-    </section>
+            <div class="scroll-indicator">
+                <span data-i18n="discover_more">Discover More</span>
+                <div class="mouse"></div>
+            </div>
+        </section>
 
 
-    <!-- About Us Section -->
-    <section id="about" class="about-section" style="padding: 100px 20px; background: rgba(255,255,255,0.02); text-align: center;">
-        <div class="container" style="max-width: 800px; margin: 0 auto;">
-            <h2 style="font-size: 2.5rem; margin-bottom: 25px; font-weight: 900;" data-i18n="about_us">About Us</h2>
-            <p id="about-content" style="font-size: 1.2rem; line-height: 1.8; opacity: 0.8;" data-i18n="about_desc">We bring you the finest modern clothing with the highest quality and the best designs that suit your refined taste.</p>
-        </div>
-    </section>    </main>
+
+        <!-- Categories Section -->
+        <section id="men-section" class="featured">
+            <div class="section-title">
+                <span data-i18n="available_categories">Available Categories</span>
+                <h2 data-i18n="featured_collection">Our Featured Collection</h2>
+                <div class="filter-wrapper">
+                    <div class="main-filters" id="main-filters-container">
+                        <!-- Dynamic -->
+                    </div>
+                    <!-- Sub filters container (filled via JS) -->
+                    <div class="sub-filters" id="sub-filters-container"></div>
+                </div>
+            </div>
+            <div class="products-grid" id="men-products">
+                <!-- Men products via JS -->
+            </div>
+        </section>
+
+
+        <!-- About Us Section -->
+        <section id="about" class="about-section"
+            style="padding: 100px 20px; background: rgba(255,255,255,0.02); text-align: center;">
+            <div class="container" style="max-width: 800px; margin: 0 auto;">
+                <h2 style="font-size: 2.5rem; margin-bottom: 25px; font-weight: 900;" data-i18n="about_us">About Us</h2>
+                <p id="about-content" style="font-size: 1.2rem; line-height: 1.8; opacity: 0.8;" data-i18n="about_desc">
+                    We bring you the finest modern clothing with the highest quality and the best designs that suit your
+                    refined taste.</p>
+            </div>
+        </section>
+    </main>
 
     <!-- Footer -->
     <style>
         @keyframes footerFadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .footer-premium {
             animation: footerFadeIn 1s ease-out forwards;
             background: linear-gradient(135deg, rgba(15, 15, 15, 0.95), rgba(5, 5, 5, 1));
             backdrop-filter: blur(10px);
             border-top: 1px solid rgba(212, 175, 55, 0.1);
         }
+
         .footer-link-premium {
             position: relative;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: inline-block;
         }
+
         .footer-link-premium::after {
             content: '';
             position: absolute;
@@ -283,22 +326,27 @@
             background: var(--primary);
             transition: width 0.3s ease;
         }
+
         .footer-link-premium:hover {
             color: var(--primary) !important;
             transform: translateY(-3px);
             opacity: 1 !important;
         }
+
         .footer-link-premium:hover::after {
             width: 100%;
         }
+
         .social-icon-premium {
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+
         .social-icon-premium:hover {
             transform: scale(1.3) rotate(8deg);
             color: var(--primary) !important;
             text-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
         }
+
         .footer-brand-text {
             background: linear-gradient(to right, #fff, var(--primary), #fff);
             -webkit-background-clip: text;
@@ -307,47 +355,76 @@
             background-size: 200% auto;
             animation: shine 3s linear infinite;
         }
+
         @keyframes shine {
-            to { background-position: 200% center; }
+            to {
+                background-position: 200% center;
+            }
         }
     </style>
 
-    <footer id="contact" class="footer-premium" style="padding: 120px 20px 50px; color: #fff; overflow: hidden; position: relative;">
+    <footer id="contact" class="footer-premium"
+        style="padding: 120px 20px 50px; color: #fff; overflow: hidden; position: relative;">
         <!-- Background Decoration -->
-        <div style="position: absolute; top: -100px; left: -100px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(212,175,55,0.05) 0%, transparent 70%); pointer-events: none;"></div>
-        
-        <div style="max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 80px; position: relative; z-index: 1;">
-            
+        <div
+            style="position: absolute; top: -100px; left: -100px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(212,175,55,0.05) 0%, transparent 70%); pointer-events: none;">
+        </div>
+
+        <div
+            style="max-width: 1300px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 80px; position: relative; z-index: 1;">
+
             <!-- Brand & Philosophy -->
             <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
-                <div class="footer-brand-text" style="font-size: 3.5rem; font-weight: 900; letter-spacing: 8px; margin-bottom: 25px; font-family: 'Outfit', sans-serif;">iCloth</div>
-                <p style="opacity: 0.5; font-size: 0.9rem; line-height: 2; max-width: 320px; font-family: 'Outfit', sans-serif; letter-spacing: 1px;">
-                    Redefining modern street fashion with precision, quality, and a commitment to timeless youth aesthetics.
+                <div class="footer-brand-text"
+                    style="font-size: 3.5rem; font-weight: 900; letter-spacing: 8px; margin-bottom: 25px; font-family: 'Outfit', sans-serif;">
+                    iCloth</div>
+                <p
+                    style="opacity: 0.5; font-size: 0.9rem; line-height: 2; max-width: 320px; font-family: 'Outfit', sans-serif; letter-spacing: 1px;">
+                    Redefining modern street fashion with precision, quality, and a commitment to timeless youth
+                    aesthetics.
                 </p>
-                <div style="width: 40px; height: 1px; background: var(--primary); margin-top: 30px; opacity: 0.5;"></div>
+                <div style="width: 40px; height: 1px; background: var(--primary); margin-top: 30px; opacity: 0.5;">
+                </div>
             </div>
 
             <!-- Navigation Grid -->
             <div style="display: grid; grid-template-columns: 1fr; gap: 40px;">
                 <div style="display: flex; flex-direction: column; gap: 18px; align-items: center;">
-                    <h3 style="color: var(--primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 15px; font-weight: 900;" data-i18n="quick_links">Discover</h3>
-                    <a href="#home" class="footer-link-premium" style="color: #fff; text-decoration: none; opacity: 0.7; font-size: 1.1rem;" data-i18n="home">Home</a>
-                    <a href="#men-section" class="footer-link-premium" style="color: #fff; text-decoration: none; opacity: 0.7; font-size: 1.1rem;" data-i18n="products">Collections</a>
-                    <a href="policy.html?type=shipping" class="footer-link-premium" style="color: #fff; text-decoration: none; opacity: 0.7; font-size: 1.1rem;" data-i18n="shipping_policy">Delivery Service</a>
-                    <a href="policy.html?type=returns" class="footer-link-premium" style="color: #fff; text-decoration: none; opacity: 0.7; font-size: 1.1rem;" data-i18n="returns_policy">Returns Policy</a>
+                    <h3 style="color: var(--primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 15px; font-weight: 900;"
+                        data-i18n="quick_links">Discover</h3>
+                    <a href="#home" class="footer-link-premium"
+                        style="color: #fff; text-decoration: none; opacity: 0.7; font-size: 1.1rem;"
+                        data-i18n="home">Home</a>
+                    <a href="#men-section" class="footer-link-premium"
+                        style="color: #fff; text-decoration: none; opacity: 0.7; font-size: 1.1rem;"
+                        data-i18n="products">Collections</a>
+                    <a href="policy.html?type=shipping" class="footer-link-premium"
+                        style="color: #fff; text-decoration: none; opacity: 0.7; font-size: 1.1rem;"
+                        data-i18n="shipping_policy">Delivery Service</a>
+                    <a href="policy.html?type=returns" class="footer-link-premium"
+                        style="color: #fff; text-decoration: none; opacity: 0.7; font-size: 1.1rem;"
+                        data-i18n="returns_policy">Returns Policy</a>
                 </div>
             </div>
 
             <!-- Connectivity -->
             <div style="display: flex; flex-direction: column; gap: 35px; align-items: center;">
-                <h3 style="color: var(--primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 4px; font-weight: 900;" data-i18n="follow_us">Connect</h3>
+                <h3 style="color: var(--primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 4px; font-weight: 900;"
+                    data-i18n="follow_us">Connect</h3>
                 <div style="display: flex; gap: 35px; font-size: 2.2rem;">
-                    <a href="https://www.facebook.com/share/1GjUAHqaq9/?mibextid=wwXIfr" target="_blank" class="social-icon-premium" style="color: #fff; opacity: 0.8;" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="https://www.instagram.com/icloth___?igsh=MWduemx1bDNrZ3Izcg%3D%3D&utm_source=qr" target="_blank" class="social-icon-premium" style="color: #fff; opacity: 0.8;" title="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="https://wa.me/201224553486" target="_blank" class="social-icon-premium" style="color: #fff; opacity: 0.8;" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    <a href="https://www.facebook.com/share/1GjUAHqaq9/?mibextid=wwXIfr" target="_blank"
+                        class="social-icon-premium" style="color: #fff; opacity: 0.8;" title="Facebook"><i
+                            class="fab fa-facebook-f"></i></a>
+                    <a href="https://www.instagram.com/icloth___?igsh=MWduemx1bDNrZ3Izcg%3D%3D&utm_source=qr"
+                        target="_blank" class="social-icon-premium" style="color: #fff; opacity: 0.8;"
+                        title="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://wa.me/201224553486" target="_blank" class="social-icon-premium"
+                        style="color: #fff; opacity: 0.8;" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
                 </div>
                 <div style="margin-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                    <a href="mailto:Zozidapple@gmail.com" style="color: #fff; text-decoration: none; opacity: 0.6; font-size: 1rem; transition: 0.3s; display: flex; align-items: center; gap: 10px;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">
+                    <a href="mailto:Zozidapple@gmail.com"
+                        style="color: #fff; text-decoration: none; opacity: 0.6; font-size: 1rem; transition: 0.3s; display: flex; align-items: center; gap: 10px;"
+                        onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">
                         <i class="fas fa-envelope" style="color: var(--primary);"></i> Zozidapple@gmail.com
                     </a>
                     <span style="opacity: 0.4; font-size: 0.8rem; letter-spacing: 2px;">EG &bull; CAIRO</span>
@@ -356,14 +433,21 @@
         </div>
 
         <!-- Elegant Copyright -->
-        <div style="margin-top: 100px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 50px; text-align: center;">
-            <p id="footer-text" style="opacity: 0.3; font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase;">
+        <div
+            style="margin-top: 100px; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 50px; text-align: center;">
+            <p id="footer-text"
+                style="opacity: 0.3; font-size: 0.75rem; letter-spacing: 3px; text-transform: uppercase;">
                 <span id="footer-text-content">&copy; 2026 iCloth Design Haus. All Rights Reserved.</span>
             </p>
-            <div style="margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 15px; opacity: 0.8;">
+            <div
+                style="margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 15px; opacity: 0.8;">
                 <span style="width: 30px; height: 1px; background: rgba(255,255,255,0.1);"></span>
                 <p style="font-size: 0.7rem; font-weight: 800; letter-spacing: 2px; color: #fff;">
-                    CREATED BY <a href="https://www.instagram.com/youssef_osama04?igsh=MXV2Y2o5MzE0d2c1dA==" target="_blank" style="color: var(--primary); text-decoration: none; border: 1px solid rgba(212,175,55,0.3); padding: 4px 12px; border-radius: 4px; margin-left: 5px; transition: 0.3s;" onmouseover="this.style.background='var(--primary)'; this.style.color='#000'" onmouseout="this.style.background='transparent'; this.style.color='var(--primary)'">𝒀𝑶𝑼𝑺𝑺𝑬𝑭</a>
+                    CREATED BY <a href="https://www.instagram.com/youssef_osama04?igsh=MXV2Y2o5MzE0d2c1dA=="
+                        target="_blank"
+                        style="color: var(--primary); text-decoration: none; border: 1px solid rgba(212,175,55,0.3); padding: 4px 12px; border-radius: 4px; margin-left: 5px; transition: 0.3s;"
+                        onmouseover="this.style.background='var(--primary)'; this.style.color='#000'"
+                        onmouseout="this.style.background='transparent'; this.style.color='var(--primary)'">𝒀𝑶𝑼𝑺𝑺𝑬𝑭</a>
                 </p>
                 <span style="width: 30px; height: 1px; background: rgba(255,255,255,0.1);"></span>
             </div>
@@ -371,14 +455,17 @@
     </footer>
 
     <!-- Fixed Floating Tools (Always Bottom) -->
-    <a href="https://wa.me/201224553486?text=Hello%2C%20I%20would%20like%20to%20inquire%20about%20a%20product%20on%20iCloth" class="whatsapp-float" target="_blank" aria-label="Contact us on WhatsApp">
+    <a href="https://wa.me/201224553486?text=Hello%2C%20I%20would%20like%20to%20inquire%20about%20a%20product%20on%20iCloth"
+        class="whatsapp-float" target="_blank" aria-label="Contact us on WhatsApp">
         <i class="fab fa-whatsapp"></i>
         <span data-i18n="whatsapp_contact">Contact via WhatsApp</span>
     </a>
 
     <!-- Admin & PWA Bottom Tools -->
-    <div class="bottom-tools" style="position: fixed; bottom: 40px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000;">
-        <button id="install-pwa" class="tool-btn" aria-label="Install App" style="display: none; background: #2196F3; color: #fff; border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer;">
+    <div class="bottom-tools"
+        style="position: fixed; bottom: 40px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000;">
+        <button id="install-pwa" class="tool-btn" aria-label="Install App"
+            style="display: none; background: #2196F3; color: #fff; border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer;">
             <i class="fas fa-download"></i>
         </button>
     </div>
@@ -387,11 +474,13 @@
     <div id="side-menu" class="side-menu">
         <div class="side-menu-header">
             <h3 data-i18n="menu">Menu</h3>
-            <button id="close-side-menu" aria-label="Close Side Menu" onclick="window.toggleSidebarMenu(); return false;"><i class="fas fa-times"></i></button>
+            <button id="close-side-menu" aria-label="Close Side Menu"
+                onclick="window.toggleSidebarMenu(); return false;"><i class="fas fa-times"></i></button>
         </div>
         <div class="side-menu-content">
             <div class="menu-section">
-                <h4 class="menu-title" style="color: var(--primary); font-weight: 900;"><i class="fas fa-fire"></i> <span data-i18n="best_seller">Best Seller</span></h4>
+                <h4 class="menu-title" style="color: var(--primary); font-weight: 900;"><i class="fas fa-fire"></i>
+                    <span data-i18n="best_seller">Best Seller</span></h4>
                 <div id="best-seller-categories" class="menu-list">
                     <!-- Dynamic Categories -->
                 </div>
@@ -414,7 +503,8 @@
     <div id="cart-sidebar" class="cart-sidebar">
         <div class="cart-header">
             <h3 data-i18n="shopping_cart">Shopping Cart</h3>
-            <button id="close-cart" aria-label="Close Shopping Cart" onclick="window.closeCartSidebar(); return false;"><i class="fas fa-times"></i></button>
+            <button id="close-cart" aria-label="Close Shopping Cart"
+                onclick="window.closeCartSidebar(); return false;"><i class="fas fa-times"></i></button>
         </div>
 
         <!-- Auth Prompt in Cart -->
@@ -447,11 +537,15 @@
         </div>
 
         <!-- Coupon Section -->
-        <div id="cart-coupon-section" style="padding: 15px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02);">
+        <div id="cart-coupon-section"
+            style="padding: 15px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02);">
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="coupon-code-input" placeholder="كود الخصم" data-i18n-placeholder="coupon_placeholder" 
+                <input type="text" id="coupon-code-input" placeholder="كود الخصم"
+                    data-i18n-placeholder="coupon_placeholder"
                     style="flex: 1; padding: 10px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: 'Cairo';">
-                <button onclick="window.applyCouponCode()" style="padding: 10px 20px; border-radius: 10px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; font-family: 'Cairo';" data-i18n="apply">تطبيق</button>
+                <button onclick="window.applyCouponCode()"
+                    style="padding: 10px 20px; border-radius: 10px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; font-family: 'Cairo';"
+                    data-i18n="apply">تطبيق</button>
             </div>
             <p id="coupon-status-msg" style="margin-top: 10px; font-size: 0.85rem; display: none;"></p>
         </div>
@@ -475,18 +569,23 @@
         <div class="modal-content">
             <div class="modal-header-actions">
                 <button id="close-modal" class="close-modal-btn"><i class="fas fa-times"></i></button>
-                <button class="share-modal-btn" onclick="window.shareCurrentProduct()"><i class="fas fa-share-alt"></i></button>
+                <button class="share-modal-btn" onclick="window.shareCurrentProduct()"><i
+                        class="fas fa-share-alt"></i></button>
             </div>
             <div class="modal-product-img">
-                <button class="img-nav-btn prev" onclick="event.stopPropagation(); window.modalPrevImg()"><i class="fas fa-chevron-left"></i></button>
+                <button class="img-nav-btn prev" onclick="event.stopPropagation(); window.modalPrevImg()"><i
+                        class="fas fa-chevron-left"></i></button>
                 <img id="modal-img" src="" alt="">
-                <button class="img-nav-btn next" onclick="event.stopPropagation(); window.modalNextImg()"><i class="fas fa-chevron-right"></i></button>
+                <button class="img-nav-btn next" onclick="event.stopPropagation(); window.modalNextImg()"><i
+                        class="fas fa-chevron-right"></i></button>
             </div>
 
             <div class="modal-body-content">
                 <!-- Breadcrumb -->
-                <nav class="breadcrumb" style="font-size: 0.75rem; margin-bottom: 15px; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px;">
-                    <span onclick="closeSizeModal()">Home</span> &gt; <span id="breadcrumb-cat">Category</span> &gt; <span id="breadcrumb-name" style="color: var(--primary);">Product</span>
+                <nav class="breadcrumb"
+                    style="font-size: 0.75rem; margin-bottom: 15px; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px;">
+                    <span onclick="closeSizeModal()">Home</span> &gt; <span id="breadcrumb-cat">Category</span> &gt;
+                    <span id="breadcrumb-name" style="color: var(--primary);">Product</span>
                 </nav>
                 <h2 id="modal-product-name" class="modal-title" data-i18n="product_name">Product Name</h2>
 
@@ -509,38 +608,52 @@
                     <!-- JS -->
                 </div>
 
-                <button class="add-to-basket-btn" onclick="window.addToBasketFromModal()" data-i18n="add_to_basket">ADD TO BASKET</button>
-                
+                <button class="add-to-basket-btn" onclick="window.addToBasketFromModal()" data-i18n="add_to_basket">ADD
+                    TO BASKET</button>
+
 
 
                 <!-- Product Features / Details (Moved to bottom) -->
-                <div id="product-details-accordion" style="margin-top: 25px; border-top: 1px solid var(--card-border); padding-top: 10px;">
-                    
+                <div id="product-details-accordion"
+                    style="margin-top: 25px; border-top: 1px solid var(--card-border); padding-top: 10px;">
+
                     <!-- Description -->
-                    <div id="desc-accordion-section" style="border-bottom: 1px solid var(--card-border); padding: 12px 0;">
-                        <button onclick="toggleDescription()" style="background: none; border: none; color: var(--text-main); width: 100%; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-family: 'Cairo';">
-                            <span style="font-weight: bold; font-size: 1.05rem;"><i class="fas fa-info-circle"></i> <span data-i18n="description">Description</span></span>
+                    <div id="desc-accordion-section"
+                        style="border-bottom: 1px solid var(--card-border); padding: 12px 0;">
+                        <button onclick="toggleDescription()"
+                            style="background: none; border: none; color: var(--text-main); width: 100%; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-family: 'Cairo';">
+                            <span style="font-weight: bold; font-size: 1.05rem;"><i class="fas fa-info-circle"></i>
+                                <span data-i18n="description">Description</span></span>
                             <i id="desc-accordion-icon" class="fas fa-plus" style="opacity: 0.7;"></i>
                         </button>
-                        <div id="modal-product-desc" style="display: none; margin-top: 12px; font-size: 1rem; color: var(--text-muted); line-height: 1.7; white-space: pre-wrap; padding: 0 5px;"></div>
+                        <div id="modal-product-desc"
+                            style="display: none; margin-top: 12px; font-size: 1rem; color: var(--text-muted); line-height: 1.7; white-space: pre-wrap; padding: 0 5px;">
+                        </div>
                     </div>
 
                     <!-- Size Chart -->
                     <div id="size-chart-container" style="display: none; padding: 12px 0;">
-                        <button onclick="toggleSizeChart()" style="background: none; border: none; color: var(--text-main); width: 100%; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-family: 'Cairo';">
-                            <span style="font-weight: bold; font-size: 1.05rem;"><i class="fas fa-ruler-combined"></i> <span data-i18n="size_chart">Size Chart</span></span>
+                        <button onclick="toggleSizeChart()"
+                            style="background: none; border: none; color: var(--text-main); width: 100%; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-family: 'Cairo';">
+                            <span style="font-weight: bold; font-size: 1.05rem;"><i class="fas fa-ruler-combined"></i>
+                                <span data-i18n="size_chart">Size Chart</span></span>
                             <i id="size-chart-icon" class="fas fa-plus" style="opacity: 0.7;"></i>
                         </button>
-                        <div id="size-chart-content" style="display: none; margin-top: 12px; overflow: hidden; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
-                            <img id="size-chart-img" src="" alt="Size Chart" style="width: 100%; display: block; cursor: zoom-in;" onclick="openFullSizeChart()">
+                        <div id="size-chart-content"
+                            style="display: none; margin-top: 12px; overflow: hidden; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
+                            <img id="size-chart-img" src="" alt="Size Chart"
+                                style="width: 100%; display: block; cursor: zoom-in;" onclick="openFullSizeChart()">
                         </div>
                     </div>
                 </div>
 
                 <!-- Related Products Section -->
-                <div id="related-products-section" style="margin-top: 35px; border-top: 2px solid var(--card-border); padding-top: 20px;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-main);" data-i18n="you_may_also_like">YOU MAY ALSO LIKE</h3>
-                    <div id="related-products-list" style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; -ms-overflow-style: none;">
+                <div id="related-products-section"
+                    style="margin-top: 35px; border-top: 2px solid var(--card-border); padding-top: 20px;">
+                    <h3 style="font-size: 1.1rem; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-main);"
+                        data-i18n="you_may_also_like">YOU MAY ALSO LIKE</h3>
+                    <div id="related-products-list"
+                        style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; -ms-overflow-style: none;">
                         <!-- JS -->
                     </div>
                 </div>
@@ -563,19 +676,22 @@
         <div class="modal-box checkout-form-container">
             <button id="close-checkout" class="close-modal"><i class="fas fa-times"></i></button>
             <h2 class="modal-title" data-i18n="complete_order_title">Complete Order 📦</h2>
-            <p style="text-align: center; margin-bottom: 20px; color: var(--text-main); opacity: 0.8;" data-i18n="complete_order_desc">Please enter your details to complete the order</p>
+            <p style="text-align: center; margin-bottom: 20px; color: var(--text-main); opacity: 0.8;"
+                data-i18n="complete_order_desc">Please enter your details to complete the order</p>
 
             <form id="order-form" class="order-form">
                 <div class="form-group">
                     <label for="customer-name" data-i18n="full_name">Full Name</label>
-                    <input type="text" id="customer-name" required placeholder="e.g., John Doe" data-i18n-placeholder="name_placeholder">
+                    <input type="text" id="customer-name" required placeholder="e.g., John Doe"
+                        data-i18n-placeholder="name_placeholder">
                 </div>
                 <div class="form-group">
                     <label for="customer-phone" data-i18n="mobile_number">Mobile Number</label>
                     <input type="tel" id="customer-phone" required placeholder="01xxxxxxxxx">
                 </div>
                 <div class="form-group">
-                    <label for="customer-phone2" data-i18n="backup_mobile_number">Backup Mobile Number (Optional)</label>
+                    <label for="customer-phone2" data-i18n="backup_mobile_number">Backup Mobile Number
+                        (Optional)</label>
                     <input type="tel" id="customer-phone2" placeholder="01xxxxxxxxx">
                 </div>
                 <div class="form-group">
@@ -588,60 +704,88 @@
                 </div>
                 <div class="form-group">
                     <label for="customer-address" data-i18n="detailed_address">Detailed Address</label>
-                    <textarea id="customer-address" required placeholder="City center, Street, Landmark..." data-i18n-placeholder="address_placeholder" style="background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-main);"></textarea>
+                    <textarea id="customer-address" required placeholder="City center, Street, Landmark..."
+                        data-i18n-placeholder="address_placeholder"
+                        style="background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-main);"></textarea>
                 </div>
 
                 <div class="form-group">
                     <label data-i18n="payment_method">Payment Method</label>
                     <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px; text-align: center;">
                         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button type="button" class="btn-payment active" onclick="window.selectPayment('cod', this)" data-i18n="cod_btn">COD (Deposit 100 EGP)</button>
-                            <button type="button" class="btn-payment" onclick="window.selectPayment('wallet', this)" data-i18n="wallet_btn">Mobile Wallet</button>
-                            <button type="button" class="btn-payment" onclick="window.selectPayment('instapay', this)" data-i18n="instapay_btn">InstaPay</button>
+                            <button type="button" class="btn-payment active" onclick="window.selectPayment('cod', this)"
+                                data-i18n="cod_btn">COD (Deposit 100 EGP)</button>
+                            <button type="button" class="btn-payment" onclick="window.selectPayment('wallet', this)"
+                                data-i18n="wallet_btn">Mobile Wallet</button>
+                            <button type="button" class="btn-payment" onclick="window.selectPayment('instapay', this)"
+                                data-i18n="instapay_btn">InstaPay</button>
                         </div>
                         <input type="hidden" id="selected-payment" name="payment-method" value="cod">
 
-                        <div id="payment-instructions" style="padding: 15px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; text-align: inherit; margin-top:10px;">
-                            <strong style="color:var(--primary); display:block; margin-bottom:5px;" data-i18n="transfer_shipping">Confirm your order (Transfer Shipping only)</strong>
-                            <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:10px;" id="transfer-desc" data-i18n="transfer_shipping_desc">Please transfer the shipping cost to confirm your order, you will pay the remaining amount on delivery.</p>
-                            
+                        <div id="payment-instructions"
+                            style="padding: 15px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; text-align: inherit; margin-top:10px;">
+                            <strong style="color:var(--primary); display:block; margin-bottom:5px;"
+                                data-i18n="transfer_shipping">Confirm your order (Transfer Shipping only)</strong>
+                            <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:10px;" id="transfer-desc"
+                                data-i18n="transfer_shipping_desc">Please transfer the shipping cost to confirm your
+                                order, you will pay the remaining amount on delivery.</p>
+
                             <!-- Sub-methods for shipping transfer when COD is selected -->
-                            <div id="shipping-options-container" style="display: none; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; justify-content: center;">
-                                <button type="button" class="btn-payment btn-shipping-sub active" onclick="window.selectShippingSubMethod('wallet', this)" style="padding: 10px; font-size: 0.8rem;" data-i18n="wallet_btn">Mobile Wallet</button>
-                                <button type="button" class="btn-payment btn-shipping-sub" onclick="window.selectShippingSubMethod('instapay', this)" style="padding: 10px; font-size: 0.8rem;" data-i18n="instapay_btn">InstaPay</button>
+                            <div id="shipping-options-container"
+                                style="display: none; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; justify-content: center;">
+                                <button type="button" class="btn-payment btn-shipping-sub active"
+                                    onclick="window.selectShippingSubMethod('wallet', this)"
+                                    style="padding: 10px; font-size: 0.8rem;" data-i18n="wallet_btn">Mobile
+                                    Wallet</button>
+                                <button type="button" class="btn-payment btn-shipping-sub"
+                                    onclick="window.selectShippingSubMethod('instapay', this)"
+                                    style="padding: 10px; font-size: 0.8rem;" data-i18n="instapay_btn">InstaPay</button>
                             </div>
-                            <div style="display: flex; align-items: center; justify-content: center; background: var(--bg-color); padding:12px; border-radius:14px; border: 1px dashed var(--card-border);">
-                                <div id="checkout-transfer-number" style="font-weight:bold; font-size: 1.2rem; letter-spacing:1px; color: var(--text-main);">01224553486</div>
-                                <button type="button" class="copy-btn" onclick="copyToClipboard(document.getElementById('checkout-transfer-number').innerText)" title="Copy">
+                            <div
+                                style="display: flex; align-items: center; justify-content: center; background: var(--bg-color); padding:12px; border-radius:14px; border: 1px dashed var(--card-border);">
+                                <div id="checkout-transfer-number"
+                                    style="font-weight:bold; font-size: 1.2rem; letter-spacing:1px; color: var(--text-main);">
+                                    01224553486</div>
+                                <button type="button" class="copy-btn"
+                                    onclick="copyToClipboard(document.getElementById('checkout-transfer-number').innerText)"
+                                    title="Copy">
                                     <i class="far fa-copy"></i>
                                     <span data-i18n="copy_btn" style="font-weight: bold;">Copy</span>
                                 </button>
                             </div>
-                            <div id="checkout-transfer-name" style="font-size: 0.8rem; margin-top: 8px; color: var(--primary); font-weight: 600; display: none;"></div>
+                            <div id="checkout-transfer-name"
+                                style="font-size: 0.8rem; margin-top: 8px; color: var(--primary); font-weight: 600; display: none;">
+                            </div>
                             <div id="checkout-instapay-link-container" style="margin-top: 12px; display: none;">
-                                <a id="checkout-instapay-link" href="#" target="_blank" class="btn btn-primary" style="width: 100%; font-size: 0.85rem; padding: 10px; background: #00B4D8; border: none; color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <a id="checkout-instapay-link" href="#" target="_blank" class="btn btn-primary"
+                                    style="width: 100%; font-size: 0.85rem; padding: 10px; background: #00B4D8; border: none; color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px;">
                                     <i class="fas fa-external-link-alt"></i> فتح تطبيق إنستاباي للدفع
                                 </a>
                             </div>
                         </div>
 
                         <div style="text-align: inherit; margin-top: 15px;">
-                            <label style="display:block; margin-bottom:8px; color:var(--text-main); opacity: 0.8;" data-i18n="upload_receipt">Transfer Receipt Screenshot (Required)</label>
-                            <input type="file" id="receipt-image" required accept="image/*" style="width: 100%; padding: 10px; background: var(--bg-color); border: 1px dashed var(--card-border); border-radius: 12px; color: var(--text-main); cursor: pointer;">
+                            <label style="display:block; margin-bottom:8px; color:var(--text-main); opacity: 0.8;"
+                                data-i18n="upload_receipt">Transfer Receipt Screenshot (Required)</label>
+                            <input type="file" id="receipt-image" required accept="image/*"
+                                style="width: 100%; padding: 10px; background: var(--bg-color); border: 1px dashed var(--card-border); border-radius: 12px; color: var(--text-main); cursor: pointer;">
                         </div>
                     </div>
                 </div>
 
                 <div class="order-summary-mini">
-                    <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 8px; opacity: 0.8;">
+                    <div class="summary-row"
+                        style="display: flex; justify-content: space-between; margin-bottom: 8px; opacity: 0.8;">
                         <span data-i18n="shipping_cost">Shipping Cost:</span>
                         <span id="checkout-shipping-cost">0 ج.م</span>
                     </div>
-                    <div class="summary-row" id="checkout-discount-row" style="display: none; justify-content: space-between; margin-bottom: 8px; color: #4CAF50; font-weight: bold;">
+                    <div class="summary-row" id="checkout-discount-row"
+                        style="display: none; justify-content: space-between; margin-bottom: 8px; color: #4CAF50; font-weight: bold;">
                         <span data-i18n="discount">Discount:</span>
                         <span id="checkout-discount-amount">0 ج.م</span>
                     </div>
-                    <div class="summary-row" style="display: flex; justify-content: space-between; font-weight: 900; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+                    <div class="summary-row"
+                        style="display: flex; justify-content: space-between; font-weight: 900; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
                         <span data-i18n="order_total">Order Total:</span>
                         <span id="form-total-price">0 ج.م</span>
                     </div>
@@ -661,7 +805,8 @@
                 <i class="fas fa-check-circle"></i>
             </div>
             <h2 style="margin-bottom: 10px;" data-i18n="order_success_title">Order Placed Successfully!</h2>
-            <p style="margin-bottom: 25px; opacity: 0.8;" data-i18n="order_success_desc">Thank you for trusting iCloth. We will contact you soon to confirm the order.
+            <p style="margin-bottom: 25px; opacity: 0.8;" data-i18n="order_success_desc">Thank you for trusting iCloth.
+                We will contact you soon to confirm the order.
             </p>
             <button onclick="closeSuccessModal()" class="btn btn-primary" data-i18n="okay">Okay</button>
         </div>
@@ -673,7 +818,8 @@
             style="max-width: 440px; width: 92%; padding: 45px 30px 40px; border-radius: 28px; position: relative; overflow: visible;">
 
             <!-- Close Button (Absolute Right) -->
-            <button id="close-orders-modal" class="close-modal" onclick="this.closest('.modal').classList.remove('active'); return false;">
+            <button id="close-orders-modal" class="close-modal"
+                onclick="this.closest('.modal').classList.remove('active'); return false;">
                 <i class="fas fa-times"></i>
             </button>
 
@@ -690,11 +836,11 @@
                     <i class="fas fa-box" style="font-size: 2.2rem; color: #fff; margin-top: 5px;"></i>
                 </div>
 
-                <h2
-                    style="margin-bottom: 10px; font-weight: 900; font-size: 2.4rem; font-family: 'Outfit', sans-serif; color: var(--text-main); line-height: 1.1;" data-i18n="track_orders">
+                <h2 style="margin-bottom: 10px; font-weight: 900; font-size: 2.4rem; font-family: 'Outfit', sans-serif; color: var(--text-main); line-height: 1.1;"
+                    data-i18n="track_orders">
                     Track Orders</h2>
-                <p
-                    style="margin-bottom: 35px; opacity: 0.9; font-size: 1.15rem; line-height: 1.4; font-family: 'Outfit', sans-serif; color: var(--text-muted); max-width: 300px; margin: 0 auto;" data-i18n="track_orders_desc">
+                <p style="margin-bottom: 35px; opacity: 0.9; font-size: 1.15rem; line-height: 1.4; font-family: 'Outfit', sans-serif; color: var(--text-muted); max-width: 300px; margin: 0 auto;"
+                    data-i18n="track_orders_desc">
                     Login with Google to follow your order status
                 </p>
 
@@ -711,18 +857,20 @@
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.08);">
                     <div style="text-align: inherit;">
-                        <h2 style="margin: 0; font-size: 1.3rem; font-weight: 900; color: var(--text-main);" data-i18n="my_orders">My Orders</h2>
+                        <h2 style="margin: 0; font-size: 1.3rem; font-weight: 900; color: var(--text-main);"
+                            data-i18n="my_orders">My Orders</h2>
                         <p id="user-email-display"
                             style="font-size: 0.8rem; opacity: 0.5; margin-top: 5px; color: var(--text-muted);"></p>
                     </div>
-                        <button id="logout-btn" onclick="window.signOutUser(); return false;" data-i18n="logout"
+                    <button id="logout-btn" onclick="window.signOutUser(); return false;" data-i18n="logout"
                         style="background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3); color: var(--primary); padding: 8px 18px; border-radius: 12px; cursor: pointer; font-size: 0.85rem; font-weight: 800; transition: 0.3s;">
                         Logout
                     </button>
                 </div>
 
                 <div id="my-orders-list" style="max-height: 480px; overflow-y: auto; padding-right: 5px;">
-                    <div style="text-align: center; padding: 40px; opacity: 0.5; color: var(--text-main);">Loading your orders...
+                    <div style="text-align: center; padding: 40px; opacity: 0.5; color: var(--text-main);">Loading your
+                        orders...
                     </div>
                 </div>
             </div>
@@ -765,9 +913,9 @@
             installBtn.style.display = 'block';
             installBtn.style.background = '#333'; // Different color to represent instruction
             installBtn.innerHTML = '<i class="fab fa-apple"></i>';
-            
+
             installBtn.addEventListener('click', () => {
-                const msg = (currentLang === 'ar') 
+                const msg = (currentLang === 'ar')
                     ? "لتثبيت التطبيق على آيفون:\n1. اضغط على زر 'مشاركة' (Share) بالأسفل.\n2. اختر 'إضافة إلى الصفحة الرئيسية' (Add to Home Screen)."
                     : "To install on iPhone:\n1. Tap the 'Share' button at the bottom.\n2. Select 'Add to Home Screen'.";
                 alert(msg);
