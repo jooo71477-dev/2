@@ -436,6 +436,14 @@ function renderProducts(data = products) {
     const list = document.getElementById('products-list');
     if (!list) return;
     console.log("📊 Rendering Admin Products:", data.length);
+    
+    // Sort by sortOrder (asc), items without sortOrder go to the end
+    data.sort((a, b) => {
+        const orderA = a.sortOrder !== undefined ? a.sortOrder : 999999;
+        const orderB = b.sortOrder !== undefined ? b.sortOrder : 999999;
+        return orderA - orderB;
+    });
+
     list.innerHTML = data.map(p => {
         // Log individual product price to console for debugging
         if (p.oldPrice) console.log(`🔍 Product [${p.name}] has oldPrice: ${p.oldPrice}`);
@@ -446,7 +454,8 @@ function renderProducts(data = products) {
             || (p.image && p.image.length < 50000 ? p.image : '')
             || '';
         return `
-        <tr>
+        <tr data-id="${p.id}">
+            <td class="drag-handle" style="cursor: move; padding-right: 15px; color: var(--primary);"><i class="fas fa-grip-vertical"></i></td>
             <td>${displayImg ? `<img src="${displayImg}" class="product-img" onerror="this.style.display='none'">` : '<div style="width:40px;height:40px;background:rgba(255,255,255,0.05);border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="opacity:0.3;"></i></div>'}</td>
             <td>
                 <div style="display:flex; align-items:center; gap:5px;">
@@ -488,6 +497,44 @@ function renderProducts(data = products) {
         </tr>
     `;
     }).join('');
+
+    // --- Initialize Drag and Drop ---
+    if (window.Sortable && list) {
+        new Sortable(list, {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: async function() {
+                console.log("🔄 Order changed, syncing with DB...");
+                await syncProductOrder();
+            }
+        });
+    }
+}
+
+async function syncProductOrder() {
+    const rows = document.querySelectorAll('#products-list tr');
+    const batch = db.batch();
+    
+    // Show some feedback (alert or small toast could be here)
+    console.log("📦 Syncing new sort order to Firestore...");
+    try {
+        rows.forEach((row, index) => {
+            const id = row.getAttribute('data-id');
+            if (id) {
+                const ref = db.collection('products').doc(id);
+                batch.update(ref, { sortOrder: index });
+                
+                // Update local state too
+                const pIdx = products.findIndex(prod => prod.id === id);
+                if (pIdx !== -1) products[pIdx].sortOrder = index;
+            }
+        });
+        await batch.commit();
+        console.log("✅ Order updated in Firestore");
+    } catch (err) {
+        console.error("❌ Failed to sync order:", err);
+        alert("فشل تحديث الترتيب في قاعدة البيانات");
+    }
 }
 
 // Utility: Copy to Clipboard
@@ -713,6 +760,9 @@ document.getElementById('product-form').onsubmit = async (e) => {
         } else {
             console.log("➕ Adding new product");
             data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            // Set initial sortOrder for new products to be at the end
+            const maxOrder = products.reduce((max, p) => Math.max(max, p.sortOrder || 0), 0);
+            data.sortOrder = maxOrder + 1;
             await db.collection('products').add(data);
         }
         console.log("✅ Save successful!");
