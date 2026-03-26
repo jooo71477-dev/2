@@ -1624,21 +1624,25 @@ function setupEventListeners() {
                     telegramMsg += `\n✅ *تم إرفاق صورة الإيصال بنجاح*`;
                 }
                 
-                // Send to Telegram silently
-                try {
-                    await fetch('https://api.telegram.org/bot8283267802:AAFWHrtLepYloK5Sg0Fd0NVNqnzwxEosIss/sendMessage', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            chat_id: '7854847724',
-                            text: telegramMsg,
-                            parse_mode: 'Markdown'
-                        })
-                    });
-                } catch (err) {
-                    console.error("Failed to send order to Telegram:", err);
+                // Send to Telegram silently (supports multiple receivers)
+                const chatIds = ['7854847724', '578537442']; // تم إضافة حسابك وحساب الشخص التاني بنجاح!
+                
+                for (const chatId of chatIds) {
+                    try {
+                        await fetch('https://api.telegram.org/bot8283267802:AAFWHrtLepYloK5Sg0Fd0NVNqnzwxEosIss/sendMessage', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                chat_id: chatId,
+                                text: telegramMsg,
+                                parse_mode: 'Markdown'
+                            })
+                        });
+                    } catch (err) {
+                        console.error(`Failed to send order to Telegram (ChatID: ${chatId}):`, err);
+                    }
                 }
                 
                 // 4. Reset state & Show Success via Animation
