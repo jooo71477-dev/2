@@ -1825,15 +1825,6 @@ footer {
 }
 
 @media (max-width: 576px) {
-    .products-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-
-    .product-img {
-        height: 220px;
-    }
-
     .hero-content h1 {
         font-size: 2.2rem;
     }
@@ -3078,10 +3069,6 @@ footer {
    MOBILE RESPONSIVE
    ==================================================== */
 @media (max-width: 576px) {
-    .product-img-wrap {
-        height: 220px;
-    }
-
     .gallery-drawer {
         width: 100vw;
     }
