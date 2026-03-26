@@ -1605,9 +1605,8 @@ function setupEventListeners() {
                     });
                 }
                 
-                // 3. Format and Send to WhatsApp
-                let num = (typeof settingsCache !== 'undefined' && settingsCache && settingsCache.whatsapp) ? settingsCache.whatsapp : '201224553486';
-                let waMsg = `*طلب جديد من الموقع!*\n\n` +
+                // 3. Format and Send to Telegram
+                let telegramMsg = `🔥 *فيه أوردر جديد على الموقع!*\n\n` +
                             `*الاسم:* ${orderData.customerName}\n` +
                             `*رقم الهاتف:* ${orderData.phone}\n` +
                             `*المحافظة:* ${orderData.gov}\n` +
@@ -1618,15 +1617,29 @@ function setupEventListeners() {
                             `*المنتجات:*\n`;
                 
                 orderData.items.forEach(i => {
-                    waMsg += `- ${window.translateText ? window.translateText(i.name) : i.name} (${i.color}, ${i.size}) x${i.quantity}\n`;
+                    telegramMsg += `- ${window.translateText ? window.translateText(i.name) : i.name} (${i.color}, ${i.size}) x${i.quantity}\n`;
                 });
                 
                 if (orderData.receiptUrl) {
-                    waMsg += `\n✅ *تم إرفاق صورة الإيصال بنجاح*`;
+                    telegramMsg += `\n✅ *تم إرفاق صورة الإيصال بنجاح*`;
                 }
                 
-                // Open WhatsApp in a new tab silently alongside the success popup
-                window.open(`https://wa.me/${num}?text=${encodeURIComponent(waMsg)}`, '_blank');
+                // Send to Telegram silently
+                try {
+                    await fetch('https://api.telegram.org/bot8283267802:AAFWHrtLepYloK5Sg0Fd0NVNqnzwxEosIss/sendMessage', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            chat_id: '7854847724',
+                            text: telegramMsg,
+                            parse_mode: 'Markdown'
+                        })
+                    });
+                } catch (err) {
+                    console.error("Failed to send order to Telegram:", err);
+                }
                 
                 // 4. Reset state & Show Success via Animation
                 const timeElapsed = Date.now() - animStartTime;
