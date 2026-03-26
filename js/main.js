@@ -359,11 +359,11 @@ function initFirebase() {
 // 🚀 Trigger Firebase after everything else is rendered
 window.addEventListener('load', () => {
     if ('requestIdleCallback' in window) {
-// Modified Init to handle params
-requestIdleCallback(() => {
-    initFirebase();
-    setTimeout(() => { if(window.handleUrlParams) window.handleUrlParams(); }, 100);
-}, { timeout: 2000 });
+        requestIdleCallback(() => {
+            initFirebase();
+            // NOTE: handleUrlParams is now called automatically after products load
+            // from attachRealTimeListeners (window._urlParamsHandled flag)
+        }, { timeout: 2000 });
     } else {
         setTimeout(initFirebase, 1000);
     }
@@ -793,6 +793,12 @@ function attachRealTimeListeners() {
         if (remoteProducts.length > 0 || snapshot.empty) {
             hideLoader();
         }
+        
+        // 🔗 Handle URL params once after first product load
+        if (!window._urlParamsHandled && remoteProducts.length > 0) {
+            window._urlParamsHandled = true;
+            if (window.handleUrlParams) window.handleUrlParams();
+        }
     }, err => {
         console.error("❌ Firebase Products Error:", err);
     });
@@ -897,7 +903,8 @@ function attachRealTimeListeners() {
 }
 
 function initElements() {
-    menContainer = document.getElementById('men-products');
+    // Support both 'men-products' and 'products-list' IDs for backward compatibility
+    menContainer = document.getElementById('men-products') || document.getElementById('products-list');
     cartBtn = document.getElementById('cart-btn');
     closeCartBtn = document.getElementById('close-cart');
     cartSidebar = document.getElementById('cart-sidebar');
@@ -913,6 +920,38 @@ function initElements() {
     themeToggle = document.getElementById('theme-toggle');
     subFiltersContainer = document.getElementById('sub-filters-container');
     window.populateGovernorates();
+    
+    // 🔗 PopState listener: Handle browser back/forward navigation
+    window.addEventListener('popstate', (e) => {
+        const path = decodeURIComponent(window.location.pathname);
+        const params = new URLSearchParams(window.location.search);
+        
+        // If navigating back and modal is open, close it
+        if (sizeModal && sizeModal.classList.contains('active')) {
+            sizeModal.classList.remove('active');
+            selectedProductForSize = null;
+            if (window._modalCarouselInterval) clearInterval(window._modalCarouselInterval);
+        }
+        
+        // Handle product URL
+        const productSlug = path.includes('/product/') ? path.split('/product/')[1] : params.get('product');
+        const catSlug = path.includes('/category/') ? path.split('/category/')[1] : params.get('cat');
+        
+        if (productSlug && remoteProducts.length > 0) {
+            let targetId = productSlug;
+            if (productSlug.includes('--')) {
+                const parts = productSlug.split('--');
+                targetId = parts[parts.length - 1];
+            }
+            const found = remoteProducts.find(x => x.id === targetId || toSlug(x.name) === toSlug(productSlug));
+            if (found) window.openSizeModal(found.id);
+        } else if (catSlug) {
+            const filterBtns = document.querySelectorAll('.main-filter-btn');
+            filterBtns.forEach(btn => {
+                if (toSlug(btn.innerText.trim()) === toSlug(catSlug)) btn.click();
+            });
+        }
+    });
 }
 
 window.populateGovernorates = function () {
@@ -1225,7 +1264,7 @@ function renderSubFilters(parentId, level = 0) {
 window.copyToClipboard = (text) => {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
-        alert(currentLang === 'ar' ? "تم النسخ!" : "Copied!");
+        showToast(currentLang === 'ar' ? '✅ تم النسخ!' : '✅ Copied!');
     }).catch(err => {
         console.error('Failed to copy: ', err);
     });
@@ -1349,10 +1388,24 @@ function setupEventListeners() {
     selectedProductForSize = null;
     if (window._modalCarouselInterval) clearInterval(window._modalCarouselInterval);
     
-    // Remove product from URL when modal closes (Clean URL Way)
-    const url = new URL(window.location.origin);
-    // If we're in a category, we could try to keep it, but reset to root is simpler
-    window.history.pushState({}, '', url);
+    // Remove product from URL when modal closes - preserve category if active
+    const isLocal = window.location.protocol === 'file:';
+    if (!isLocal) {
+        const activeBtn = document.querySelector('.main-filter-btn.active');
+        const activeCat = activeBtn && activeBtn.dataset.parent !== 'all' ? activeBtn.innerText.trim() : null;
+        let targetUrl;
+        if (activeCat) {
+            targetUrl = new URL(window.location.origin + `/category/${toSlug(activeCat)}`);
+        } else {
+            targetUrl = new URL(window.location.origin + '/');
+        }
+        window.history.pushState({}, '', targetUrl);
+        updateCanonical(targetUrl.href);
+    } else {
+        const url = new URL(window.location);
+        url.searchParams.delete('product');
+        window.history.pushState({}, '', url);
+    }
 };
     if (closeModal) closeModal.onclick = () => {
         window.closeSizeModal();
@@ -1397,8 +1450,18 @@ function setupEventListeners() {
             submitBtn.innerText = translations[currentLang].loading;
 
             try {
+                const paymentMethod = document.getElementById('selected-payment').value;
+                // Determine if a transfer receipt is needed:
+                // Receipt is required for wallet/instapay (full transfer) 
+                // Receipt is optional for pure COD (cash on delivery with no sub-method transfer)
+                // BUT for COD with deposit (sub-method = wallet/instapay), receipt IS required
+                const activeSubBtn = document.querySelector('.btn-shipping-sub.active');
+                const codSubMethod = activeSubBtn ? (activeSubBtn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || '') : '';
+                const needsReceipt = (paymentMethod === 'wallet' || paymentMethod === 'instapay') ||
+                                     (paymentMethod === 'cod' && codSubMethod !== '');
+
                 const receiptFile = document.getElementById('receipt-image').files[0];
-                if (!receiptFile) {
+                if (needsReceipt && !receiptFile) {
                     alert(currentLang === 'ar' ? 'الرجاء إرفاق صورة إيصال التحويل' : 'Please upload the transfer receipt image');
                     submitBtn.disabled = false;
                     submitBtn.innerText = translations[currentLang].confirm_order;
@@ -1406,48 +1469,49 @@ function setupEventListeners() {
                 }
 
                 let receiptUrl = '';
-                try {
-                    // Compress image before upload and convert to Base64 string directly
-                    receiptUrl = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            const img = new Image();
-                            img.onload = () => {
-                                try {
-                                    const canvas = document.createElement('canvas');
-                                    const ctx = canvas.getContext('2d');
-                                    const MAX_WIDTH = 600;
-                                    let width = img.width;
-                                    let height = img.height;
+                if (receiptFile) {
+                    try {
+                        // Compress image before upload and convert to Base64 string directly
+                        receiptUrl = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                                const img = new Image();
+                                img.onload = () => {
+                                    try {
+                                        const canvas = document.createElement('canvas');
+                                        const ctx = canvas.getContext('2d');
+                                        const MAX_WIDTH = 600;
+                                        let width = img.width;
+                                        let height = img.height;
 
-                                    if (width > MAX_WIDTH) {
-                                        height *= MAX_WIDTH / width;
-                                        width = MAX_WIDTH;
+                                        if (width > MAX_WIDTH) {
+                                            height *= MAX_WIDTH / width;
+                                            width = MAX_WIDTH;
+                                        }
+
+                                        canvas.width = width;
+                                        canvas.height = height;
+                                        ctx.drawImage(img, 0, 0, width, height);
+                                        
+                                        const base64Str = canvas.toDataURL('image/jpeg', 0.6);
+                                        resolve(base64Str);
+                                    } catch (e) {
+                                        reject(e);
                                     }
-
-                                    canvas.width = width;
-                                    canvas.height = height;
-                                    ctx.drawImage(img, 0, 0, width, height);
-                                    
-                                    // Convert directly to Base64 string to bypass Firebase Storage entirely
-                                    const base64Str = canvas.toDataURL('image/jpeg', 0.6);
-                                    resolve(base64Str);
-                                } catch (e) {
-                                    reject(e);
-                                }
+                                };
+                                img.onerror = () => reject(new Error("Invalid image"));
+                                img.src = event.target.result;
                             };
-                            img.onerror = () => reject(new Error("Invalid image"));
-                            img.src = event.target.result;
-                        };
-                        reader.onerror = () => reject(new Error("Failed to read file"));
-                        reader.readAsDataURL(receiptFile);
-                    });
-                } catch(e) {
-                    console.error("Image processing error", e);
-                    alert(currentLang === 'ar' ? 'حدث خطأ في معالجة الإيصال: ' + e.message : 'Error processing the receipt: ' + e.message);
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = translations[currentLang].confirm_order;
-                    return;
+                            reader.onerror = () => reject(new Error("Failed to read file"));
+                            reader.readAsDataURL(receiptFile);
+                        });
+                    } catch(e) {
+                        console.error("Image processing error", e);
+                        alert(currentLang === 'ar' ? 'حدث خطأ في معالجة الإيصال: ' + e.message : 'Error processing the receipt: ' + e.message);
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = translations[currentLang].confirm_order;
+                        return;
+                    }
                 }
 
                 const gov = document.getElementById('customer-gov').value;
@@ -1583,8 +1647,12 @@ const getAllChildrenIds = (catId) => {
 };
 
 function filterAndRender(section, parent, sub, bestSellerOnly = false) {
+    // Auto-recover if menContainer is null (e.g., called before initElements)
     if (!menContainer) {
-        console.error("❌ [Render] menContainer not found!");
+        menContainer = document.getElementById('men-products') || document.getElementById('products-list');
+    }
+    if (!menContainer) {
+        console.error("❌ [Render] menContainer not found! (tried men-products and products-list)");
         return;
     }
 
@@ -2144,12 +2212,79 @@ function injectProductSchema(p) {
 
 window.shareCurrentProduct = () => {
     const url = window.location.href;
+    
+    // Try native share API first (mobile)
+    if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+        const p = selectedProductForSize;
+        navigator.share({
+            title: p ? (translateText(p.name) || 'iCloth') : 'iCloth',
+            text: p ? `${translateText(p.name)} - ${p.price} ${translations[currentLang].currency}` : 'تسوق من iCloth',
+            url: url
+        }).catch(() => {});
+        return;
+    }
+    
+    // Fallback: copy to clipboard + show toast
     navigator.clipboard.writeText(url).then(() => {
-        alert(currentLang === 'ar' ? "تم نسخ رابط المشروع لعيونك! سيكو سيكو" : "Product link copied to clipboard! ✨");
-    }).catch(err => {
-        console.error('Failed to copy: ', err);
+        showToast(currentLang === 'ar' ? '✅ تم نسخ رابط المنتج!' : '✅ Product link copied!');
+    }).catch(() => {
+        // Last fallback: select text from temp input
+        const el = document.createElement('textarea');
+        el.value = url;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        showToast(currentLang === 'ar' ? '✅ تم نسخ الرابط!' : '✅ Link copied!');
     });
 };
+
+// 🍞 Toast Notification System
+function showToast(message, duration = 2500) {
+    // Remove existing toast
+    const existing = document.getElementById('icloth-toast');
+    if (existing) existing.remove();
+    
+    const toast = document.createElement('div');
+    toast.id = 'icloth-toast';
+    toast.innerText = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: rgba(20, 20, 20, 0.95);
+        color: #fff;
+        padding: 14px 28px;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 700;
+        font-family: 'Cairo', sans-serif;
+        z-index: 99999;
+        border: 1px solid rgba(212, 175, 55, 0.4);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        opacity: 0;
+        transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        white-space: nowrap;
+        pointer-events: none;
+        backdrop-filter: blur(10px);
+    `;
+    document.body.appendChild(toast);
+    
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+    });
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(10px)';
+        setTimeout(() => toast.remove(), 400);
+    }, duration);
+}
+window.showToast = showToast;
 
 function renderRelatedProducts(targetCatId, currentProdId) {
     const list = document.getElementById('related-products-list');
@@ -2589,56 +2724,87 @@ window.handleUrlParams = () => {
     let catSlug = null;
     let productSlug = null;
 
-    if (path.includes('/category/')) {
-        catSlug = path.split('/category/')[1];
-    } else if (path.includes('/product/')) {
+    if (path.includes('/product/')) {
         productSlug = path.split('/product/')[1];
+    } else if (path.includes('/category/')) {
+        catSlug = path.split('/category/')[1];
     }
 
     const finalCat = catSlug || legacyCat;
     const finalProduct = productSlug || legacyProduct;
 
-    if (finalCat) {
-        const checkCats = setInterval(() => {
-            const filterBtns = document.querySelectorAll('.main-filter-btn');
-            if (filterBtns.length > 0) {
-                filterBtns.forEach(btn => {
-                    const btnTextSafe = btn.innerText.trim();
-                    if (toSlug(btnTextSafe) === toSlug(finalCat) || btnTextSafe.toUpperCase() === finalCat.toUpperCase()) {
-                        btn.click();
-                        clearInterval(checkCats);
-                    }
-                });
-            }
-        }, 500);
-        setTimeout(() => clearInterval(checkCats), 5000);
-    }
+    console.log(`🔗 [URL Routing] path=${path} | product=${finalProduct} | cat=${finalCat}`);
 
     if (finalProduct) {
         console.log("🔍 [Routing] Searching for product:", finalProduct);
-        const checkProducts = setInterval(() => {
-            if (remoteProducts && remoteProducts.length > 0) {
-                // Smart Search: 1. Try to extract ID from URL (name--id format)
-                let targetId = finalProduct;
-                if (finalProduct.includes('--')) {
-                    const parts = finalProduct.split('--');
-                    targetId = parts[parts.length - 1]; // Assume ID is at the end
-                }
-
-                const found = remoteProducts.find(x => 
-                    x.id === targetId || 
-                    toSlug(x.name) === toSlug(finalProduct) ||
-                    (x.name_ar && toSlug(x.name_ar) === toSlug(finalProduct))
-                );
-                
-                if (found) {
-                    console.log("✅ [Routing] Product found! Opening modal:", found.name);
-                    window.openSizeModal(found.id);
+        
+        // Extract ID immediately if in name--id format
+        let targetId = finalProduct;
+        if (finalProduct.includes('--')) {
+            const parts = finalProduct.split('--');
+            targetId = parts[parts.length - 1];
+        }
+        
+        const tryOpenProduct = () => {
+            if (!remoteProducts || remoteProducts.length === 0) return false;
+            
+            const found = remoteProducts.find(x => 
+                x.id === targetId || 
+                x.id === finalProduct ||
+                toSlug(x.name) === toSlug(finalProduct) ||
+                toSlug(x.name) === toSlug(targetId) ||
+                (x.name_ar && toSlug(x.name_ar) === toSlug(finalProduct))
+            );
+            
+            if (found) {
+                console.log("✅ [Routing] Product found! Opening modal:", found.name);
+                // Small delay to ensure page is fully rendered
+                setTimeout(() => window.openSizeModal(found.id), 300);
+                return true;
+            }
+            return false;
+        };
+        
+        // Try immediately first
+        if (!tryOpenProduct()) {
+            // If products not loaded yet, poll until they are
+            let attempts = 0;
+            const checkProducts = setInterval(() => {
+                attempts++;
+                if (tryOpenProduct()) {
+                    clearInterval(checkProducts);
+                } else if (attempts > 80) { // 8 seconds max
+                    console.warn("⚠️ [Routing] Product not found after timeout:", finalProduct);
                     clearInterval(checkProducts);
                 }
-            }
-        }, 100); // Check more frequently
-        setTimeout(() => clearInterval(checkProducts), 8000);
+            }, 100);
+        }
+    } else if (finalCat) {
+        const tryCat = () => {
+            const filterBtns = document.querySelectorAll('.main-filter-btn');
+            if (filterBtns.length === 0) return false;
+            let found = false;
+            filterBtns.forEach(btn => {
+                const btnTextSafe = btn.innerText.trim();
+                if (toSlug(btnTextSafe) === toSlug(finalCat) || btnTextSafe.toUpperCase() === finalCat.toUpperCase()) {
+                    btn.click();
+                    found = true;
+                }
+            });
+            return found;
+        };
+        
+        if (!tryCat()) {
+            let attempts = 0;
+            const checkCats = setInterval(() => {
+                attempts++;
+                if (tryCat()) {
+                    clearInterval(checkCats);
+                } else if (attempts > 50) {
+                    clearInterval(checkCats);
+                }
+            }, 200);
+        }
     }
 };
 
