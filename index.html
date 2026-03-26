@@ -795,7 +795,126 @@
                 </div>
 
                 <button type="submit" id="order-submit-btn" class="btn btn-primary"
-                    style="width: 100%; margin-top: 15px;" data-i18n="confirm_order">Confirm Order Now ✨</button>
+                    style="width: 100%; margin-top: 15px; position: relative; height: 60px; overflow: hidden; padding: 0; border: none; border-radius: 12px; z-index: 1;">
+                    <!-- Label -->
+                    <div id="btn-label" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; z-index: 30; transition: opacity 0.4s ease; background: var(--primary);">
+                        <span data-i18n="confirm_order" style="color: #000; font-weight: 800; font-size: 1.1rem;">Confirm Order Now ✨</span>
+                    </div>
+
+                    <!-- Scene -->
+                    <div id="btn-scene" style="position: absolute; inset: 0; display: none; overflow: hidden; border-radius: 12px;">
+                        <div class="road-bg" style="position: absolute; inset: 0; background: #1c1c1c;"></div>
+                        <div class="asphalt" style="position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0px, transparent 3px, rgba(255,255,255,0.015) 3px, rgba(255,255,255,0.015) 4px), #222;"></div>
+                        <div class="road-edge-top" style="position: absolute; top: 4px; left: 0; right: 0; height: 3px; background: #e8b800; opacity: 0.85;"></div>
+                        <div class="road-edge-bottom" style="position: absolute; bottom: 4px; left: 0; right: 0; height: 3px; background: #e8b800; opacity: 0.85;"></div>
+                        <div class="center-dashes" style="position: absolute; top: 50%; transform: translateY(-50%); left: 0; right: 0; height: 4px; background: repeating-linear-gradient(90deg, white 0px, white 50px, transparent 50px, transparent 90px); animation: dashMove 0.5s linear infinite; opacity: 0.9;"></div>
+                        
+                        <!-- Truck -->
+                        <div id="btn-truck" style="position: absolute; left: -280px; bottom: 8px; width: 180px; transition: left 3.2s cubic-bezier(0.25, 0.1, 0.25, 1); z-index: 10; transform: scale(0.65); transform-origin: bottom left;">
+                            <div class="smoke-particle" style="width:8px;height:8px;left:8px;top:-4px;animation-delay:0s"></div>
+                            <div class="smoke-particle" style="width:6px;height:6px;left:18px;top:-2px;animation-delay:0.25s"></div>
+                            <div class="smoke-particle" style="width:10px;height:10px;left:3px;top:-6px;animation-delay:0.5s"></div>
+                            <div class="headlight-beam" style="position: absolute; right: -50px; top: 50%; transform: translateY(-50%); width: 60px; height: 30px; background: radial-gradient(ellipse at left, rgba(255,240,150,0.35) 0%, transparent 80%); animation: headlight 0.6s ease-in-out infinite;"></div>
+                            
+                            <svg viewBox="0 0 240 75" xmlns="http://www.w3.org/2000/svg" width="240">
+                                <defs>
+                                    <linearGradient id="cabGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e8424a"/><stop offset="100%" stop-color="#b02030"/></linearGradient>
+                                    <linearGradient id="trailerGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c0392b"/><stop offset="100%" stop-color="#922b21"/></linearGradient>
+                                    <linearGradient id="windowGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a8d8f0"/><stop offset="100%" stop-color="#6bb8e0"/></linearGradient>
+                                </defs>
+                                <rect x="4" y="12" width="158" height="46" rx="3" fill="url(#trailerGrad)"/>
+                                <rect x="4" y="48" width="158" height="10" rx="2" fill="#7b241c"/>
+                                <line x1="4" y1="23" x2="162" y2="23" stroke="#a93226" stroke-width="0.8"/>
+                                <line x1="4" y1="34" x2="162" y2="34" stroke="#a93226" stroke-width="0.8"/>
+                                <line x1="4" y1="45" x2="162" y2="45" stroke="#a93226" stroke-width="0.8"/>
+                                <rect x="50" y="18" width="70" height="20" rx="2" fill="rgba(255,255,255,0.08)"/>
+                                <text x="85" y="32" fill="rgba(255,255,255,0.7)" font-size="8" font-weight="700" text-anchor="middle" font-family="Arial" letter-spacing="2">ICLOTH</text>
+                                <rect x="158" y="22" width="10" height="28" rx="1" fill="#922b21"/>
+                                <rect x="163" y="35" width="10" height="6" rx="1" fill="#7b241c"/>
+                                <rect x="5" y="18" width="6" height="10" rx="1" fill="#ff4444"/>
+                                <rect x="5" y="30" width="6" height="8" rx="1" fill="#ff6600" opacity="0.8"/>
+                                <path d="M170 14 L196 14 L210 10 L225 14 L232 24 L232 58 L168 58 L168 24 Z" fill="url(#cabGrad)"/>
+                                <path d="M170 14 L196 14 L210 10 L225 14 L232 24 L232 35 L168 35 L168 24 Z" fill="#d63031" opacity="0.4"/>
+                                <line x1="168" y1="35" x2="232" y2="35" stroke="#c0392b" stroke-width="1"/>
+                                <path d="M210 11 L225 14 L231 23 L209 23 Z" fill="url(#windowGrad)" opacity="0.9"/>
+                                <path d="M213 13 L222 15 L224 19 L212 19 Z" fill="rgba(255,255,255,0.3)"/>
+                                <rect x="172" y="16" width="30" height="17" rx="2" fill="url(#windowGrad)" opacity="0.85"/>
+                                <rect x="173" y="17" width="15" height="8" rx="1" fill="rgba(255,255,255,0.25)"/>
+                                <rect x="162" y="20" width="8" height="5" rx="1" fill="#c0392b"/>
+                                <line x1="166" y1="25" x2="168" y2="30" stroke="#922b21" stroke-width="1.5"/>
+                                <ellipse cx="228" cy="38" rx="4" ry="6" fill="#fffde0" opacity="0.95"/>
+                                <ellipse cx="228" cy="38" rx="2.5" ry="4" fill="#ffffff"/>
+                                <ellipse cx="228" cy="38" rx="6" ry="8" fill="rgba(255,240,150,0.2)"/>
+                                <rect x="225" y="50" width="7" height="5" rx="1" fill="#ff8c00" opacity="0.9"/>
+                                <rect x="226" y="29" width="6" height="18" rx="1" fill="#1a1a1a"/>
+                                <line x1="226" y1="33" x2="232" y2="33" stroke="#333" stroke-width="0.6"/>
+                                <line x1="226" y1="37" x2="232" y2="37" stroke="#333" stroke-width="0.6"/>
+                                <line x1="226" y1="41" x2="232" y2="41" stroke="#333" stroke-width="0.6"/>
+                                <line x1="229" y1="29" x2="229" y2="47" stroke="#333" stroke-width="0.6"/>
+                                <rect x="205" y="4" width="18" height="8" rx="2" fill="#c0392b"/>
+                                <rect x="207" y="5" width="14" height="6" rx="1" fill="#922b21"/>
+                                <line x1="210" y1="5" x2="210" y2="11" stroke="#7b241c" stroke-width="0.8"/>
+                                <line x1="213" y1="5" x2="213" y2="11" stroke="#7b241c" stroke-width="0.8"/>
+                                <line x1="216" y1="5" x2="216" y2="11" stroke="#7b241c" stroke-width="0.8"/>
+                                <line x1="219" y1="5" x2="219" y2="11" stroke="#7b241c" stroke-width="0.8"/>
+                                <rect x="170" y="36" width="26" height="20" rx="1" fill="rgba(0,0,0,0.1)" stroke="#c0392b" stroke-width="0.5"/>
+                                <rect x="194" y="44" width="5" height="3" rx="1" fill="#ccc"/>
+                                <rect x="20" y="56" width="210" height="6" rx="1" fill="#555"/>
+                                <rect x="40" y="56" width="3" height="6" fill="#444"/>
+                                <rect x="80" y="56" width="3" height="6" fill="#444"/>
+                                <rect x="120" y="56" width="3" height="6" fill="#444"/>
+                                <rect x="160" y="56" width="3" height="6" fill="#444"/>
+                                <rect x="195" y="56" width="3" height="6" fill="#444"/>
+                                <circle cx="38" cy="63" r="11" fill="#1a1a1a"/>
+                                <circle cx="38" cy="63" r="9" fill="#222"/>
+                                <circle cx="38" cy="63" r="6" fill="#2a2a2a"/>
+                                <circle cx="38" cy="63" r="5" fill="#444"/>
+                                <circle cx="38" cy="63" r="3" fill="#333"/>
+                                <circle cx="38" cy="63" r="1.5" fill="#555"/>
+                                <circle cx="55" cy="63" r="11" fill="#1a1a1a"/>
+                                <circle cx="55" cy="63" r="9" fill="#222"/>
+                                <circle cx="55" cy="63" r="6" fill="#2a2a2a"/>
+                                <circle cx="55" cy="63" r="5" fill="#444"/>
+                                <circle cx="55" cy="63" r="3" fill="#333"/>
+                                <circle cx="55" cy="63" r="1.5" fill="#555"/>
+                                <circle cx="110" cy="63" r="11" fill="#1a1a1a"/>
+                                <circle cx="110" cy="63" r="9" fill="#222"/>
+                                <circle cx="110" cy="63" r="6" fill="#2a2a2a"/>
+                                <circle cx="110" cy="63" r="5" fill="#444"/>
+                                <circle cx="110" cy="63" r="3" fill="#333"/>
+                                <circle cx="110" cy="63" r="1.5" fill="#555"/>
+                                <circle cx="127" cy="63" r="11" fill="#1a1a1a"/>
+                                <circle cx="127" cy="63" r="9" fill="#222"/>
+                                <circle cx="127" cy="63" r="6" fill="#2a2a2a"/>
+                                <circle cx="127" cy="63" r="5" fill="#444"/>
+                                <circle cx="127" cy="63" r="3" fill="#333"/>
+                                <circle cx="127" cy="63" r="1.5" fill="#555"/>
+                                <circle cx="208" cy="63" r="11" fill="#1a1a1a"/>
+                                <circle cx="208" cy="63" r="9" fill="#222"/>
+                                <circle cx="208" cy="63" r="7" fill="#2a2a2a"/>
+                                <circle cx="208" cy="63" r="5.5" fill="#3a3a3a"/>
+                                <circle cx="208" cy="63" r="3" fill="#444"/>
+                                <circle cx="208" cy="63" r="1.5" fill="#555"/>
+                                <ellipse cx="38" cy="73.5" rx="11" ry="2.5" fill="rgba(0,0,0,0.4)"/>
+                                <ellipse cx="55" cy="73.5" rx="11" ry="2.5" fill="rgba(0,0,0,0.4)"/>
+                                <ellipse cx="110" cy="73.5" rx="11" ry="2.5" fill="rgba(0,0,0,0.4)"/>
+                                <ellipse cx="127" cy="73.5" rx="11" ry="2.5" fill="rgba(0,0,0,0.4)"/>
+                                <ellipse cx="208" cy="73.5" rx="11" ry="2.5" fill="rgba(0,0,0,0.4)"/>
+                                <rect x="0" y="73" width="240" height="2" fill="rgba(255,255,255,0.05)" rx="1"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Success -->
+                    <div id="btn-success" style="position: absolute; inset: 0; background: linear-gradient(135deg, #0d6e3f, #1a9c5b); display: flex; align-items: center; justify-content: center; gap: 8px; transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 40; border-radius: 12px;">
+                        <div class="checkmark" style="width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        </div>
+                        <span data-i18n="order_success_title" style="color: #fff; font-size: 1rem; font-weight: 700;">Order Placed Successfully!</span>
+                    </div>
+                </button>
             </form>
         </div>
     </div>

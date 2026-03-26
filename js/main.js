@@ -1441,13 +1441,59 @@ function setupEventListeners() {
     const closeCheckout = document.getElementById('close-checkout');
     if (closeCheckout) closeCheckout.onclick = () => document.getElementById('checkout-modal').classList.remove('active');
 
+    window.spawnStars = (btn) => {
+        const positions = [
+            { x: '10%', y: '10%', tx: '-60px', ty: '-30px' },
+            { x: '80%', y: '20%', tx: '50px', ty: '-40px' },
+            { x: '30%', y: '50%', tx: '-30px', ty: '30px' },
+            { x: '70%', y: '60%', tx: '40px', ty: '20px' },
+            { x: '50%', y: '10%', tx: '10px', ty: '-50px' }
+        ];
+        positions.forEach(p => {
+            const s = document.createElement('div');
+            s.className = 'star';
+            s.style.left = p.x;
+            s.style.top = p.y;
+            s.style.setProperty('--tx', p.tx);
+            s.style.setProperty('--ty', p.ty);
+            btn.appendChild(s);
+            setTimeout(() => s.remove(), 800);
+        });
+    };
+
     const orderForm = document.getElementById('order-form');
     if (orderForm) {
         orderForm.onsubmit = async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('order-submit-btn');
+            if (submitBtn.dataset.running === 'true') return;
+            submitBtn.dataset.running = 'true';
+            submitBtn.style.cursor = 'default';
             submitBtn.disabled = true;
-            submitBtn.innerText = translations[currentLang].loading;
+
+            const label = document.getElementById('btn-label');
+            const scene = document.getElementById('btn-scene');
+            const truck = document.getElementById('btn-truck');
+            const successOverlay = document.getElementById('btn-success');
+            
+            const resetAnim = () => {
+                if(scene) scene.style.display = 'none';
+                if(truck) {
+                    truck.style.transition = 'none';
+                    truck.style.left = '-280px';
+                    setTimeout(() => { truck.style.transition = 'left 3.2s cubic-bezier(0.25, 0.1, 0.25, 1)'; }, 50);
+                }
+                if(successOverlay) successOverlay.style.transform = 'translateY(100%)';
+                if(label) { label.style.opacity = '1'; label.style.pointerEvents = 'auto'; }
+                submitBtn.style.cursor = 'pointer';
+                submitBtn.disabled = false;
+                submitBtn.dataset.running = 'false';
+            };
+
+            const animStartTime = Date.now();
+            if(label) { label.style.opacity = '0'; label.style.pointerEvents = 'none'; }
+            if(scene) scene.style.display = 'block';
+            setTimeout(() => { if(truck) truck.style.left = '110%'; }, 120);
 
             try {
                 const paymentMethod = document.getElementById('selected-payment').value;
@@ -1463,8 +1509,7 @@ function setupEventListeners() {
                 const receiptFile = document.getElementById('receipt-image').files[0];
                 if (needsReceipt && !receiptFile) {
                     alert(currentLang === 'ar' ? 'الرجاء إرفاق صورة إيصال التحويل' : 'Please upload the transfer receipt image');
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = translations[currentLang].confirm_order;
+                    resetAnim();
                     return;
                 }
 
@@ -1508,8 +1553,7 @@ function setupEventListeners() {
                     } catch(e) {
                         console.error("Image processing error", e);
                         alert(currentLang === 'ar' ? 'حدث خطأ في معالجة الإيصال: ' + e.message : 'Error processing the receipt: ' + e.message);
-                        submitBtn.disabled = false;
-                        submitBtn.innerText = translations[currentLang].confirm_order;
+                        resetAnim();
                         return;
                     }
                 }
@@ -1584,25 +1628,36 @@ function setupEventListeners() {
                 // Open WhatsApp in a new tab silently alongside the success popup
                 window.open(`https://wa.me/${num}?text=${encodeURIComponent(waMsg)}`, '_blank');
                 
-                // 4. Reset state & Show Success
-                appliedCoupon = null;
-                const couponInput = document.getElementById('coupon-code-input');
-                if (couponInput) couponInput.value = '';
-                const couponStatus = document.getElementById('coupon-status-msg');
-                if (couponStatus) couponStatus.style.display = 'none';
+                // 4. Reset state & Show Success via Animation
+                const timeElapsed = Date.now() - animStartTime;
+                const timeToWait = Math.max(0, 3200 - timeElapsed);
 
-                cart = [];
-                updateCartUI();
-                localStorage.setItem('icloth_cart', JSON.stringify(cart));
-                document.getElementById('checkout-modal').classList.remove('active');
-                document.getElementById('success-modal').classList.add('active');
-                orderForm.reset();
+                setTimeout(() => {
+                    if (successOverlay) {
+                        successOverlay.style.transform = 'translateY(0)';
+                        spawnStars(submitBtn);
+                    }
+                    setTimeout(() => {
+                        resetAnim();
+                        appliedCoupon = null;
+                        const couponInput = document.getElementById('coupon-code-input');
+                        if (couponInput) couponInput.value = '';
+                        const couponStatus = document.getElementById('coupon-status-msg');
+                        if (couponStatus) couponStatus.style.display = 'none';
+
+                        cart = [];
+                        updateCartUI();
+                        localStorage.setItem('icloth_cart', JSON.stringify(cart));
+                        document.getElementById('checkout-modal').classList.remove('active');
+                        document.getElementById('success-modal').classList.add('active');
+                        orderForm.reset();
+                    }, 2100);
+                }, timeToWait);
+
             } catch (err) {
                 console.error("Unhanded checkout error:", err);
                 alert(currentLang === 'ar' ? "حدث خطأ أثناء معالجة الطلب! " + err.message : "An error occurred while processing the order! " + err.message);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = translations[currentLang].confirm_order;
+                resetAnim();
             }
         };
     }
