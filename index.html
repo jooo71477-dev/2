@@ -218,6 +218,11 @@
             <!-- Right Icons -->
             <div class="nav-icons"
                 style="display: flex; gap: 20px; align-items: center; flex: 1; justify-content: flex-end; z-index: 11;">
+                <a href="#" id="wishlist-btn" onclick="window.toggleWishlistMenu(); return false;" class="wishlist-icon"
+                    aria-label="View Wishlist" style="font-size: 1.6rem !important; position: relative; margin: 0 5px;">
+                    <i class="far fa-heart"></i>
+                    <span class="wishlist-count" style="position: absolute; top: -8px; right: -10px; background: #ff4d4d; color: #fff; font-size: 0.7rem; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid var(--bg-color); font-weight: 800; display: none;">0</span>
+                </a>
                 <a href="#" id="my-orders-btn" onclick="window.openMyOrdersModal(); return false;" class="nav-login-btn"
                     aria-label="View My Orders" style="font-size: 1.6rem !important;">
                     <i class="fas fa-user-circle"></i>
@@ -562,6 +567,21 @@
                 </div>
             </div>
             <button class="checkout-btn" data-i18n="checkout">Checkout</button>
+        </div>
+    </div>
+    
+    <!-- Wishlist Sidebar -->
+    <div id="wishlist-sidebar" class="cart-sidebar wishlist-sidebar">
+        <div class="cart-header">
+            <h3 data-i18n="wishlist">Favorites</h3>
+            <button id="close-wishlist" aria-label="Close Wishlist"
+                onclick="window.toggleWishlistMenu(); return false;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cart-items" id="wishlist-items-list">
+            <p class="empty-msg">Your favorites list is empty</p>
+        </div>
+        <div class="cart-footer">
+            <button class="btn btn-primary" style="width: 100%;" onclick="window.toggleWishlistMenu(); document.getElementById('products-section').scrollIntoView({behavior: 'smooth'});">Continue Shopping</button>
         </div>
     </div>
 

@@ -17,6 +17,10 @@ let activeAITranslations = new Set();
 let activeCategory = "all";
 let remoteProducts = []; // To store products from Firebase
 let appliedCoupon = null;
+let wishlist = [];
+try {
+    wishlist = JSON.parse(localStorage.getItem('icloth_wishlist') || '[]');
+} catch (e) { wishlist = []; }
 
 const governorates_data = {
     en: ["Cairo", "Giza", "Alexandria", "Dakahlia", "Red Sea", "Beheira", "Faiyum", "Gharbia", "Ismailia", "Monufia", "Minya", "Qalyubia", "New Valley", "Suez", "Sharqia", "Damietta", "Port Said", "South Sinai", "Kafr El Sheikh", "Matrouh", "Luxor", "Qena", "North Sinai", "Sohag", "Beni Suef", "Asyut", "Aswan"],
@@ -104,7 +108,8 @@ const translations = {
         collection_free: "Collection in-store FREE",
         you_may_also_like: "YOU MAY ALSO LIKE",
         shipping_policy: "Shipping Policy",
-        returns_policy: "Returns & Exchange Policy"
+        returns_policy: "Returns & Exchange Policy",
+        wishlist: "Favorites"
     },
     ar: {
         home: "الرئيسية",
@@ -185,6 +190,7 @@ const translations = {
         add_to_basket: "أضف للسلة",
         collection_free: "التجميع من المتجر مجاناً",
         you_may_also_like: "منتجات قد تعجبك",
+        wishlist: "المفضلة",
         shipping_policy: "سياسة الشحن",
         returns_policy: "سياسة الاستبدال والارجاع"
     }
@@ -1795,11 +1801,21 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
         const catName = p.category || "";
         const seoAlt = `${translatedName} ${catName} - ${currentLang === 'ar' ? 'آي كلوث' : 'iCloth'}`;
 
+        const isInW = wishlist.includes(p.id);
+        const translatedProduct = (currentLang === 'ar' ? 'منتج' : 'Product');
+
         return `
         <div class="product-card" data-product-id="${p.id}" data-current-img="0" data-color-idx="${p.explicitMainImage ? '-1' : '0'}" onclick="openSizeModal('${p.id}')">
             <div class="product-img-wrap" style="position:relative; overflow:hidden;">
                 ${p.badge ? `<span class="badge-label" data-translate-cache="${p.badge}">${translatedBadge}</span>` : ''}
                 ${p.isBestSeller ? `<div class="best-seller-badge" title="${translations[currentLang].best_seller || 'Best Seller'}"><i class="fas fa-fire"></i></div>` : ''}
+                
+                <button class="wishlist-toggle-btn ${isInW ? 'active' : ''}" 
+                    onclick="event.stopPropagation(); window.toggleWishlist('${p.id}', this)" 
+                    aria-label="Add to Favorites">
+                    <i class="${isInW ? 'fas' : 'far'} fa-heart"></i>
+                </button>
+
                 <img class="product-card-main-img" src="${mainImg}" loading="lazy" alt="${seoAlt}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'400\\'><rect width=\\'400\\' height=\\'400\\' fill=\\'%23222\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-family=\\'Arial\\' font-size=\\'24\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>No Image</text></svg>'">
                 
                 <div class="card-overlay-name" data-translate-cache="${p.name}">${translatedName}</div>
@@ -2930,6 +2946,85 @@ window.applyCouponCode = applyCouponCode;
 window.toggleSidebarMenu = toggleSidebarMenu;
 window.applySideFilter = applySideFilter;
 window.applyBestSellerFilter = applyBestSellerFilter;
+
+// --- 💖 WISHLIST SYSTEM ---
+window.toggleWishlist = (id, btn) => {
+    const idx = wishlist.indexOf(id);
+    if (idx === -1) {
+        wishlist.push(id);
+        if (btn) {
+            btn.classList.add('active');
+            btn.querySelector('i').className = 'fas fa-heart';
+        }
+        showToast(currentLang === 'ar' ? '❤️ تمت الإضافة للمفضلة' : '❤️ Added to favorites');
+    } else {
+        wishlist.splice(idx, 1);
+        if (btn) {
+            btn.classList.remove('active');
+            btn.querySelector('i').className = 'far fa-heart';
+        }
+        showToast(currentLang === 'ar' ? '💔 تمت الإزالة من المفضلة' : '💔 Removed from favorites');
+    }
+    localStorage.setItem('icloth_wishlist', JSON.stringify(wishlist));
+    updateWishlistUI();
+};
+
+window.toggleWishlistMenu = () => {
+    const menu = document.getElementById('wishlist-sidebar');
+    const overlay = document.getElementById('cart-overlay');
+    if (menu && overlay) {
+        const isActive = menu.classList.toggle('active');
+        overlay.classList.toggle('active');
+        if (isActive) renderWishlist();
+    }
+};
+
+function updateWishlistUI() {
+    const countBadge = document.querySelector('.wishlist-count');
+    if (countBadge) {
+        countBadge.innerText = wishlist.length;
+        countBadge.style.display = wishlist.length > 0 ? 'flex' : 'none';
+    }
+    const headerHeart = document.querySelector('#wishlist-btn i');
+    if (headerHeart) {
+        headerHeart.className = wishlist.length > 0 ? 'fas fa-heart' : 'far fa-heart';
+        if (wishlist.length > 0) headerHeart.style.color = '#ff4d4d';
+        else headerHeart.style.color = '';
+    }
+}
+
+function renderWishlist() {
+    const list = document.getElementById('wishlist-items-list');
+    if (!list) return;
+
+    if (wishlist.length === 0) {
+        list.innerHTML = `<p class="empty-msg">${currentLang === 'ar' ? 'قائمة المفضلة فارغة' : 'Your favorites list is empty'}</p>`;
+        return;
+    }
+
+    const favoriteProducts = remoteProducts.filter(p => wishlist.includes(p.id));
+    list.innerHTML = favoriteProducts.map(p => {
+        const translatedName = (currentLang === 'ar' && p.name_ar) ? p.name_ar : translateText(p.name);
+        const img = p.image || '';
+        return `
+            <div class="cart-item" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 15px 0;">
+                <img src="${getOptimizedImg(img, 150)}" alt="${translatedName}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 10px;">
+                <div class="cart-item-info" style="flex: 1; margin: 0 15px;">
+                    <h4 style="font-size: 0.95rem; margin-bottom: 5px;">${translatedName}</h4>
+                    <div style="color: var(--primary); font-weight: 800; font-size: 0.85rem;">${p.price} ${translations[currentLang].currency}</div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="openSizeModal('${p.id}'); toggleWishlistMenu();" style="background: var(--primary); color: #000; border: none; width: 35px; height: 35px; border-radius: 8px; cursor: pointer;"><i class="fas fa-shopping-bag"></i></button>
+                    <button onclick="window.toggleWishlist('${p.id}')" style="background: rgba(255,77,77,0.1); color: #ff4d4d; border: 1px solid rgba(255,77,77,0.2); width: 35px; height: 35px; border-radius: 8px; cursor: pointer;"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Global update for load
+setTimeout(updateWishlistUI, 3000);
+
 
 // Execute Initialization
 document.addEventListener('DOMContentLoaded', initAll);
