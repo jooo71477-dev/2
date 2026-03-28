@@ -711,22 +711,63 @@ window.setQuickColor = (el, name) => {
 
 window.toggleColorPicker = (btn) => {
     const parent = btn.closest('.form-group');
-    const picker = parent.querySelector('.color-picker-grid');
-    if (picker) {
-        const isVisible = picker.style.display === 'flex';
-        // Close all other pickers first
-        document.querySelectorAll('.color-picker-grid').forEach(p => p.style.display = 'none');
-        picker.style.display = isVisible ? 'none' : 'flex';
+    let picker = parent.querySelector('.color-picker-grid');
+    
+    if (!picker) {
+        // Create the picker dynamically if it doesn't exist
+        picker = document.createElement('div');
+        picker.className = 'color-picker-grid';
+        picker.style.cssText = `
+            display: none; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            background: #111; 
+            padding: 20px; 
+            border: 1px solid var(--primary); 
+            border-radius: 12px;
+            margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            width: 100%;
+            z-index: 100;
+        `;
         
-        // Focus search input if opening
-        if (!isVisible) {
-            const searchInput = picker.querySelector('.color-search-input');
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.focus();
-                window.filterAdminColors(searchInput);
-            }
-        }
+        // Add search input inside picker
+        const searchUI = `
+            <div style="width: 100%; margin-bottom: 20px;">
+                <input type="text" class="color-search-input" placeholder="Search 400+ colors..." 
+                       style="width: 100%; padding: 12px; border-radius: 8px; background: #000; border: 1px solid #333; color: #fff; font-family: 'Cairo';"
+                       oninput="window.filterAdminColors(this)">
+            </div>
+            <div class="swatches-container" style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">
+                ${ColorSystem.registry.map(c => `
+                    <div class="color-swatch-item-admin" 
+                         data-name="${c.nameAr}" 
+                         data-en="${c.nameEn}" 
+                         onclick="window.setQuickColor(this, '${c.nameAr}')"
+                         style="width: 75px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; transition: 0.2s; padding: 5px; border-radius: 8px;">
+                        
+                        <div style="width: 45px; height: 45px; background: ${c.hex}; border-radius: 8px; border: 2px solid rgba(255,255,255,0.1); transition: 0.2s;"></div>
+                        
+                        <span style="font-size: 0.65rem; color: #ccc; text-align: center; font-family: 'Cairo'; line-height: 1.2; word-break: break-all; width: 100%;">
+                            ${c.nameAr}
+                        </span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        picker.innerHTML = searchUI;
+        parent.appendChild(picker);
+    }
+
+    const isVisible = picker.style.display === 'flex' || picker.style.display === 'block';
+    document.querySelectorAll('.color-picker-grid').forEach(p => p.style.display = 'none');
+    picker.style.display = isVisible ? 'none' : 'block';
+    
+    if (!isVisible) {
+        const input = picker.querySelector('.color-search-input');
+        if (input) { input.value = ''; input.focus(); }
     }
 };
 
@@ -739,7 +780,7 @@ window.filterAdminColors = (input) => {
         const name = s.getAttribute('data-name').toLowerCase();
         const en = s.getAttribute('data-en').toLowerCase();
         if (name.includes(query) || en.includes(query) || query === '') {
-            s.style.display = 'block';
+            s.style.display = 'flex';
         } else {
             s.style.display = 'none';
         }
