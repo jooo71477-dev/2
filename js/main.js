@@ -672,7 +672,7 @@ function updateThemeIcon(theme) {
 }
 
 // DOM Elements
-let menContainer, cartBtn, closeCartBtn, cartSidebar, cartOverlay, loader, navbar, sizeModal, closeModal, modalProductName, modalProductPrice, mobileMenuBtn, navLinks, themeToggle, subFiltersContainer;
+let menContainer, cartBtn, closeCartBtn, cartSidebar, cartOverlay, loader, navbar, sizeModal, closeModal, modalProductName, modalProductPrice, colorContainer, mobileMenuBtn, navLinks, themeToggle, subFiltersContainer;
 
 const hideLoader = () => {
     const loaderEl = document.getElementById('loader');
@@ -909,6 +909,7 @@ function initElements() {
     closeModal = document.getElementById('close-modal');
     modalProductName = document.getElementById('modal-product-name');
     modalProductPrice = document.getElementById('modal-product-price');
+    colorContainer = document.getElementById('modal-color-options');
     mobileMenuBtn = document.querySelector('.mobile-menu-btn');
     navLinks = document.querySelector('.nav-links');
     themeToggle = document.getElementById('theme-toggle');
@@ -2045,12 +2046,20 @@ window.closeGalleryPanel = () => {
 window.openSizeModal = (id) => {
     const p = remoteProducts.find(prod => prod.id == id);
     if (!p) return;
+    
+    // Define UI Elements
+    const sizeModal = document.getElementById('size-modal');
+    const colorContainer = document.getElementById('modal-color-options');
+    const modalProductName = document.getElementById('modal-product-name');
+    
     selectedProductForSize = p;
     const firstVariant = p.colorVariants && p.colorVariants.length > 0 ? p.colorVariants[0] : null;
     selectedColor = firstVariant ? firstVariant.name : '';
 
-    modalProductName.innerText = translateText(p.name);
-    modalProductName.setAttribute('data-translate-cache', p.name);
+    if (modalProductName) {
+        modalProductName.innerText = translateText(p.name);
+        modalProductName.setAttribute('data-translate-cache', p.name);
+    }
     
     // 🧭 Update Breadcrumbs
     const bCat = document.getElementById('breadcrumb-cat');
@@ -2127,26 +2136,28 @@ window.openSizeModal = (id) => {
     const colorVariantNames = (p.colorVariants || []).map(v => v.name);
     const sortedColorNames = ColorSystem.sortColors(colorVariantNames, 'hue');
     
-    if (sortedColorNames.length > 0) {
-        colorContainer.innerHTML = sortedColorNames.map(name => {
-            const v = p.colorVariants.find(x => x.name === name);
-            const i = p.colorVariants.indexOf(v);
-            return `
-                <div class="color-swatch-item ${v.name === selectedColor ? 'selected' : ''}" 
-                     onclick="modalSelectColor('${v.name}', this)" 
-                     style="background: ${ColorSystem.getHex(v.name)}" 
-                     title="${ColorSystem.translate(v.name, currentLang)}"></div>
-            `;
-        }).join('');
-    } else {
-        colorContainer.innerHTML = '';
+    if (colorContainer) {
+        if (sortedColorNames.length > 0) {
+            colorContainer.innerHTML = sortedColorNames.map(name => {
+                const v = p.colorVariants.find(x => x.name === name);
+                const i = p.colorVariants.indexOf(v);
+                return `
+                    <div class="color-swatch-item ${v.name === selectedColor ? 'selected' : ''}" 
+                         onclick="modalSelectColor('${v.name}', this)" 
+                         style="background: ${ColorSystem.getHex(v.name)}" 
+                         title="${ColorSystem.translate(v.name, currentLang)}"></div>
+                `;
+            }).join('');
+        } else {
+            colorContainer.innerHTML = '';
+        }
     }
 
     // Reset selected size
     window._selectedModalSize = null;
 
     renderModalSizes(p, selectedColor);
-    sizeModal.classList.add('active');
+    if (sizeModal) sizeModal.classList.add('active');
 
     // --- Size Chart Handling ---
     const chartContainer = document.getElementById('size-chart-container');
