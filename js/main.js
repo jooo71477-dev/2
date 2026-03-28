@@ -15,6 +15,7 @@ let selectedColor = null;
 let aiTranslationCache = JSON.parse(localStorage.getItem('icloth_ai_cache') || '{}');
 let activeAITranslations = new Set();
 let activeCategory = "all";
+const BOSTA_PROXY_URL = "https://bosta-proxy.jooo71477.workers.dev";
 let remoteProducts = []; // To store products from Firebase
 let appliedCoupon = null;
 let wishlist = [];
@@ -2728,15 +2729,25 @@ async function loadMyOrders() {
                         <span style="font-size:0.85rem; opacity:0.7;">${o.createdAt ? o.createdAt.toDate().toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US') : '---'}</span>
                         <span class="order-status" style="background: #2196F3; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem;">${o.status || (currentLang === 'ar' ? 'جديد' : 'New')}</span>
                     </div>
-                    <div style="margin: 10px 0;">
-                        ${o.items ? o.items.map(i => `<div style="font-size:0.9rem; margin: 5px 0;">• ${i.name} × ${i.quantity}</div>`).join('') : (currentLang === 'ar' ? 'لا توجد منتجات' : 'No items')}
+                    <div class="tracking-container" id="tracking-${o.id}" style="margin: 15px 0;">
+                        ${o.trackingNumber ? `
+                            <div class="tracking-loader" style="font-size: 0.75rem; color: var(--primary); opacity: 0.8; text-align: center; padding: 10px;">
+                                <i class="fas fa-satellite-dish fa-spin"></i> ${currentLang === 'ar' ? 'جاري تتبع الشحنة...' : 'Tracking shipment...'}
+                            </div>
+                        ` : ''}
                     </div>
-                    <div style="margin-top:12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-weight:bold; color: var(--primary);">
-                        ${translations[currentLang].total} ${o.total || 0} ${translations[currentLang].currency}
+                    <div style="margin-top:12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight:bold; color: var(--primary);">${translations[currentLang].total} ${o.total || 0} ${translations[currentLang].currency}</span>
+                        ${o.trackingNumber ? `<span style="font-size: 0.7rem; opacity: 0.5;">#${o.trackingNumber}</span>` : ''}
                     </div>
                 </div>
             `;
         }).join('');
+
+        // 🚀 Fetch real-time tracking for each order
+        orders.forEach(o => {
+            if (o.trackingNumber) getLiveTrackingStatus(o.id, o.trackingNumber);
+        });
 
         console.log("✅ تم عرض الطلبات بنجاح");
 
@@ -2746,6 +2757,99 @@ async function loadMyOrders() {
     }
 }
 
+
+async function getLiveTrackingStatus(orderId, trackingNumber) {
+    const container = document.getElementById(`tracking-${orderId}`);
+    if (!container) return;
+
+    try {
+        const response = await fetch(BOSTA_PROXY_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                endpoint: `/deliveries/${trackingNumber}/tracking-updates`,
+                method: 'GET'
+            })
+        });
+
+        // 🛡️ Fallback: If Bosta returns error (Order deleted from Bosta), use Firestore's last saved status
+        if (!response.ok) throw new Error("Bosta data unavailable");
+
+        const data = await response.json();
+        const updates = data.tracking ? data.tracking.map(u => u.state) : [];
+        const currentState = data.state || (updates.length > 0 ? updates[updates.length - 1] : 'PENDING');
+
+        // Map Bosta State to Progress Percentage & Icon
+        let progress = 10;
+        let statusText = currentLang === 'ar' ? 'تم استلام طلبك' : 'Order Received';
+        
+        const stateMap = {
+            'PICKUP_REQUESTED': { p: 25, ar: 'جاري تسليم الشحنة للمندوب', en: 'Pickup Requested' },
+            'PICKED_UP': { p: 50, ar: 'تم استلام الشحنة - جاري الفرز', en: 'Picked Up' },
+            'IN_TRANSIT': { p: 75, ar: 'الشحنة في الطريق إليك', en: 'In Transit' },
+            'OUT_FOR_DELIVERY': { p: 90, ar: 'المندوب في طريقه لموقعك', en: 'Out for Delivery' },
+            'DELIVERED': { p: 100, ar: 'تم التسليم بنجاح ✅', en: 'Delivered' },
+            'CANCELED': { p: 0, ar: 'تم إلغاء الشحنة ❌', en: 'Canceled' },
+            'RETURNED': { p: 0, ar: 'تم إرجاع الشحنة', en: 'Returned' }
+        };
+
+        if (stateMap[currentState]) {
+            progress = stateMap[currentState].p;
+            statusText = currentLang === 'ar' ? stateMap[currentState].ar : stateMap[currentState].en;
+        }
+
+        // 💾 Update Firestore Snapshot for durability
+        db.collection('orders').doc(orderId).update({
+            lastKnownBostaState: currentState,
+            lastKnownBostaProgress: progress,
+            lastKnownBostaTextAr: stateMap[currentState]?.ar,
+            lastKnownBostaTextEn: stateMap[currentState]?.en
+        }).catch(() => {});
+
+        renderProgressBar(container, progress, statusText);
+
+    } catch (err) {
+        console.warn(`⚠️ Bosta sync failed for ${trackingNumber}, falling back to persistence.`);
+        
+        // 🏗️ Fallback Logic: Try to find last known snapshot in Firestore order data
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        if (orderDoc.exists) {
+            const o = orderDoc.data();
+            if (o.lastKnownBostaProgress !== undefined) {
+                const text = currentLang === 'ar' ? o.lastKnownBostaTextAr : o.lastKnownBostaTextEn;
+                renderProgressBar(container, o.lastKnownBostaProgress, text || (currentLang === 'ar' ? 'الحالة المحفوظة' : 'Saved Status'));
+            } else {
+                // If NO snapshot ever saved, fallback to generic order status bar
+                renderGenericStatus(container, o.status);
+            }
+        }
+    }
+}
+
+function renderGenericStatus(container, status) {
+    // Basic status-based bar for manual orders or failed hits
+    let p = 15;
+    let txt = currentLang === 'ar' ? 'تم استلام الطلب' : 'Received';
+    if (status === 'Processing' || status === 'جاري التجهيز') { p = 40; txt = currentLang === 'ar' ? 'قيد التجهيز' : 'Processing'; }
+    if (status === 'Shipped' || status === 'تم الشحن') { p = 75; txt = currentLang === 'ar' ? 'تم الشحن' : 'Shipped'; }
+    if (status === 'Delivered' || status === 'تم التسليم') { p = 100; txt = currentLang === 'ar' ? 'تم التسليم ✅' : 'Delivered'; }
+    
+    renderProgressBar(container, p, txt);
+}
+
+function renderProgressBar(container, progress, text) {
+    const isError = progress === 0;
+    const barColor = isError ? '#ff4d4d' : 'var(--primary)';
+    
+    container.innerHTML = `
+        <div style="margin-bottom: 8px; font-size: 0.75rem; font-weight: 900; color: ${barColor}; display: flex; justify-content: space-between;">
+            <span>${text}</span>
+            <span>${progress}%</span>
+        </div>
+        <div class="progress-track" style="height: 8px; width: 100%; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+            <div class="progress-fill" style="height: 100%; width: ${progress}%; background: linear-gradient(90deg, ${barColor}, #fff); border-radius: 10px; transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></div>
+        </div>
+    `;
+}
 
 function closeSuccessModal() {
     const modal = document.getElementById('success-modal');
