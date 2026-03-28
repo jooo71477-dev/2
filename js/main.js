@@ -1833,7 +1833,7 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
             <div class="product-img-wrap" style="position:relative; overflow:hidden;">
                 ${p.isNew ? `<span class="badge-label" style="position: absolute; top: 12px; left: 12px; background: var(--primary); color: #000; border: none; font-weight: 900; z-index: 10; padding: 4px 8px; font-size: 0.72rem; letter-spacing: 0.5px;">NEW</span>` : ''}
                 
-                ${p.status === 'best-seller' ? '<div class="best-seller-badge"><i class="fas fa-fire"></i></div>' : ''}
+                ${p.isBestSeller === true ? '<div class="best-seller-badge"><i class="fas fa-fire"></i></div>' : ''}
 
                 <img class="product-card-main-img" src="${mainImg}" loading="lazy" alt="${seoAlt}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'400\\'><rect width=\\'400\\' height=\\'400\\' fill=\\'%23222\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-family=\\'Arial\\' font-size=\\'24\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>No Image</text></svg>'">
                 
@@ -2162,6 +2162,15 @@ window.openSizeModal = (id) => {
     if (bCat && bName) {
         bCat.innerText = p.category || (currentLang === 'ar' ? 'عام' : 'General');
         bName.innerText = translateText(p.name);
+    }
+    
+    // 🔥 Best Seller Badge & Label in Modal
+    const modalBadgeContainer = document.getElementById('modal-badge-container');
+    if (modalBadgeContainer) {
+        let badgeHTML = '';
+        if (p.isBestSeller === true) badgeHTML += '<div class="best-seller-badge"><i class="fas fa-fire"></i></div>';
+        if (p.isNew) badgeHTML += `<span class="badge-label" style="position: absolute; top: 12px; left: 12px; background: var(--primary); color: #000; border: none; font-weight: 900; z-index: 10; padding: 4px 8px; font-size: 0.72rem; letter-spacing: 0.5px;">NEW</span>`;
+        modalBadgeContainer.innerHTML = badgeHTML;
     }
     
     const colorLabelSpan = document.getElementById('selected-color-name');
