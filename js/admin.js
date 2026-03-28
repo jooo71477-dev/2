@@ -771,7 +771,7 @@ function buildVariantHTML(name, images, sizes, stock, thumbnail) {
             <div class="form-group" style="position:relative;">
                 <label>اسم اللون (مثلاً: أسود)</label>
                 <div style="display:flex; gap:8px;">
-                    <input type="text" class="v-name" value="${name}" placeholder="أسود، أزرق، أحمر..." required list="color-suggestions">
+                    <input type="text" class="v-name" value="${name}" placeholder="..." required list="color-suggestions">
                     ${colorDatalist}
                     <button type="button" class="btn-mini" onclick="toggleColorPicker(this)" style="padding:0 12px; height:42px; display:flex; align-items:center; justify-content:center; background:rgba(212,175,55,0.1); border-color:var(--primary); color:var(--primary);">
                         <i class="fas fa-palette"></i>
