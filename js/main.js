@@ -205,36 +205,7 @@ const fashionTranslations = {
     'coat': 'بالطو', 'shorts': 'شورت', 'acc': 'إكسسوارات', 'accessories': 'إكسسوارات'
 };
 
-const colorTranslations = {
-    'أسود': 'Black', 'أبيض': 'White', 'أوف وايت': 'Off-White', 'سكري': 'Creamy',
-    'كريمي': 'Creamy', 'عاجي': 'Ivory', 'شامبين': 'Champagne', 'لؤلؤي': 'Pearl',
-    'رمادي': 'Grey', 'رصاصي': 'Grey', 'فحمي': 'Charcoal', 'رصاصي فاتح': 'Light Grey',
-    'رصاصي غامق': 'Dark Grey', 'بني': 'Brown', 'هافان': 'Havana', 'جملي': 'Camel',
-    'كافيه': 'Cafe', 'طحيني': 'Tahini', 'بيج': 'Beige', 'رملي': 'Sand',
-    'خردلي': 'Mustard', 'كحلي': 'Navy', 'أزرق': 'Blue', 'أزرق ملكي': 'Royal Blue',
-    'سماوي': 'Sky Blue', 'لبني': 'Light Blue', 'تركواز': 'Turquoise', 'بترولي': 'Petrol',
-    'جنزاري': 'Teal', 'أزرق فاتح': 'Light Blue', 'أزرق غامق': 'Dark Blue',
-    'أخضر': 'Green', 'زيتي': 'Olive', 'زيتوني': 'Olive', 'بستاج': 'Pistachio',
-    'مينت جرين': 'Mint Green', 'فسفوري': 'Neon Green', 'أخضر فاتح': 'Light Green',
-    'أخضر غامق': 'Dark Green', 'أخضر نعناعي': 'Mint Green', 'أخضر تفاحي': 'Apple Green',
-    'أحمر': 'Red', 'نبيتي': 'Burgundy', 'طوبي': 'Brick', 'خمري': 'Wine',
-    'برتقالي': 'Orange', 'سيمون': 'Salmon', 'مشمشي': 'Apricot', 'خوخي': 'Peach',
-    'وردي': 'Pink', 'بينك': 'Pink', 'فوشيا': 'Fuchsia', 'موف': 'Mauve',
-    'بنفسجي': 'Purple', 'ليلكي': 'Lilac', 'أرجواني': 'Purple', 'لافندر': 'Lavender',
-    'أصفر': 'Yellow', 'مستردة': 'Mustard', 'ذهبي': 'Gold', 'فضي': 'Silver',
-    'فيروزي': 'Turquoise', 'مرجاني': 'Coral', 'بصلي': 'Onion', 'عسلي': 'Honey',
-    'ليموني': 'Lemon', 'تلجي': 'Ice', 'برونزي': 'Bronze', 'نحاسي': 'Copper',
-    'كاكي': 'Khaki', 'مارون': 'Maroon', 'ياقوتي': 'Ruby', 'زمردي': 'Emerald',
-    'نيلي': 'Indigo', 'بني محروق': 'Dark Brown', 'بترولي فاتح': 'Light Petrol',
-    'أزرق بترولي': 'Petrol Blue', 'رمادي أزرق': 'Blue Grey', 'لبني فاتح': 'Pale Blue',
-    'ذهبي وردي': 'Rose Gold', 'فضة معتقة': 'Antique Silver', 'أخضر عسكري': 'Army Green',
-    'برتقالي محروق': 'Burnt Orange', 'أصفر كناري': 'Canary Yellow', 'أزرق كبالت': 'Cobalt Blue',
-    'نيلي غامق': 'Dark Indigo', 'بنفسجي باهت': 'Pale Purple', 'أحمر مرجاني': 'Coral Red',
-    'أخضر بحري': 'Sea Green', 'رصاصي مزرق': 'Slate Grey', 'بني فاتح': 'Light Brown',
-    'بني غامق': 'Dark Brown', 'ورد جوري': 'Rose', 'سماوي صافي': 'Clear Sky',
-    'أخضر نيون': 'Neon Green', 'أصفر نيون': 'Neon Yellow', 'برتقالي نيون': 'Neon Orange',
-    'بينك نيون': 'Neon Pink', 'برقوقي': 'Plum', 'توتي': 'Berry'
-};
+// Color System is now handled by ColorSystem class in colors_system.js
 
 const toSlug = (text) => {
     if (!text) return "";
@@ -258,16 +229,9 @@ function translateText(text) {
         if (translations[currentLang][cleanText.toLowerCase()]) return translations[currentLang][cleanText.toLowerCase()];
     }
 
-    // 2. Handle Color Transitions (Ar -> En or En -> Ar)
-    if (currentLang === 'en' && colorTranslations[cleanText]) {
-        return colorTranslations[cleanText];
-    }
-    if (currentLang === 'ar') {
-        // Find if English word exists in colorTranslations values and return Arabic key
-        for (const [ar, en] of Object.entries(colorTranslations)) {
-            if (en.toLowerCase() === cleanText.toLowerCase()) return ar;
-        }
-    }
+    // 2. Handle Color Translations (via ColorSystem)
+    const colorTranslation = typeof ColorSystem !== 'undefined' ? ColorSystem.translate(cleanText, currentLang) : null;
+    if (colorTranslation && colorTranslation !== cleanText) return colorTranslation;
     
     // 3. Fashion Dictionary (Product types)
     if (currentLang === 'ar' && fashionTranslations[cleanText.toLowerCase()]) {
@@ -1812,9 +1776,14 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
 
         const hasMultipleImages = firstImages.length > 1;
         
-        // Revised Color Swatches for Card (More like the reference)
-        const colorSwatches = (p.colorVariants && p.colorVariants.length > 0)
-            ? `<div class="card-color-swatches">${p.colorVariants.slice(0, 4).map((v, i) => `<button class="card-color-dot ${i === 0 && !p.explicitMainImage ? 'active' : ''}" title="${v.name}" onclick="event.stopPropagation(); cardSelectColor('${p.id}', ${i}, this)" style="background:${getColorHex(v.name)};"></button>`).join('')}${p.colorVariants.length > 4 ? `<span class="color-more-count">+${p.colorVariants.length - 4}</span>` : ''}</div>`
+        // Revised Color Swatches for Card (Sorted by Hue)
+        let variants = (p.colorVariants && p.colorVariants.length > 0) ? [...p.colorVariants] : [];
+        if (variants.length > 0 && typeof ColorSystem !== 'undefined') {
+            variants = ColorSystem.sortColors(variants.map(v => v.name), 'hue').map(name => variants.find(v => v.name === name));
+        }
+
+        const colorSwatches = variants.length > 0
+            ? `<div class="card-color-swatches">${variants.slice(0, 4).map((v, i) => `<button class="card-color-dot ${i === 0 && !p.explicitMainImage ? 'active' : ''}" title="${ColorSystem.translate(v.name, currentLang)}" onclick="event.stopPropagation(); cardSelectColor('${p.id}', ${p.colorVariants.indexOf(v)}, this)" style="background:${ColorSystem.getHex(v.name)};"></button>`).join('')}${variants.length > 4 ? `<span class="color-more-count">+${variants.length - 4}</span>` : ''}</div>`
             : '';
 
         const mainImgRaw = firstImages[0] || '';
@@ -1870,85 +1839,8 @@ window._galleryCurrentProduct = null;
 window._galleryColorIdx = 0;
 window._galleryImgIdx = 0;
 
-function getColorHex(name) {
-    const map = {
-        // --- الأساسيات (Basics) ---
-        'أسود': '#000000', 'black': '#000000', 'coal': '#36454f', 'charcoal': '#36454f', 'jet': '#343434',
-        'أبيض': '#ffffff', 'white': '#ffffff', 'snow': '#fffafa', 'ivory': '#fffff0', 'pearl': '#f0ead6',
-        'رمادي': '#808080', 'grey': '#808080', 'gray': '#808080', 'silver': '#c0c0c0', 'فضي': '#c0c0c0',
-        'platinum': '#e5e4e2', 'ash': '#b2beb5', 'slate': '#708090', 'lead': '#212121',
-
-        // --- درجات البني والبيج (Browns & Beiges) ---
-        'بني': '#4b2e2a', 'brown': '#4b2e2a', 'chocolate': '#7b3f00', 'شوكولاتة': '#7b3f00',
-        'قهوة': '#6f4e37', 'coffee': '#6f4e37', 'caramel': '#af6f09', 'كراميل': '#af6f09',
-        'بيج': '#f5f5dc', 'beige': '#f5f5dc', 'كريمي': '#fffdd0', 'cream': '#fffdd0',
-        'أوف وايت': '#f5f5f5', 'offwhite': '#f5f5f5', 'off-white': '#f5f5f5',
-        'جملي': '#c19a6b', 'camel': '#c19a6b', 'هافان': '#945d31', 'havana': '#945d31',
-        'tan': '#d2b48c', 'khaki': '#c3b091', 'كاكي': '#c3b091', 'sand': '#c2b280', 'رملي': '#c2b280',
-        'mocha': '#967969', 'موكاتينو': '#967969', 'latte': '#c5a582', 'تايب': '#483c32', 'taupe': '#483c32',
-        'نود': '#e3bc9a', 'nude': '#e3bc9a', 'skin': '#fcd0b4', 'بشرة': '#fcd0b4',
-
-        // --- الأحمر والدرجات الدافئة (Reds & Warm Tones) ---
-        'أحمر': '#ff0000', 'red': '#ff0000', 'ruby': '#e0115f', 'crimson': '#dc143c',
-        'نبيتي': '#800020', 'burgundy': '#800020', 'wine': '#722f37', 'maroon': '#800000', 'مارون': '#800000',
-        'بوردو': '#800020', 'bordeaux': '#800020', 'cherry': '#d2042d', 'كرزي': '#d2042d',
-        'برتقالي': '#ffa500', 'orange': '#ffa500', 'rust': '#b7410e', 'صدأ': '#b7410e',
-        'مرجاني': '#ff7f50', 'coral': '#ff7f50', 'peach': '#ffdab9', 'خوخي': '#ffdab9',
-        'مشمشي': '#fbceb1', 'apricot': '#fbceb1', 'terracotta': '#e2725b',
-
-        // --- الوردي (Pinks) ---
-        'روز': '#ff66cc', 'pink': '#ff66cc', 'بينك': '#ff66cc', 'fuchsia': '#ff00ff', 'فوشيا': '#ff00ff',
-        'ماجينتا': '#ff00ff', 'magenta': '#ff00ff', 'hot pink': '#ff69b4', 'بامبي': '#ffb2d1',
-        'باودر': '#fed8e0', 'powder pink': '#fed8e0', 'salmon': '#fa8072', 'سمو': '#fa8072',
-
-        // --- الأزرق والدنيم (Blues & Denim) ---
-        'أزرق': '#0000ff', 'blue': '#0000ff', 'كحلي': '#000080', 'navy': '#000080',
-        'سماوي': '#87ceeb', 'sky blue': '#87ceeb', 'بيبي بلو': '#89cff0', 'baby blue': '#89cff0', 'babyblue': '#89cff0', 'لبني': '#add8e6',
-        'تركوازي': '#40e0d0', 'turquoise': '#40e0d0', 'cyan': '#00ffff', 'سياان': '#00ffff',
-        'teal': '#008080', 'جنزاري': '#008080', 'petrol': '#005f6a', 'بتولي': '#005f6a',
-        'azure': '#f0ffff', 'denim': '#1560bd', 'جينز': '#1560bd', 'indigo': '#4b0082', 'إنديغو': '#4b0082',
-        'royal blue': '#4169e1', 'أزرق ملكي': '#4169e1', 'cobalt': '#0047ab',
-
-        // --- الأخضر (Greens) ---
-        'أخضر': '#008000', 'green': '#008000', 'زيتي': '#556b2f', 'olive': '#556b2f',
-        'ليموني': '#32cd32', 'lime': '#32cd32', 'منتي': '#3eb489', 'mint': '#3eb489',
-        'فستقي': '#93c572', 'pistachio': '#93c572', 'emerald': '#50c878', 'زمردي': '#50c878',
-        'forest': '#228b22', 'سيتي': '#228b22', 'army': '#4b5320', 'جيشي': '#4b5320',
-        'sage': '#bcb88a', 'ساج': '#bcb88a', 'jade': '#00a86b', 'خضرة': '#00a86b',
-
-        // --- الأصفر والبنفسجي (Yellows & Purples) ---
-        'أصفر': '#ffff00', 'yellow': '#ffff00', 'lemon': '#fff700', 'خردلي': '#e1ad01', 'mustard': '#e1ad01',
-        'بنفسجي': '#800080', 'purple': '#800080', 'موف': '#9932cc', 'violet': '#9932cc', 
-        'لافندر': '#e6e6fa', 'lavender': '#e6e6fa', 'ليلك': '#c8a2c8', 'lilac': '#c8a2c8',
-        'باذنجاني': '#311432', 'eggplant': '#311432', 'plum': '#8e4585', 'برقوقي': '#8e4585',
-        'mauve': '#e0b0ff', 'أرجواني': '#a020f0',
-
-        // --- ألوان الموضة والمعادن (Fashion & Metals) ---
-        'ذهبي': '#d4af37', 'gold': '#d4af37', 'bronze': '#cd7f32', 'برونز': '#cd7f32',
-        'copper': '#b87333', 'نحاس': '#b87333', 'champagne': '#f7e7ce', 'شامبين': '#f7e7ce',
-        'rose gold': '#b76e79', 'روز جولد': '#b76e79', 'ذهبي وردي': '#b76e79',
-        'أوف وايت': '#f5f5f5', 'سكري': '#fffdd0', 'كريمي': '#fff8dc', 'عاجي': '#fffff0',
-        'رصاصي': '#a9a9a9', 'فحمي': '#36454f', 'طحيني': '#e3d5b8', 'رملي': '#c2b280',
-        'خردلي': '#e1ad01', 'أزرق ملكي': '#4169e1', 'لبني': '#add8e6', 'جنزاري': '#2f4f4f',
-        'زيتوني': '#808000', 'بستاج': '#daf7a6', 'مينت جرين': '#98ff98', 'فسفوري': '#00ff00',
-        'طوبي': '#b22222', 'خمري': '#673147', 'سيمون': '#ffa07a', 'مشمشي': '#fbceb1',
-        'ليلكي': '#c8a2c8', 'أرجواني': '#9932cc', 'لافندر': '#e6e6fa', 'مستردة': '#ffdb58',
-        'فيروزي': '#00ced1', 'بصلي': '#ff8c69', 'عسلي': '#ffbf00', 'ليموني': '#fff44f',
-        'تلجي': '#f0f8ff', 'لؤلؤي': '#eae0c8', 'نحاسي': '#b87333', 'كاكي': '#f0e68c',
-        'ياقوتي': '#e0115f', 'زمردي': '#50c878', 'نيلي': '#4b0082', 'توتي': '#8b0000',
-        'metallic': '#aaa9ad', 'ليزر': '#e5e4e2', 'rainbow': 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)',
-    };
-    const low = name.toLowerCase().trim();
-    for (const k of Object.keys(map)) {
-        if (low.includes(k.toLowerCase())) return map[k];
-    }
-    // hash fallback
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    const h = Math.abs(hash) % 360;
-    return `hsl(${h}, 55%, 45%)`;
-}
-window.getColorHex = getColorHex;
+// Backwards compatibility for templates
+window.getColorHex = (name) => ColorSystem.getHex(name);
 
 function updateCardImage(card, p, dir) {
     const getImages = (colorIdx) => {
@@ -2085,11 +1977,15 @@ function renderGalleryContent() {
     // Color tabs
     const tabsEl = document.getElementById('gallery-color-tabs');
     if (tabsEl && p.colorVariants && p.colorVariants.length > 0) {
-        tabsEl.innerHTML = p.colorVariants.map((cv, i) => `
-            <button class="gallery-color-tab ${i === colorIdx ? 'active' : ''}" onclick="gallerySelectColor(${i})" style="--dot-color: ${getColorHex(cv.name)}">
-                <span class="gallery-color-dot"></span>${cv.name}
-            </button>
-        `).join('');
+        tabsEl.innerHTML = ColorSystem.sortColors(p.colorVariants.map(v => v.name), 'hue').map(name => {
+            const i = p.colorVariants.findIndex(v => v.name === name);
+            const cv = p.colorVariants[i];
+            return `
+                <button class="gallery-color-tab ${i === colorIdx ? 'active' : ''}" onclick="gallerySelectColor(${i})" style="--dot-color: ${ColorSystem.getHex(cv.name)}">
+                    <span class="gallery-color-dot"></span>${ColorSystem.translate(cv.name, currentLang)}
+                </button>
+            `;
+        }).join('');
     } else if (tabsEl) {
         tabsEl.innerHTML = '';
     }
@@ -2228,11 +2124,20 @@ window.openSizeModal = (id) => {
         toggleNavButtons();
     }
 
-    const colorContainer = document.getElementById('modal-color-options');
-    if (p.colorVariants && p.colorVariants.length > 0) {
-        colorContainer.innerHTML = p.colorVariants.map((v, i) => `
-            <div class="color-swatch-item ${i === 0 ? 'selected' : ''}" onclick="modalSelectColor('${v.name}', this)" style="background: ${getColorHex(v.name)}" title="${translateText(v.name)}"></div>
-        `).join('');
+    const colorVariantNames = (p.colorVariants || []).map(v => v.name);
+    const sortedColorNames = ColorSystem.sortColors(colorVariantNames, 'hue');
+    
+    if (sortedColorNames.length > 0) {
+        colorContainer.innerHTML = sortedColorNames.map(name => {
+            const v = p.colorVariants.find(x => x.name === name);
+            const i = p.colorVariants.indexOf(v);
+            return `
+                <div class="color-swatch-item ${v.name === selectedColor ? 'selected' : ''}" 
+                     onclick="modalSelectColor('${v.name}', this)" 
+                     style="background: ${ColorSystem.getHex(v.name)}" 
+                     title="${ColorSystem.translate(v.name, currentLang)}"></div>
+            `;
+        }).join('');
     } else {
         colorContainer.innerHTML = '';
     }

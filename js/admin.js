@@ -26,109 +26,7 @@ const BOSTA_PROXY_URL = "https://bosta-proxy.jooo71477.workers.dev";
 const governorates = [
     "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "البحر الأحمر", "البحيرة", "الفيوم", "الغربية", "الإسماعيلية", "المنوفية", "المنيا", "القليوبية", "الوادي الجديد", "السويس", "الشرقية", "دمياط", "بورسعيد", "جنوب سيناء", "كفر الشيخ", "مطروح", "الأقصر", "قنا", "شمال سيناء", "سوهاج", "بني سويف", "أسيوط", "أسوان"
 ];
-const commonColors = [
-    { name: "أسود", nameEn: "Black", color: "#000000" },
-    { name: "أبيض", nameEn: "White", color: "#FFFFFF" },
-    { name: "أوف وايت", nameEn: "Off-White", color: "#F5F5F5" },
-    { name: "سكري", nameEn: "Creamy", color: "#FFFDD0" },
-    { name: "كريمي", nameEn: "Creamy", color: "#FFF8DC" },
-    { name: "عاجي", nameEn: "Ivory", color: "#FFFFF0" },
-    { name: "شامبين", nameEn: "Champagne", color: "#F7E7CE" },
-    { name: "لؤلؤي", nameEn: "Pearl", color: "#EAE0C8" },
-    { name: "رمادي", nameEn: "Grey", color: "#808080" },
-    { name: "رصاصي", nameEn: "Grey", color: "#A9A9A9" },
-    { name: "فحمي", nameEn: "Charcoal", color: "#36454F" },
-    { name: "رصاصي فاتح", nameEn: "Light Grey", color: "#D3D3D3" },
-    { name: "رصاصي غامق", nameEn: "Dark Grey", color: "#696969" },
-    { name: "بني", nameEn: "Brown", color: "#5C4033" },
-    { name: "هافان", nameEn: "Havana", color: "#8B4513" },
-    { name: "جملي", nameEn: "Camel", color: "#C19A6B" },
-    { name: "كافيه", nameEn: "Cafe", color: "#D2B48C" },
-    { name: "طحيني", nameEn: "Tahini", color: "#E3D5B8" },
-    { name: "بيج", nameEn: "Beige", color: "#F5F5DC" },
-    { name: "رملي", nameEn: "Sand", color: "#C2B280" },
-    { name: "خردلي", nameEn: "Mustard", color: "#E1AD01" },
-    { name: "كحلي", nameEn: "Navy", color: "#000080" },
-    { name: "أزرق", nameEn: "Blue", color: "#0000FF" },
-    { name: "أزرق ملكي", nameEn: "Royal Blue", color: "#4169E1" },
-    { name: "سماوي", nameEn: "Sky Blue", color: "#87CEEB" },
-    { name: "لبني", nameEn: "Light Blue", color: "#ADD8E6" },
-    { name: "تركواز", nameEn: "Turquoise", color: "#40E0D0" },
-    { name: "بترولي", nameEn: "Petrol", color: "#005F6B" },
-    { name: "جنزاري", nameEn: "Teal", color: "#2F4F4F" },
-    { name: "أزرق فاتح", nameEn: "Light Blue", color: "#B0E0E6" },
-    { name: "أزرق غامق", nameEn: "Dark Blue", color: "#00008B" },
-    { name: "أخضر", nameEn: "Green", color: "#008000" },
-    { name: "زيتي", nameEn: "Olive", color: "#4B5320" },
-    { name: "زيتوني", nameEn: "Olive", color: "#808000" },
-    { name: "بستاج", nameEn: "Pistachio", color: "#DAF7A6" },
-    { name: "مينت جرين", nameEn: "Mint Green", color: "#98FF98" },
-    { name: "فسفوري", nameEn: "Neon Green", color: "#00FF00" },
-    { name: "أخضر فاتح", nameEn: "Light Green", color: "#90EE90" },
-    { name: "أخضر غامق", nameEn: "Dark Green", color: "#006400" },
-    { name: "أخضر نعناعي", nameEn: "Mint Green", color: "#AAF0D1" },
-    { name: "أخضر تفاحي", nameEn: "Apple Green", color: "#8DB600" },
-    { name: "أحمر", nameEn: "Red", color: "#FF0000" },
-    { name: "نبيتي", nameEn: "Burgundy", color: "#800000" },
-    { name: "طوبي", nameEn: "Brick", color: "#B22222" },
-    { name: "خمري", nameEn: "Wine", color: "#673147" },
-    { name: "برتقالي", nameEn: "Orange", color: "#FFA500" },
-    { name: "سيمون", nameEn: "Salmon", color: "#FFA07A" },
-    { name: "مشمشي", nameEn: "Apricot", color: "#FBCEB1" },
-    { name: "خوخي", nameEn: "Peach", color: "#FFDAB9" },
-    { name: "وردي", nameEn: "Pink", color: "#FFC0CB" },
-    { name: "بينك", nameEn: "Pink", color: "#FF69B4" },
-    { name: "فوشيا", nameEn: "Fuchsia", color: "#FF00FF" },
-    { name: "موف", nameEn: "Mauve", color: "#E0B0FF" },
-    { name: "بنفسجي", nameEn: "Purple", color: "#800080" },
-    { name: "ليلكي", nameEn: "Lilac", color: "#C8A2C8" },
-    { name: "أرجواني", nameEn: "Purple", color: "#9932CC" },
-    { name: "لافندر", nameEn: "Lavender", color: "#E6E6FA" },
-    { name: "أصفر", nameEn: "Yellow", color: "#FFFF00" },
-    { name: "مستردة", nameEn: "Mustard", color: "#FFDB58" },
-    { name: "ذهبي", nameEn: "Gold", color: "#D4AF37" },
-    { name: "فضي", nameEn: "Silver", color: "#C0C0C0" },
-    { name: "فيروزي", nameEn: "Turquoise", color: "#00CED1" },
-    { name: "مرجاني", nameEn: "Coral", color: "#FF7F50" },
-    { name: "بصلي", nameEn: "Onion", color: "#FF8C69" },
-    { name: "عسلي", nameEn: "Honey", color: "#FFBF00" },
-    { name: "ليموني", nameEn: "Lemon", color: "#FFF44F" },
-    { name: "تلجي", nameEn: "Ice", color: "#F0F8FF" },
-    { name: "برونزي", nameEn: "Bronze", color: "#CD7F32" },
-    { name: "نحاسي", nameEn: "Copper", color: "#B87333" },
-    { name: "كاكي", nameEn: "Khaki", color: "#F0E68C" },
-    { name: "مارون", nameEn: "Maroon", color: "#800000" },
-    { name: "سيينا", nameEn: "Sienna", color: "#A0522D" },
-    { name: "ياقوتي", nameEn: "Ruby", color: "#E0115F" },
-    { name: "زمردي", nameEn: "Emerald", color: "#50C878" },
-    { name: "نيلي", nameEn: "Indigo", color: "#4B0082" },
-    { name: "بني محروق", nameEn: "Dark Brown", color: "#3D2B1F" },
-    { name: "بترولي فاتح", nameEn: "Light Petrol", color: "#008B8B" },
-    { name: "أزرق بترولي", nameEn: "Petrol Blue", color: "#005F6B" },
-    { name: "رمادي أزرق", nameEn: "Blue Grey", color: "#607D8B" },
-    { name: "لبني فاتح", nameEn: "Pale Blue", color: "#E0F7FA" },
-    { name: "ذهبي وردي", nameEn: "Rose Gold", color: "#B76E79" },
-    { name: "فضة معتقة", nameEn: "Antique Silver", color: "#8E8E8E" },
-    { name: "أخضر عسكري", nameEn: "Army Green", color: "#4B5320" },
-    { name: "برتقالي محروق", nameEn: "Burnt Orange", color: "#CC5500" },
-    { name: "أصفر كناري", nameEn: "Canary Yellow", color: "#FFEF00" },
-    { name: "أزرق كبالت", nameEn: "Cobalt Blue", color: "#0047AB" },
-    { name: "نيلي غامق", nameEn: "Dark Indigo", color: "#000080" },
-    { name: "بنفسجي باهت", nameEn: "Pale Purple", color: "#D8BFD8" },
-    { name: "أحمر مرجاني", nameEn: "Coral Red", color: "#FF4040" },
-    { name: "أخضر بحري", nameEn: "Sea Green", color: "#2E8B57" },
-    { name: "رصاصي مزرق", nameEn: "Slate Grey", color: "#708090" },
-    { name: "بني فاتح", nameEn: "Light Brown", color: "#D2B48C" },
-    { name: "بني غامق", nameEn: "Dark Brown", color: "#3E2723" },
-    { name: "ورد جوري", nameEn: "Rose", color: "#E91E63" },
-    { name: "سماوي صافي", nameEn: "Clear Sky", color: "#00BFFF" },
-    { name: "أخضر نيون", nameEn: "Neon Green", color: "#39FF14" },
-    { name: "أصفر نيون", nameEn: "Neon Yellow", color: "#FFFF33" },
-    { name: "برتقالي نيون", nameEn: "Neon Orange", color: "#FF5F1F" },
-    { name: "بينك نيون", nameEn: "Neon Pink", color: "#FF44CC" },
-    { name: "برقوقي", nameEn: "Plum", color: "#8E4585" },
-    { name: "توتي", nameEn: "Berry", color: "#8B0000" }
-];
+// Common Colors are now handled by ColorSystem class in colors_system.js
 
 
 
@@ -815,27 +713,56 @@ window.toggleColorPicker = (btn) => {
     const parent = btn.closest('.form-group');
     const picker = parent.querySelector('.color-picker-grid');
     if (picker) {
-        const isVisible = picker.style.display === 'grid';
+        const isVisible = picker.style.display === 'flex';
         // Close all other pickers first
         document.querySelectorAll('.color-picker-grid').forEach(p => p.style.display = 'none');
-        picker.style.display = isVisible ? 'none' : 'grid';
+        picker.style.display = isVisible ? 'none' : 'flex';
+        
+        // Focus search input if opening
+        if (!isVisible) {
+            const searchInput = picker.querySelector('.color-search-input');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.focus();
+                window.filterAdminColors(searchInput);
+            }
+        }
     }
+};
+
+window.filterAdminColors = (input) => {
+    const query = input.value.toLowerCase().trim();
+    const picker = input.closest('.color-picker-grid');
+    const swatches = picker.querySelectorAll('.color-swatch-item-admin');
+    
+    swatches.forEach(s => {
+        const name = s.getAttribute('data-name').toLowerCase();
+        const en = s.getAttribute('data-en').toLowerCase();
+        if (name.includes(query) || en.includes(query) || query === '') {
+            s.style.display = 'block';
+        } else {
+            s.style.display = 'none';
+        }
+    });
 };
 
 
 function buildVariantHTML(name, images, sizes, stock, thumbnail) {
-    const colorOptionsUI = commonColors.map(c => `
-        <div onclick="setQuickColor(this, '${c.name}')" 
-             title="${c.name}" 
-             style="width:28px; height:28px; background:${c.color}; border-radius:6px; cursor:pointer; border:2px solid rgba(255,255,255,0.1); transition:0.2s;"
-             onmouseover="this.style.transform='scale(1.2)'; this.style.borderColor='var(--primary)'" 
-             onmouseout="this.style.transform='scale(1)'; this.style.borderColor='rgba(255,255,255,0.1)'">
+    const sortedReg = [...ColorSystem.registry].sort((a,b) => a.hue - b.hue);
+    
+    const colorOptionsUI = sortedReg.map(c => `
+        <div class="color-swatch-item-admin" 
+             onclick="setQuickColor(this, '${c.ar}')" 
+             title="${c.ar} / ${c.en}" 
+             data-name="${c.ar}" 
+             data-en="${c.en}"
+             style="width:32px; height:32px; background:${c.hex}; border-radius:8px; cursor:pointer; border:2px solid rgba(255,255,255,0.1); transition:0.2s; position:relative;">
         </div>
     `).join('');
 
     const colorDatalist = `
         <datalist id="color-suggestions">
-            ${commonColors.map(c => `<option value="${c.name}">`).join('')}
+            ${ColorSystem.registry.map(c => `<option value="${c.ar}"><option value="${c.en}">`).join('')}
         </datalist>
     `;
 
@@ -850,10 +777,18 @@ function buildVariantHTML(name, images, sizes, stock, thumbnail) {
                         <i class="fas fa-palette"></i>
                     </button>
                 </div>
-                <!-- Color Picker Popover -->
-                <div class="color-picker-grid" style="display:none; position:absolute; top:calc(100% + 5px); right:0; z-index:1000; background:#111; border:1px solid var(--border); border-radius:12px; padding:12px; grid-template-columns: repeat(6, 1fr); gap:8px; box-shadow:0 10px 30px rgba(0,0,0,0.8); width:230px;">
-                    <div style="grid-column: 1 / -1; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 5px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">اختر لوناً:</div>
-                    ${colorOptionsUI}عاوز
+                <!-- Color Picker Popover Enhanced -->
+                <div class="color-picker-grid" style="display:none; position:absolute; top:calc(100% + 5px); right:0; z-index:1000; background:#1a1a1a; border:1px solid var(--border); border-radius:16px; padding:15px; flex-direction:column; gap:12px; box-shadow:0 15px 40px rgba(0,0,0,0.9); width:280px;">
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="font-size: 0.8rem; font-weight:bold; color: var(--primary);">اختر لون اللون:</div>
+                        <input type="text" class="color-search-input" placeholder="بحث عن لون..." oninput="window.filterAdminColors(this)" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 12px; font-size:0.8rem; color:#fff; width:100%;">
+                    </div>
+                    <div class="swatches-container" style="display:grid; grid-template-columns: repeat(6, 1fr); gap:8px; max-height:200px; overflow-y:auto; padding-right:5px; scrollbar-width: thin; scrollbar-color: var(--primary) transparent;">
+                        ${colorOptionsUI}
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-dim); opacity:0.6; text-align:center; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;">
+                        يوجد ${ColorSystem.registry.length} لون متاح
+                    </div>
                 </div>
             </div>
             <div class="form-group">
