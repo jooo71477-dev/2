@@ -277,7 +277,7 @@ function translateText(text) {
     // 4. Return original if English requested
     if (currentLang === 'en') return cleanText;
 
-    // 4. AI Translation (For dynamic content like product names/descriptions)
+    // 5. AI Translation (For dynamic content like product names/descriptions)
     if (aiTranslationCache[cleanText]) return aiTranslationCache[cleanText];
 
     // Trigger background AI translation if not in cache
@@ -1831,13 +1831,9 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
         return `
         <div class="product-card" data-product-id="${p.id}" data-current-img="0" data-color-idx="${p.explicitMainImage ? '-1' : '0'}" onclick="openSizeModal('${p.id}')">
             <div class="product-img-wrap" style="position:relative; overflow:hidden;">
-                ${p.isNew ? `<span class="badge-label" style="background: var(--primary); color: #000; border: none; font-weight: 900;">NEW</span>` : ''}
+                ${p.isNew ? `<span class="badge-label" style="position: absolute; top: 12px; left: 12px; background: var(--primary); color: #000; border: none; font-weight: 900; z-index: 10; padding: 4px 8px; font-size: 0.72rem; letter-spacing: 0.5px;">NEW</span>` : ''}
                 
-                <button class="wishlist-toggle-btn ${isInW ? 'active' : ''}" 
-                    onclick="event.stopPropagation(); window.toggleWishlist('${p.id}', this)" 
-                    aria-label="Add to Favorites">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isInW ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="bookmark-svg"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                </button>
+                ${p.status === 'best-seller' ? '<div class="best-seller-badge"><i class="fas fa-fire"></i></div>' : ''}
 
                 <img class="product-card-main-img" src="${mainImg}" loading="lazy" alt="${seoAlt}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'400\\'><rect width=\\'400\\' height=\\'400\\' fill=\\'%23222\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-family=\\'Arial\\' font-size=\\'24\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>No Image</text></svg>'">
                 
@@ -3075,9 +3071,9 @@ function renderWishlist() {
     if (!list) return;
 
     if (wishlist.length === 0) {
-        list.innerHTML = `<div class="empty-wishlist" style="text-align: center; padding: 60px 20px; opacity: 0.5;">
-            <i class="far fa-heart" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i>
-            <p>${currentLang === 'ar' ? 'قائمة المفضلة فارغة' : 'Your favorites list is empty'}</p>
+        list.innerHTML = `<div class="empty-wishlist" style="text-align: center; padding: 60px 20px; opacity: 0.3;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 25px;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+            <p style="font-size: 1.1rem; letter-spacing: 0.5px;">${currentLang === 'ar' ? 'قائمة المفضلة فارغة' : 'Your favorites list is empty'}</p>
         </div>`;
         return;
     }

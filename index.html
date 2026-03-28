@@ -144,26 +144,12 @@
         }
     </style>
 
-    <!-- Google Translate Script -->
-    <script type="text/javascript">
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-                pageLanguage: 'en',
-                includedLanguages: 'en,ar',
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-                autoDisplay: false
-            }, 'google_translate_element');
-        }
-    </script>
-    <script type="text/javascript"
-        src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-    
-    <!-- Google Search Console Verification -->
+    <!-- Local Translation System Enabled -->
     <meta name="google-site-verification" content="google92bedffde32ff9db" />
 </head>
 
 <body>
-    <!-- Hidden Google Translate Element -->
+    <!-- Local Translation Logic Active -->
     <div id="google_translate_element" style="display:none"></div>
 
     <!-- Premier Preloader (Splash Screen) -->
@@ -575,7 +561,9 @@
         <div class="cart-header">
             <h3 data-i18n="wishlist">Favorites</h3>
             <button id="close-wishlist" aria-label="Close Wishlist"
-                onclick="window.toggleWishlistMenu(); return false;"><i class="fas fa-times"></i></button>
+                onclick="window.toggleWishlistMenu(); return false;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
         </div>
         <div class="cart-items" id="wishlist-items-list">
             <p class="empty-msg">Your favorites list is empty</p>
