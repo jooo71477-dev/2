@@ -2990,9 +2990,13 @@ window.toggleWishlistMenu = () => {
     const menu = document.getElementById('wishlist-sidebar');
     const overlay = document.getElementById('cart-overlay');
     if (menu && overlay) {
-        const isActive = menu.classList.toggle('active');
-        overlay.classList.toggle('active');
-        if (isActive) renderWishlist();
+        const isOpen = menu.classList.toggle('open');
+        if (isOpen) {
+            overlay.classList.add('show');
+            renderWishlist();
+        } else {
+            overlay.classList.remove('show');
+        }
     }
 };
 
@@ -3006,7 +3010,7 @@ function updateWishlistUI() {
     if (navWishBtn) {
         const svg = navWishBtn.querySelector('svg');
         if (svg) {
-            const hasItems = wishlist.length > 0;
+            const hasItems = (wishlist || []).length > 0;
             svg.setAttribute('fill', hasItems ? 'currentColor' : 'none');
             svg.style.color = hasItems ? '#d4af37' : '';
         }
@@ -3015,7 +3019,7 @@ function updateWishlistUI() {
     if (selectedProductForSize) {
         const modalWB = document.getElementById('modal-wishlist-btn');
         if (modalWB) {
-            const isInW = wishlist.includes(selectedProductForSize.id);
+            const isInW = (wishlist || []).includes(selectedProductForSize.id);
             modalWB.classList.toggle('active', isInW);
             const svg = modalWB.querySelector('svg');
             if (svg) svg.setAttribute('fill', isInW ? 'currentColor' : 'none');
