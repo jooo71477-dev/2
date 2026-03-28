@@ -18,7 +18,10 @@
     text-align: center;
     font-size: 0.9rem;
     font-weight: 800;
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
     z-index: 3000;
     display: none;
     letter-spacing: 0.5px;
@@ -157,7 +160,6 @@
     box-sizing: border-box;
 }
 
-/* Fix for horizontal scroll on mobile */
 html,
 body {
     width: 100%;
@@ -174,7 +176,11 @@ body {
     color: var(--text-main);
     background: var(--bg-color);
     line-height: 1.6;
-    transition: background 0.4s ease, color 0.4s ease;
+    transition: background 0.4s ease, color 0.4s ease, padding-top 0.4s ease;
+}
+
+body.announcement-active {
+    padding-top: 42px;
 }
 
 ul {
@@ -344,17 +350,22 @@ body.announcement-active .navbar {
 }
 
 body.announcement-active .navbar.scrolled {
-    top: 0;
+    top: 42px;
 }
 
 @media (max-width: 768px) {
+    body.announcement-active {
+        padding-top: 36px;
+    }
+    
     body.announcement-active .navbar {
-        transform: translateY(32px);
-        top: 0;
+        transform: none;
+        top: 36px;
     }
 
     body.announcement-active .navbar.scrolled {
-        transform: translateY(0);
+        transform: none;
+        top: 36px;
     }
 }
 
