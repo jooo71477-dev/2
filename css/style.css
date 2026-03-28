@@ -3509,6 +3509,23 @@ footer {
     animation-delay: 0.2s;
 }
 
+/* Wishlist Enhancements */
+.wishlist-item:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: var(--primary) !important;
+    transform: scale(1.02);
+}
+
+.wishlist-item button:hover {
+    transform: scale(1.1);
+}
+
+.wish-info h4 {
+    font-family: 'Outfit', sans-serif;
+    color: var(--text-main);
+}
+
+
 [dir="rtl"] .side-menu-content {
     animation: slideInRight 0.5s ease backwards;
 }

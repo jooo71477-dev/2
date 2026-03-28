@@ -196,6 +196,15 @@ const translations = {
     }
 };
 
+const fashionTranslations = {
+    'bag': 'حقيبة', 'bags': 'حقائب', 'blouse': 'بلوزة', 'dress': 'فستان', 'dresses': 'فساتين',
+    'shirt': 'قميص', 'shirts': 'قمصان', 't-shirt': 'تيشيرت', 't-shirts': 'تيشيرتات',
+    'skirt': 'جيبة', 'skirts': 'جيبات', 'suit': 'بدلة', 'suits': 'بدل', 'mini dress': 'فستان قصير',
+    'vest': 'فيست', 'vist': 'فيست', 'top flat': 'توب فلات', 'hoodie': 'هوديي', 'hoodies': 'هوديز',
+    'trousers': 'بنطلون', 'pants': 'بنطلون', 'jeans': 'جينز', 'jacket': 'جاكيت', 'jackets': 'جاكيتات',
+    'coat': 'بالطو', 'shorts': 'شورت', 'acc': 'إكسسوارات', 'accessories': 'إكسسوارات'
+};
+
 const colorTranslations = {
     'أسود': 'Black', 'أبيض': 'White', 'أوف وايت': 'Off-White', 'سكري': 'Creamy',
     'كريمي': 'Creamy', 'عاجي': 'Ivory', 'شامبين': 'Champagne', 'لؤلؤي': 'Pearl',
@@ -260,7 +269,12 @@ function translateText(text) {
         }
     }
     
-    // 3. If English, return as is
+    // 3. Fashion Dictionary (Product types)
+    if (currentLang === 'ar' && fashionTranslations[cleanText.toLowerCase()]) {
+        return fashionTranslations[cleanText.toLowerCase()];
+    }
+
+    // 4. Return original if English requested
     if (currentLang === 'en') return cleanText;
 
     // 4. AI Translation (For dynamic content like product names/descriptions)
@@ -309,7 +323,11 @@ async function getSmartTranslation(text) {
         }
         return data.translated || cleanText;
     } catch (e) {
-        console.warn("AI Translation Error:", e);
+        // Silenced: Server API not configured for local development
+        if (!window._apiWarned) {
+            console.debug("AI Translation API not available (Serverless fallback active).");
+            window._apiWarned = true;
+        }
         return cleanText;
     } finally {
         activeAITranslations.delete(cleanText);
@@ -344,6 +362,13 @@ function initFirebase() {
         updateAuthUI();
         if (user) {
             console.log("👤 User Logged In:", user.email);
+            
+            // --- Auto-refresh My Orders Modal if open ---
+            const ordersModal = document.getElementById('my-orders-modal');
+            if (ordersModal && ordersModal.classList.contains('active')) {
+                openMyOrdersModal(); // This will handle the section transition
+            }
+
             if (sessionStorage.getItem('pendingCheckout') === 'true') {
                 sessionStorage.removeItem('pendingCheckout');
                 setTimeout(() => {
@@ -709,13 +734,7 @@ const initAll = () => {
         // NOTE: loadDynamicCategories and attachRealTimeListeners 
         // are now called inside initFirebase to ensure TBT safety.
         
-        // 🚀 RUN FULL SYSTEM AUDIT
-        setTimeout(() => {
-            if (typeof window.runFullWebsiteAudit === 'function') {
-                window.runFullWebsiteAudit();
-            }
-        }, 3000);
-
+        // Audit will be triggered after products load in attachRealTimeListeners for accuracy
     } catch (error) {
         console.error("Initialization error:", error);
     }
@@ -748,7 +767,7 @@ window.runFullWebsiteAudit = () => {
         "Cart Button": checkUI('cart-btn', "Cart"),
         "Orders Button": checkUI('my-orders-btn', "Orders"),
         "Google Login": checkUI('google-login-btn', "Login"),
-        "Product Grid": checkUI('men-products', "Grid"),
+        "Product Grid": (document.getElementById('men-products') || document.getElementById('products-list')) ? "✅ ACTIVE" : "❌ MISSING/FAIL",
         "Checkout Modal": checkUI('checkout-modal', "Checkout"),
         "Success Modal": checkUI('success-modal', "Success")
     };
@@ -804,6 +823,11 @@ function attachRealTimeListeners() {
         if (!window._urlParamsHandled && remoteProducts.length > 0) {
             window._urlParamsHandled = true;
             if (window.handleUrlParams) window.handleUrlParams();
+            
+            // 🚀 Run Audit now that we have data
+            if (typeof window.runFullWebsiteAudit === 'function') {
+                setTimeout(window.runFullWebsiteAudit, 1000);
+            }
         }
     }, err => {
         console.error("❌ Firebase Products Error:", err);
@@ -1807,8 +1831,7 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
         return `
         <div class="product-card" data-product-id="${p.id}" data-current-img="0" data-color-idx="${p.explicitMainImage ? '-1' : '0'}" onclick="openSizeModal('${p.id}')">
             <div class="product-img-wrap" style="position:relative; overflow:hidden;">
-                ${p.badge ? `<span class="badge-label" data-translate-cache="${p.badge}">${translatedBadge}</span>` : ''}
-                ${p.isBestSeller ? `<div class="best-seller-badge" title="${translations[currentLang].best_seller || 'Best Seller'}"><i class="fas fa-fire"></i></div>` : ''}
+                ${p.isNew ? `<span class="badge-label" style="background: var(--primary); color: #000; border: none; font-weight: 900;">NEW</span>` : ''}
                 
                 <button class="wishlist-toggle-btn ${isInW ? 'active' : ''}" 
                     onclick="event.stopPropagation(); window.toggleWishlist('${p.id}', this)" 
@@ -2959,6 +2982,9 @@ window.applyBestSellerFilter = applyBestSellerFilter;
 // --- 💖 WISHLIST SYSTEM ---
 window.toggleWishlist = (id, btn) => {
     const idx = wishlist.indexOf(id);
+    const wishlistSidebar = document.getElementById('wishlist-sidebar');
+    const isSidebarOpen = wishlistSidebar && wishlistSidebar.classList.contains('open');
+
     if (idx === -1) {
         wishlist.push(id);
         if (btn) {
@@ -2974,10 +3000,27 @@ window.toggleWishlist = (id, btn) => {
             const svg = btn.querySelector('svg');
             if (svg) svg.setAttribute('fill', 'none');
         }
+        
+        // --- Optimistic UI for fast delete ---
+        if (isSidebarOpen) {
+            const el = document.querySelector(`.wishlist-item[data-id="${id}"]`);
+            if (el) {
+                el.style.transform = 'translateX(100%)';
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    renderWishlist();
+                }, 300);
+            }
+        }
         showToast(currentLang === 'ar' ? '🔓 تمت الإزالة من المفضلة' : '🔓 Removed from favorites');
     }
     localStorage.setItem('icloth_wishlist', JSON.stringify(wishlist));
     updateWishlistUI();
+    
+    // Refresh sidebar if it's already open (but not already handled by optimistic UI)
+    if (isSidebarOpen && idx === -1) {
+        renderWishlist();
+    }
 };
 
 window.toggleWishlistFromModal = () => {
@@ -3032,7 +3075,10 @@ function renderWishlist() {
     if (!list) return;
 
     if (wishlist.length === 0) {
-        list.innerHTML = `<p class="empty-msg">${currentLang === 'ar' ? 'قائمة المفضلة فارغة' : 'Your favorites list is empty'}</p>`;
+        list.innerHTML = `<div class="empty-wishlist" style="text-align: center; padding: 60px 20px; opacity: 0.5;">
+            <i class="far fa-heart" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i>
+            <p>${currentLang === 'ar' ? 'قائمة المفضلة فارغة' : 'Your favorites list is empty'}</p>
+        </div>`;
         return;
     }
 
@@ -3041,20 +3087,23 @@ function renderWishlist() {
         const translatedName = (currentLang === 'ar' && p.name_ar) ? p.name_ar : translateText(p.name);
         const img = p.image || '';
         return `
-            <div class="cart-item" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 15px 0;">
-                <img src="${getOptimizedImg(img, 150)}" alt="${translatedName}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 10px;">
-                <div class="cart-item-info" style="flex: 1; margin: 0 15px;">
-                    <h4 style="font-size: 0.95rem; margin-bottom: 5px;">${translatedName}</h4>
-                    <div style="color: var(--primary); font-weight: 800; font-size: 0.85rem;">${p.price} ${translations[currentLang].currency}</div>
-                    <button onclick="openSizeModal('${p.id}'); toggleWishlistMenu();" style="margin-top: 10px; background: var(--primary); color: #000; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; width: 100%; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                        <i class="fas fa-shopping-bag"></i> ${currentLang === 'ar' ? 'أضف للسلة' : 'Add to Cart'}
+            <div class="wishlist-item" data-id="${p.id}" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 12px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; position: relative; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); overflow: hidden;">
+                <div class="wish-img-wrap" style="width: 85px; height: 110px; flex-shrink: 0; border-radius: 12px; overflow: hidden;">
+                    <img src="${getOptimizedImg(img, 200)}" alt="${translatedName}" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                
+                <div class="wish-info" style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                    <h4 style="font-size: 0.9rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">${translatedName}</h4>
+                    <div style="color: var(--primary); font-weight: 900; font-size: 1rem; margin-bottom: 8px;">${p.price} ${translations[currentLang].currency}</div>
+                    
+                    <button onclick="openSizeModal('${p.id}'); toggleWishlistMenu();" style="background: var(--primary); color: #000; border: none; padding: 10px; border-radius: 12px; cursor: pointer; font-size: 0.75rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; width: fit-content; min-width: 120px;">
+                        <i class="fas fa-shopping-bag" style="font-size: 0.8rem;"></i> ${currentLang === 'ar' ? 'أضف للسلة' : 'Add to Cart'}
                     </button>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 10px; justify-content: flex-start;">
-                    <button onclick="window.toggleWishlist('${p.id}')" style="background: rgba(255,77,77,0.1); color: #ff4d4d; border: 1px solid rgba(255,77,77,0.2); width: 35px; height: 35px; border-radius: 8px; cursor: pointer;" title="Remove">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+
+                <button onclick="window.toggleWishlist('${p.id}')" style="position: absolute; top: 12px; right: 12px; background: rgba(255,77,77,0.1); color: #ff4d4d; border: 1px solid rgba(255,77,77,0.2); width: 32px; height: 32px; border-radius: 10px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;" title="Remove">
+                    <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
+                </button>
             </div>
         `;
     }).join('');
