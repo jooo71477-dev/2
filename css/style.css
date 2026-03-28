@@ -2203,7 +2203,7 @@ footer {
     flex-direction: row-reverse;
 }
 
-.close-modal-btn, .share-modal-btn {
+.close-modal-btn, .share-modal-btn, .wishlist-modal-btn {
     width: 42px;
     height: 42px;
     background: rgba(0, 0, 0, 0.7);
@@ -2221,9 +2221,19 @@ footer {
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
-.close-modal-btn:hover, .share-modal-btn:hover {
+.wishlist-modal-btn.active {
+    background: rgba(255, 77, 77, 0.9) !important;
+    border-color: rgba(255, 77, 77, 0.4) !important;
+    color: #fff !important;
+}
+
+.close-modal-btn:hover, .share-modal-btn:hover, .wishlist-modal-btn:hover {
     background: var(--primary);
     color: #000 !important;
+    transform: scale(1.1);
+}
+
+.close-modal-btn:hover {
     transform: scale(1.1) rotate(90deg);
 }
 

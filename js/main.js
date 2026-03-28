@@ -2155,6 +2155,14 @@ window.openSizeModal = (id) => {
     const refEl = document.getElementById('modal-product-ref');
     if (refEl) refEl.innerText = p.reference ? `REF. ${p.reference}` : `REF. ${p.id.substring(0,8)}`;
 
+    // Update Wishlist Button State in Modal
+    const modalWB = document.getElementById('modal-wishlist-btn');
+    if (modalWB) {
+        const isInW = (wishlist || []).includes(p.id);
+        modalWB.classList.toggle('active', isInW);
+        modalWB.querySelector('i').className = isInW ? 'fas fa-heart' : 'far fa-heart';
+    }
+
     const modalProductPrice = document.getElementById('modal-product-price');
     if (modalProductPrice) {
         const oldPriceVal = p.priceBefore || p.oldPrice;
@@ -2969,6 +2977,12 @@ window.toggleWishlist = (id, btn) => {
     updateWishlistUI();
 };
 
+window.toggleWishlistFromModal = () => {
+    if (!selectedProductForSize) return;
+    const btn = document.getElementById('modal-wishlist-btn');
+    window.toggleWishlist(selectedProductForSize.id, btn);
+};
+
 window.toggleWishlistMenu = () => {
     const menu = document.getElementById('wishlist-sidebar');
     const overlay = document.getElementById('cart-overlay');
@@ -2990,6 +3004,15 @@ function updateWishlistUI() {
         headerHeart.className = wishlist.length > 0 ? 'fas fa-heart' : 'far fa-heart';
         if (wishlist.length > 0) headerHeart.style.color = '#ff4d4d';
         else headerHeart.style.color = '';
+    }
+    // Also update modal button if open
+    if (selectedProductForSize) {
+        const modalWB = document.getElementById('modal-wishlist-btn');
+        if (modalWB) {
+            const isInW = wishlist.includes(selectedProductForSize.id);
+            modalWB.classList.toggle('active', isInW);
+            modalWB.querySelector('i').className = isInW ? 'fas fa-heart' : 'far fa-heart';
+        }
     }
 }
 
