@@ -3455,37 +3455,11 @@ footer {
 }
 
 /* Best Seller Fire Badge */
-.best-seller-badge {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    background: linear-gradient(135deg, #ff4d4d, #f9cb28);
-    color: #fff;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    z-index: 12;
-    box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
-    animation: firePulse 2s infinite ease-in-out;
-}
-
+/* Best Seller Fire Animation */
 @keyframes firePulse {
-    0% {
-        transform: scale(1);
-        opacity: 0.8;
-    }
-    50% {
-        transform: scale(1.1);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 0.8;
-    }
+    0% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(255, 77, 0, 0.2)); }
+    50% { transform: scale(1.15); filter: drop-shadow(0 0 12px rgba(255, 77, 0, 0.6)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(255, 77, 0, 0.2)); }
 }
 
 /* Badges in RTL: Flip sides to maintain balance */
@@ -3657,33 +3631,33 @@ footer {
 }
 
 /* --- 🔥 BEST SELLER BADGE (Premium Square Style) --- */
+/* --- 🔥 BEST SELLER BADGE (Pure Flame Style) --- */
 .best-seller-badge {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 38px;
-    height: 38px;
-    background: linear-gradient(135deg, #ff9d42, #ff3d00);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 1.2rem;
-    z-index: 10;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(255, 61, 0, 0.4);
-    border-radius: 4px; /* Slight rounding like screenshot */
+    top: 15px;
+    right: 15px;
+    z-index: 20;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.best-seller-badge i {
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, #ffce3a, #ff4e00);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 10px rgba(255, 78, 0, 0.4));
+    animation: firePulse 1.5s infinite ease-in-out;
 }
 
 [dir="rtl"] .best-seller-badge {
     right: auto;
-    left: 12px;
+    left: 15px;
 }
 
 .product-card:hover .best-seller-badge {
-    transform: scale(1.1) rotate(5deg);
-    background: rgba(0, 0, 0, 0.7);
-    color: #ffaa00;
+    transform: scale(1.2) rotate(8deg);
 }
 
 /* Hidden per user request: Wishlist on Cards - completely removed from DOM but CSS fail-safe here */
