@@ -219,8 +219,8 @@
             <div class="nav-icons"
                 style="display: flex; gap: 20px; align-items: center; flex: 1; justify-content: flex-end; z-index: 11;">
                 <a href="#" id="wishlist-btn" onclick="window.toggleWishlistMenu(); return false;" class="wishlist-icon"
-                    aria-label="View Wishlist" style="font-size: 1.6rem !important; position: relative; margin: 0 5px;">
-                    <i class="far fa-heart"></i>
+                    aria-label="View Wishlist" style="font-size: 1.6rem !important; position: relative; margin: 0 5px; display: flex; align-items: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="bookmark-svg"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
                     <span class="wishlist-count" style="position: absolute; top: -8px; right: -10px; background: #ff4d4d; color: #fff; font-size: 0.7rem; width: 18px; height: 18px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid var(--bg-color); font-weight: 800; display: none;">0</span>
                 </a>
                 <a href="#" id="my-orders-btn" onclick="window.openMyOrdersModal(); return false;" class="nav-login-btn"
@@ -592,7 +592,9 @@
         <div class="modal-content">
             <div class="modal-header-actions">
                 <button id="close-modal" class="close-modal-btn"><i class="fas fa-times"></i></button>
-                <button id="modal-wishlist-btn" class="wishlist-modal-btn" onclick="event.stopPropagation(); window.toggleWishlistFromModal()"><i class="far fa-heart"></i></button>
+                <button id="modal-wishlist-btn" class="wishlist-modal-btn" onclick="event.stopPropagation(); window.toggleWishlistFromModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="bookmark-svg"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                </button>
                 <button class="share-modal-btn" onclick="window.shareCurrentProduct()"><i
                         class="fas fa-share-alt"></i></button>
             </div>

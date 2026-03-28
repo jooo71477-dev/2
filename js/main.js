@@ -1813,7 +1813,7 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
                 <button class="wishlist-toggle-btn ${isInW ? 'active' : ''}" 
                     onclick="event.stopPropagation(); window.toggleWishlist('${p.id}', this)" 
                     aria-label="Add to Favorites">
-                    <i class="${isInW ? 'fas' : 'far'} fa-heart"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isInW ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="bookmark-svg"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
                 </button>
 
                 <img class="product-card-main-img" src="${mainImg}" loading="lazy" alt="${seoAlt}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'400\\'><rect width=\\'400\\' height=\\'400\\' fill=\\'%23222\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-family=\\'Arial\\' font-size=\\'24\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>No Image</text></svg>'">
@@ -2155,12 +2155,13 @@ window.openSizeModal = (id) => {
     const refEl = document.getElementById('modal-product-ref');
     if (refEl) refEl.innerText = p.reference ? `REF. ${p.reference}` : `REF. ${p.id.substring(0,8)}`;
 
-    // Update Wishlist Button State in Modal
+    // Update Wishlist Button State in Modal (Bookmark SVG)
     const modalWB = document.getElementById('modal-wishlist-btn');
     if (modalWB) {
         const isInW = (wishlist || []).includes(p.id);
         modalWB.classList.toggle('active', isInW);
-        modalWB.querySelector('i').className = isInW ? 'fas fa-heart' : 'far fa-heart';
+        const svg = modalWB.querySelector('svg');
+        if (svg) svg.setAttribute('fill', isInW ? 'currentColor' : 'none');
     }
 
     const modalProductPrice = document.getElementById('modal-product-price');
@@ -2962,16 +2963,18 @@ window.toggleWishlist = (id, btn) => {
         wishlist.push(id);
         if (btn) {
             btn.classList.add('active');
-            btn.querySelector('i').className = 'fas fa-heart';
+            const svg = btn.querySelector('svg');
+            if (svg) svg.setAttribute('fill', 'currentColor');
         }
-        showToast(currentLang === 'ar' ? '❤️ تمت الإضافة للمفضلة' : '❤️ Added to favorites');
+        showToast(currentLang === 'ar' ? '🔖 تمت الإضافة للمفضلة' : '🔖 Added to favorites');
     } else {
         wishlist.splice(idx, 1);
         if (btn) {
             btn.classList.remove('active');
-            btn.querySelector('i').className = 'far fa-heart';
+            const svg = btn.querySelector('svg');
+            if (svg) svg.setAttribute('fill', 'none');
         }
-        showToast(currentLang === 'ar' ? '💔 تمت الإزالة من المفضلة' : '💔 Removed from favorites');
+        showToast(currentLang === 'ar' ? '🔓 تمت الإزالة من المفضلة' : '🔓 Removed from favorites');
     }
     localStorage.setItem('icloth_wishlist', JSON.stringify(wishlist));
     updateWishlistUI();
@@ -2999,11 +3002,14 @@ function updateWishlistUI() {
         countBadge.innerText = wishlist.length;
         countBadge.style.display = wishlist.length > 0 ? 'flex' : 'none';
     }
-    const headerHeart = document.querySelector('#wishlist-btn i');
-    if (headerHeart) {
-        headerHeart.className = wishlist.length > 0 ? 'fas fa-heart' : 'far fa-heart';
-        if (wishlist.length > 0) headerHeart.style.color = '#ff4d4d';
-        else headerHeart.style.color = '';
+    const navWishBtn = document.querySelector('#wishlist-btn');
+    if (navWishBtn) {
+        const svg = navWishBtn.querySelector('svg');
+        if (svg) {
+            const hasItems = wishlist.length > 0;
+            svg.setAttribute('fill', hasItems ? 'currentColor' : 'none');
+            svg.style.color = hasItems ? '#d4af37' : '';
+        }
     }
     // Also update modal button if open
     if (selectedProductForSize) {
@@ -3011,7 +3017,8 @@ function updateWishlistUI() {
         if (modalWB) {
             const isInW = wishlist.includes(selectedProductForSize.id);
             modalWB.classList.toggle('active', isInW);
-            modalWB.querySelector('i').className = isInW ? 'fas fa-heart' : 'far fa-heart';
+            const svg = modalWB.querySelector('svg');
+            if (svg) svg.setAttribute('fill', isInW ? 'currentColor' : 'none');
         }
     }
 }
@@ -3035,10 +3042,14 @@ function renderWishlist() {
                 <div class="cart-item-info" style="flex: 1; margin: 0 15px;">
                     <h4 style="font-size: 0.95rem; margin-bottom: 5px;">${translatedName}</h4>
                     <div style="color: var(--primary); font-weight: 800; font-size: 0.85rem;">${p.price} ${translations[currentLang].currency}</div>
+                    <button onclick="openSizeModal('${p.id}'); toggleWishlistMenu();" style="margin-top: 10px; background: var(--primary); color: #000; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; width: 100%; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <i class="fas fa-shopping-bag"></i> ${currentLang === 'ar' ? 'أضف للسلة' : 'Add to Cart'}
+                    </button>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="openSizeModal('${p.id}'); toggleWishlistMenu();" style="background: var(--primary); color: #000; border: none; width: 35px; height: 35px; border-radius: 8px; cursor: pointer;"><i class="fas fa-shopping-bag"></i></button>
-                    <button onclick="window.toggleWishlist('${p.id}')" style="background: rgba(255,77,77,0.1); color: #ff4d4d; border: 1px solid rgba(255,77,77,0.2); width: 35px; height: 35px; border-radius: 8px; cursor: pointer;"><i class="fas fa-trash"></i></button>
+                <div style="display: flex; flex-direction: column; gap: 10px; justify-content: flex-start;">
+                    <button onclick="window.toggleWishlist('${p.id}')" style="background: rgba(255,77,77,0.1); color: #ff4d4d; border: 1px solid rgba(255,77,77,0.2); width: 35px; height: 35px; border-radius: 8px; cursor: pointer;" title="Remove">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
             </div>
         `;

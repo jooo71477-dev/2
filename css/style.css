@@ -2241,6 +2241,20 @@ footer {
     transform: scale(1.1); /* Share doesn't need rotate */
 }
 
+.bookmark-svg {
+    transition: all 0.3s ease;
+}
+
+.wishlist-modal-btn:hover .bookmark-svg, 
+.wishlist-toggle-btn:hover .bookmark-svg {
+    transform: scale(1.1);
+}
+
+.wishlist-modal-btn.active .bookmark-svg,
+.wishlist-toggle-btn.active .bookmark-svg {
+    fill: currentColor;
+}
+
 .share-modal-btn i {
     font-size: 1rem;
 }
