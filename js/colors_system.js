@@ -147,6 +147,10 @@ const ICLOTH_COLORS = [
  * Global Color Utility Class
  */
 class ColorSystem {
+    static get registry() {
+        return ICLOTH_COLORS;
+    }
+
     static getRegistry() {
         return ICLOTH_COLORS;
     }

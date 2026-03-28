@@ -752,17 +752,17 @@ function buildVariantHTML(name, images, sizes, stock, thumbnail) {
     
     const colorOptionsUI = sortedReg.map(c => `
         <div class="color-swatch-item-admin" 
-             onclick="setQuickColor(this, '${c.ar}')" 
-             title="${c.ar} / ${c.en}" 
-             data-name="${c.ar}" 
-             data-en="${c.en}"
+             onclick="setQuickColor(this, '${c.nameAr}')" 
+             title="${c.nameAr} / ${c.nameEn}" 
+             data-name="${c.nameAr}" 
+             data-en="${c.nameEn}"
              style="width:32px; height:32px; background:${c.hex}; border-radius:8px; cursor:pointer; border:2px solid rgba(255,255,255,0.1); transition:0.2s; position:relative;">
         </div>
     `).join('');
 
     const colorDatalist = `
         <datalist id="color-suggestions">
-            ${ColorSystem.registry.map(c => `<option value="${c.ar}"><option value="${c.en}">`).join('')}
+            ${ColorSystem.registry.map(c => `<option value="${c.nameAr}"><option value="${c.nameEn}">`).join('')}
         </datalist>
     `;
 
