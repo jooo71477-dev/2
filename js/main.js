@@ -1793,16 +1793,14 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
         const mainImg = mainImgRaw ? getOptimizedImg(mainImgRaw, 400) : '';
         const translatedName = (currentLang === 'ar' && p.name_ar) ? p.name_ar : translateText(p.name);
         const translatedBadge = (currentLang === 'ar' && p.badge_ar) ? p.badge_ar : (p.badge ? translateText(p.badge) : '');
+        const badgeContent = translatedBadge || (p.isNew ? 'NEW' : '');
         const catName = p.category || "";
         const seoAlt = `${translatedName} ${catName} - ${currentLang === 'ar' ? 'آي كلوث' : 'iCloth'}`;
-
-        const isInW = wishlist.includes(p.id);
-        const translatedProduct = (currentLang === 'ar' ? 'منتج' : 'Product');
 
         return `
         <div class="product-card" data-product-id="${p.id}" data-current-img="0" data-color-idx="${p.explicitMainImage ? '-1' : '0'}" onclick="openSizeModal('${p.id}')">
             <div class="product-img-wrap" style="position:relative; overflow:hidden;">
-                ${p.isNew ? `<span class="badge-label" style="position: absolute; top: 12px; left: 12px; background: var(--primary); color: #000; border: none; font-weight: 900; z-index: 10; padding: 4px 8px; font-size: 0.72rem; letter-spacing: 0.5px;">NEW</span>` : ''}
+                ${badgeContent ? `<span class="badge-label">${badgeContent}</span>` : ''}
                 
                 ${p.isBestSeller === true ? '<div class="best-seller-badge"><i class="fas fa-fire"></i></div>' : ''}
 
@@ -2075,7 +2073,9 @@ window.openSizeModal = (id) => {
     if (modalBadgeContainer) {
         let badgeHTML = '';
         if (p.isBestSeller === true) badgeHTML += '<div class="best-seller-badge"><i class="fas fa-fire"></i></div>';
-        if (p.isNew) badgeHTML += `<span class="badge-label" style="position: absolute; top: 12px; left: 12px; background: var(--primary); color: #000; border: none; font-weight: 900; z-index: 10; padding: 4px 8px; font-size: 0.72rem; letter-spacing: 0.5px;">NEW</span>`;
+        const modalTranslatedBadge = (currentLang === 'ar' && p.badge_ar) ? p.badge_ar : (p.badge ? translateText(p.badge) : '');
+        const modalBadgeContent = modalTranslatedBadge || (p.isNew ? 'NEW' : '');
+        if (modalBadgeContent) badgeHTML += `<span class="badge-label">${modalBadgeContent}</span>`;
         modalBadgeContainer.innerHTML = badgeHTML;
     }
     
