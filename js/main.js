@@ -2440,9 +2440,14 @@ function renderModalSizes(p, color) {
     }
 
     const finalSizes = sizes.length > 0 ? sizes : standardSizes;
+    window._currentModalSizeStock = sizeStock; // Store for selectSizeForCart
+    
+    // Clear stock info when rendering new sizes
+    const info = document.getElementById('size-stock-info');
+    if (info) info.innerHTML = '';
 
     container.innerHTML = finalSizes.map(s => {
-        const stock = sizeStock[s] !== undefined ? sizeStock[s] : 99; // Default high if no specific stock
+        const stock = sizeStock[s] !== undefined ? sizeStock[s] : 99;
         const isOutOfStock = stock <= 0;
         return `
             <button class="size-btn ${isOutOfStock ? 'out-of-stock' : ''}" 
@@ -2458,6 +2463,27 @@ window.selectSizeForCart = (size, btn) => {
     document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     window._selectedModalSize = size;
+
+    // Show remaining stock info
+    const info = document.getElementById('size-stock-info');
+    if (info && window._currentModalSizeStock) {
+        const stock = window._currentModalSizeStock[size] !== undefined ? window._currentModalSizeStock[size] : null;
+        if (stock !== null) {
+            let arText = `متوفر ${stock} قطعة`;
+            if (stock == 0) arText = "نفذت الكمية!";
+            else if (stock == 1) arText = "فاضل قطعة واحدة فقط!";
+            else if (stock == 2) arText = "فاضل قطعتين فقط!";
+            else if (stock <= 10) arText = `فاضل ${stock} قطع فقط!`;
+            
+            const enText = stock === 0 ? "Out of stock" : (stock <= 10 ? `Only ${stock} items left!` : `${stock} items available`);
+            
+            info.innerHTML = `<i class="fas ${stock === 0 ? 'fa-exclamation-circle' : 'fa-box-open'}"></i> ${currentLang === 'ar' ? arText : enText}`;
+            info.style.color = stock <= 3 ? 'var(--danger)' : (stock <= 10 ? '#ff9800' : 'var(--primary)');
+            info.style.opacity = '1';
+        } else {
+            info.innerHTML = '';
+        }
+    }
 };
 
 window.addToBasketFromModal = () => {
