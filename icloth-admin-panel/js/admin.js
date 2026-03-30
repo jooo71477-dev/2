@@ -292,13 +292,14 @@ function removeMainImage() {
 }
 
 function addColorVariant(name = '', image = '') {
-    const id = Date.now() + Math.random();
+    const id = Date.now() + "_" + Math.floor(Math.random() * 1000);
     colorVariants.push({ id, name, image });
     renderColorVariants();
 }
 
 window.removeColorVariant = (id) => {
-    colorVariants = colorVariants.filter(v => v.id !== id);
+    console.log("🗑️ Removing Color Variant:", id);
+    colorVariants = colorVariants.filter(v => String(v.id) !== String(id));
     renderColorVariants();
 };
 
@@ -306,33 +307,33 @@ function renderColorVariants() {
     if (!colorVariantsContainer) return;
     colorVariantsContainer.innerHTML = colorVariants.map(v => `
         <div class="stat-card" style="padding: 15px; position: relative; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); text-align: right;">
-            <i class="fas fa-times" style="position: absolute; top: 10px; left: 10px; color: #f44336; cursor: pointer; font-size: 1.1rem; z-index: 10;" onclick="removeColorVariant(${v.id})"></i>
+            <i class="fas fa-times" style="position: absolute; top: 10px; left: 10px; color: #f44336; cursor: pointer; font-size: 1.1rem; z-index: 10;" onclick="window.removeColorVariant('${v.id}')"></i>
             
             <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px;">اسم اللون:</label>
-            <input type="text" placeholder="مثال: أحمر" value="${v.name}" onchange="updateVariantName(${v.id}, this.value)" style="width: 100%; margin-bottom: 10px; font-size: 0.85rem; padding: 8px;">
+            <input type="text" placeholder="مثال: أحمر" value="${v.name}" onchange="window.updateVariantName('${v.id}', this.value)" style="width: 100%; margin-bottom: 10px; font-size: 0.85rem; padding: 8px;">
             
             <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px;">مقاسات هذا اللون (اضغط Enter أو Space):</label>
             <div style="border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); border-radius: 8px; padding: 5px; min-height: 40px; margin-bottom: 10px;">
                 <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px;">
-                    ${(v.sizes || '').split(',').map(s => s.trim()).filter(s => s).map((s, sIdx) => `<span style="background: var(--accent); color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px;">${s} <i class="fas fa-times" style="cursor: pointer;" onclick="removeVariantSize(${v.id}, ${sIdx})"></i></span>`).join('')}
+                    ${(v.sizes || '').split(',').map(s => s.trim()).filter(s => s).map((s, sIdx) => `<span style="background: var(--accent); color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px;">${s} <i class="fas fa-times" style="cursor: pointer;" onclick="window.removeVariantSize('${v.id}', ${sIdx})"></i></span>`).join('')}
                 </div>
-                <input type="text" placeholder="اكتب المقاس واضغط Enter" onkeydown="handleVariantSizeKey(event, ${v.id}, this)" style="border: none; background: transparent; padding: 5px; outline: none; width: 100%; font-size: 0.8rem; color: #fff;">
+                <input type="text" placeholder="اكتب المقاس واضغط Enter" onkeydown="window.handleVariantSizeKey(event, '${v.id}', this)" style="border: none; background: transparent; padding: 5px; outline: none; width: 100%; font-size: 0.8rem; color: #fff;">
             </div>
 
             <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px;">صورة اللون:</label>
-            <input type="file" accept="image/*" onchange="handleVariantImage(this, ${v.id})" style="font-size: 0.7rem; width: 100%; margin-bottom: 10px;">
+            <input type="file" accept="image/*" onchange="window.handleVariantImage(this, '${v.id}')" style="font-size: 0.7rem; width: 100%; margin-bottom: 10px;">
             <img src="${v.image || 'https://placehold.co/100x120?text=No+Color+Image'}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; ${v.image ? '' : 'filter: grayscale(1); opacity: 0.3;'}">
         </div>
     `).join('');
 }
 
 window.updateVariantName = (id, name) => {
-    const v = colorVariants.find(v => v.id === id);
+    const v = colorVariants.find(v => String(v.id) === String(id));
     if (v) v.name = name;
 };
 
 window.updateVariantSizes = (id, sizes) => {
-    const v = colorVariants.find(v => v.id === id);
+    const v = colorVariants.find(v => String(v.id) === String(id));
     if (v) v.sizes = sizes;
 };
 
@@ -341,7 +342,7 @@ window.handleVariantSizeKey = (e, id, input) => {
         e.preventDefault();
         const val = input.value.trim().replace(/,/g, '');
         if (val) {
-            const v = colorVariants.find(v => v.id === id);
+            const v = colorVariants.find(v => String(v.id) === String(id));
             if (v) {
                 const currentSizes = (v.sizes || '').split(',').map(s => s.trim()).filter(s => s);
                 currentSizes.push(val);
@@ -357,7 +358,7 @@ window.handleVariantSizeKey = (e, id, input) => {
             }
         }
     } else if (e.key === 'Backspace' && input.value === '') {
-        const v = colorVariants.find(v => v.id === id);
+        const v = colorVariants.find(v => String(v.id) === String(id));
         if (v) {
             let currentSizes = (v.sizes || '').split(',').map(s => s.trim()).filter(s => s);
             if (currentSizes.length > 0) {
@@ -375,7 +376,8 @@ window.handleVariantSizeKey = (e, id, input) => {
 };
 
 window.removeVariantSize = (id, idxToRemove) => {
-    const v = colorVariants.find(v => v.id === id);
+    console.log("🗑️ Removing Variant Size at index:", idxToRemove, "for variant:", id);
+    const v = colorVariants.find(v => String(v.id) === String(id));
     if (v) {
         let currentSizes = (v.sizes || '').split(',').map(s => s.trim()).filter(s => s);
         if (idxToRemove >= 0 && idxToRemove < currentSizes.length) {
@@ -396,12 +398,13 @@ function renderMainSizes() {
     tagsDiv.innerHTML = sizes.map((s, idx) => `
         <span style="background: var(--accent); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px;">
             ${s} 
-            <i class="fas fa-times" style="cursor: pointer;" onclick="removeMainSize(${idx})"></i>
+            <i class="fas fa-times" style="cursor: pointer;" onclick="window.removeMainSize(${idx})"></i>
         </span>
     `).join('');
 }
 
 window.removeMainSize = (idxToRemove) => {
+    console.log("🗑️ Removing Main Size at index:", idxToRemove);
     const inputHidden = document.getElementById('p-sizes');
     let sizes = inputHidden.value.split(',').map(s => s.trim()).filter(s => s);
     sizes.splice(idxToRemove, 1);
@@ -444,7 +447,7 @@ window.handleVariantImage = async (input, id) => {
             const base64 = e.target.result;
             // Variants can be smaller to save space (800px is plenty)
             const compressed = await compressImage(base64, 800);
-            const v = colorVariants.find(v => v.id === id);
+            const v = colorVariants.find(v => String(v.id) === String(id));
             if (v) {
                 v.image = compressed;
                 renderColorVariants();
@@ -797,7 +800,11 @@ async function editProduct(id) {
     document.getElementById('p-subcategory').value = p.subCategory;
     document.getElementById('p-sizes').value = (p.sizes || []).join(', ');
     renderMainSizes();
-    colorVariants = (p.colorVariants || (p.colors || []).map(c => ({ name: c, image: '', sizes: '' }))).map(v => ({ ...v, id: Math.random(), sizes: Array.isArray(v.sizes) ? v.sizes.join(', ') : (v.sizes || '') }));
+    colorVariants = (p.colorVariants || (p.colors || []).map(c => ({ name: c, image: '', sizes: '' }))).map(v => ({ 
+        ...v, 
+        id: v.id || (Date.now() + "_" + Math.floor(Math.random() * 1000)), 
+        sizes: Array.isArray(v.sizes) ? v.sizes.join(', ') : (v.sizes || '') 
+    }));
     renderColorVariants();
     document.getElementById('p-badge').value = p.badge || '';
     if (document.getElementById('p-badge-ar')) document.getElementById('p-badge-ar').value = p.badge_ar || '';
