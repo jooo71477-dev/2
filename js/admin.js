@@ -1593,6 +1593,64 @@ async function shipToBosta(orderId) {
             shippedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
+        // ------------- 🛑 DECREASE STOCK LOGIC 🛑 -------------
+        try {
+            console.log("🚚 Decreasing stock for shipped items...");
+            for (const item of order.items) {
+                if (!item.id) continue;
+                const productRef = db.collection('products').doc(item.id);
+                const pDoc = await productRef.get();
+                
+                if (pDoc.exists) {
+                    const pData = pDoc.data();
+                    let updatedSizes = Array.isArray(pData.sizes) ? [...pData.sizes] : [];
+                    let updatedColorVariants = Array.isArray(pData.colorVariants) ? JSON.parse(JSON.stringify(pData.colorVariants)) : [];
+                    let changed = false;
+
+                    const qtyToRemove = item.quantity || 1;
+
+                    for (let q = 0; q < qtyToRemove; q++) {
+                        if (!item.color || item.color === "" || item.color === "بدون لون" || item.color === "Default") {
+                            const index = updatedSizes.indexOf(item.size);
+                            if (index !== -1) {
+                                updatedSizes.splice(index, 1);
+                                changed = true;
+                            }
+                        } else {
+                            const variantIndex = updatedColorVariants.findIndex(v => v.name === item.color || v.name_ar === item.color || v.name_en === item.color || (v.name && v.name.includes(item.color)) || (item.color && item.color.includes(v.name)));
+                            if (variantIndex !== -1) {
+                                const variant = updatedColorVariants[variantIndex];
+                                let variantSizes = Array.isArray(variant.sizes) ? variant.sizes : [];
+                                const sizeIndex = variantSizes.indexOf(item.size);
+                                if (sizeIndex !== -1) {
+                                    variantSizes.splice(sizeIndex, 1);
+                                    updatedColorVariants[variantIndex].sizes = variantSizes;
+                                    changed = true;
+                                }
+                            } else {
+                                const fallbackIndex = updatedSizes.indexOf(item.size);
+                                if (fallbackIndex !== -1) {
+                                    updatedSizes.splice(fallbackIndex, 1);
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (changed) {
+                        await productRef.update({
+                            sizes: updatedSizes,
+                            colorVariants: updatedColorVariants
+                        });
+                        console.log(`✅ Stock updated for product ${item.id} (removed ${qtyToRemove} of ${item.size})`);
+                    }
+                }
+            }
+        } catch (stockErr) {
+            console.error("❌ Error updating product stock:", stockErr);
+        }
+        // ------------------------------------------------------
+
         alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
         
         if (typeof loadOrders === 'function') loadOrders();

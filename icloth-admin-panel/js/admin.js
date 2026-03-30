@@ -275,6 +275,7 @@ function toggleForm() {
         colorVariants = [];
         renderColorVariants();
         document.getElementById('form-title').innerText = 'إضافة منتج جديد';
+        renderMainSizes(); // Re-render empty main sizes
     }
 }
 
@@ -310,8 +311,13 @@ function renderColorVariants() {
             <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px;">اسم اللون:</label>
             <input type="text" placeholder="مثال: أحمر" value="${v.name}" onchange="updateVariantName(${v.id}, this.value)" style="width: 100%; margin-bottom: 10px; font-size: 0.85rem; padding: 8px;">
             
-            <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px;">مقاسات هذا اللون (M, L, XL):</label>
-            <input type="text" placeholder="M, L, XL" value="${v.sizes || ''}" onchange="updateVariantSizes(${v.id}, this.value)" style="width: 100%; margin-bottom: 10px; font-size: 0.85rem; padding: 8px; border-color: #444;">
+            <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px;">مقاسات هذا اللون (اضغط Enter أو Space):</label>
+            <div style="border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); border-radius: 8px; padding: 5px; min-height: 40px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px;">
+                    ${(v.sizes || '').split(',').map(s => s.trim()).filter(s => s).map(s => `<span style="background: var(--accent); color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px;">${s} <i class="fas fa-times" style="cursor: pointer;" onclick="removeVariantSize(${v.id}, '${s}')"></i></span>`).join('')}
+                </div>
+                <input type="text" placeholder="اكتب المقاس واضغط Enter" onkeydown="handleVariantSizeKey(event, ${v.id}, this)" style="border: none; background: transparent; padding: 5px; outline: none; width: 100%; font-size: 0.8rem; color: #fff;">
+            </div>
 
             <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px;">صورة اللون:</label>
             <input type="file" accept="image/*" onchange="handleVariantImage(this, ${v.id})" style="font-size: 0.7rem; width: 100%; margin-bottom: 10px;">
@@ -329,6 +335,80 @@ function updateVariantSizes(id, sizes) {
     const v = colorVariants.find(v => v.id === id);
     if (v) v.sizes = sizes;
 }
+
+function handleVariantSizeKey(e, id, input) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === ',') {
+        e.preventDefault();
+        const val = input.value.trim().replace(/,/g, '');
+        if (val) {
+            const v = colorVariants.find(v => v.id === id);
+            if (v) {
+                const currentSizes = (v.sizes || '').split(',').map(s => s.trim()).filter(s => s);
+                currentSizes.push(val);
+                v.sizes = currentSizes.join(', ');
+                renderColorVariants();
+                // Focus will be lost, so maybe wait and focus again? (or user just clicks)
+            }
+        }
+    }
+}
+
+function removeVariantSize(id, sizeToRemove) {
+    const v = colorVariants.find(v => v.id === id);
+    if (v) {
+        let currentSizes = (v.sizes || '').split(',').map(s => s.trim()).filter(s => s);
+        // Find index and remove only the FIRST occurrence
+        const idx = currentSizes.indexOf(sizeToRemove);
+        if (idx !== -1) {
+            currentSizes.splice(idx, 1);
+            v.sizes = currentSizes.join(', ');
+            renderColorVariants();
+        }
+    }
+}
+
+// Global Main Sizes Tags logic
+function renderMainSizes() {
+    const inputHidden = document.getElementById('p-sizes');
+    const tagsDiv = document.getElementById('p-sizes-tags');
+    if (!inputHidden || !tagsDiv) return;
+    
+    const sizes = inputHidden.value.split(',').map(s => s.trim()).filter(s => s);
+    tagsDiv.innerHTML = sizes.map((s, idx) => `
+        <span style="background: var(--accent); color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px;">
+            ${s} 
+            <i class="fas fa-times" style="cursor: pointer;" onclick="removeMainSize(${idx})"></i>
+        </span>
+    `).join('');
+}
+
+window.removeMainSize = (idxToRemove) => {
+    const inputHidden = document.getElementById('p-sizes');
+    let sizes = inputHidden.value.split(',').map(s => s.trim()).filter(s => s);
+    sizes.splice(idxToRemove, 1);
+    inputHidden.value = sizes.join(', ');
+    renderMainSizes();
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const inputEl = document.getElementById('p-sizes-input');
+    if (inputEl) {
+        inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === ',') {
+                e.preventDefault();
+                const val = inputEl.value.trim().replace(/,/g, '');
+                if (val) {
+                    const inputHidden = document.getElementById('p-sizes');
+                    let sizes = inputHidden.value.split(',').map(s => s.trim()).filter(s => s);
+                    sizes.push(val);
+                    inputHidden.value = sizes.join(', ');
+                    inputEl.value = '';
+                    renderMainSizes();
+                }
+            }
+        });
+    }
+});
 
 async function handleVariantImage(input, id) {
     if (input.files && input.files[0]) {
@@ -689,6 +769,7 @@ async function editProduct(id) {
     updateSubCats();
     document.getElementById('p-subcategory').value = p.subCategory;
     document.getElementById('p-sizes').value = (p.sizes || []).join(', ');
+    renderMainSizes();
     colorVariants = (p.colorVariants || (p.colors || []).map(c => ({ name: c, image: '', sizes: '' }))).map(v => ({ ...v, id: Math.random(), sizes: Array.isArray(v.sizes) ? v.sizes.join(', ') : (v.sizes || '') }));
     renderColorVariants();
     document.getElementById('p-badge').value = p.badge || '';
@@ -858,6 +939,64 @@ async function shipToBosta(orderId) {
             status: 'تم الشحن',
             shippedAt: new Date().toISOString()
         });
+
+        // ------------- 🛑 DECREASE STOCK LOGIC 🛑 -------------
+        try {
+            console.log("🚚 Decreasing stock for shipped items...");
+            for (const item of order.items) {
+                if (!item.id) continue;
+                const productRef = db.collection('products').doc(item.id);
+                const pDoc = await productRef.get();
+                
+                if (pDoc.exists) {
+                    const pData = pDoc.data();
+                    let updatedSizes = Array.isArray(pData.sizes) ? [...pData.sizes] : [];
+                    let updatedColorVariants = Array.isArray(pData.colorVariants) ? JSON.parse(JSON.stringify(pData.colorVariants)) : [];
+                    let changed = false;
+
+                    const qtyToRemove = item.quantity || 1;
+
+                    for (let q = 0; q < qtyToRemove; q++) {
+                        if (!item.color || item.color === "" || item.color === "بدون لون" || item.color === "Default") {
+                            const index = updatedSizes.indexOf(item.size);
+                            if (index !== -1) {
+                                updatedSizes.splice(index, 1);
+                                changed = true;
+                            }
+                        } else {
+                            const variantIndex = updatedColorVariants.findIndex(v => v.name === item.color || v.name_ar === item.color || v.name_en === item.color || (v.name && v.name.includes(item.color)) || (item.color && item.color.includes(v.name)));
+                            if (variantIndex !== -1) {
+                                const variant = updatedColorVariants[variantIndex];
+                                let variantSizes = Array.isArray(variant.sizes) ? variant.sizes : [];
+                                const sizeIndex = variantSizes.indexOf(item.size);
+                                if (sizeIndex !== -1) {
+                                    variantSizes.splice(sizeIndex, 1);
+                                    updatedColorVariants[variantIndex].sizes = variantSizes;
+                                    changed = true;
+                                }
+                            } else {
+                                const fallbackIndex = updatedSizes.indexOf(item.size);
+                                if (fallbackIndex !== -1) {
+                                    updatedSizes.splice(fallbackIndex, 1);
+                                    changed = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (changed) {
+                        await productRef.update({
+                            sizes: updatedSizes,
+                            colorVariants: updatedColorVariants
+                        });
+                        console.log(`✅ Stock updated for product ${item.id} (removed ${qtyToRemove} of ${item.size})`);
+                    }
+                }
+            }
+        } catch (stockErr) {
+            console.error("❌ Error updating product stock:", stockErr);
+        }
+        // ------------------------------------------------------
 
         alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
 

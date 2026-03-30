@@ -823,9 +823,12 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>المقاسات المتاحة (M, L, XL ...)</label>
-                            <input type="text" id="p-sizes" value="" placeholder="مثال: M, L, XL, XXL">
-                            <small style="opacity: 0.6;">افصل بين كل مقاس بفاصلة ( , )</small>
+                            <label>المقاسات المتاحة للقسم الأساسي (اكتب الكلمة واضغط Space أو Enter)</label>
+                            <div style="border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); padding: 5px; border-radius: 12px; min-height: 45px; display: flex; flex-direction: column;">
+                                <div id="p-sizes-tags" style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px;"></div>
+                                <input type="text" id="p-sizes-input" placeholder="مثال: L ... ثم اضغط مسطرة" style="border: none; background: transparent; padding: 5px; outline: none; width: 100%; font-size: 0.9rem; color: #fff;">
+                            </div>
+                            <input type="hidden" id="p-sizes" value="">
                         </div>
                         <div class="form-group" style="grid-column: 1 / -1;">
                             <label>الألوان المتاحة (صور لكل لون)</label>
