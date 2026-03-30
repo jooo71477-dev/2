@@ -312,10 +312,24 @@ function renderColorVariants() {
             <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px;">اسم اللون:</label>
             <input type="text" placeholder="مثال: أحمر" value="${v.name}" onchange="window.updateVariantName('${v.id}', this.value)" style="width: 100%; margin-bottom: 10px; font-size: 0.85rem; padding: 8px;">
             
-            <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px;">مقاسات هذا اللون (اضغط Enter أو Space):</label>
-            <div style="border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); border-radius: 8px; padding: 5px; min-height: 40px; margin-bottom: 10px;">
-                <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px;">
-                    ${(v.sizes || '').split(',').map(s => s.trim()).filter(s => s).map((s, sIdx) => `<span style="background: var(--accent); color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px;">${s} <i class="fas fa-times" style="cursor: pointer;" onclick="window.removeVariantSize('${v.id}', ${sIdx})"></i></span>`).join('')}
+            <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px;">مقاسات هذا اللون (اضغط Enter للتحويل لتاج):</label>
+            <div style="border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; min-height: 40px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+                    ${(v.sizes || '').split(',').map(s => s.trim()).filter(s => s).map((s, sIdx) => {
+                        const qty = (v.sizeStock && v.sizeStock[s] !== undefined) ? v.sizeStock[s] : 1;
+                        return `
+                        <div class="size-stock-tag" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 5px 8px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; gap: 3px;">
+                            <div style="font-size: 0.75rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                                <strong>${s}</strong>
+                                <i class="fas fa-times" style="cursor: pointer; color: #f44336; font-size: 0.65rem;" onclick="window.removeVariantSize('${v.id}', ${sIdx})"></i>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 5px; margin-top: 2px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 3px;">
+                                <span style="font-size: 0.6rem; color: #888;">الكمية:</span>
+                                <input type="number" value="${qty}" onchange="window.updateVariantSizeQty('${v.id}', '${s}', this.value)" 
+                                       style="width: 45px; background: #000; border: none; color: var(--accent); font-size: 0.8rem; text-align: center; border-radius: 4px; font-weight: bold;">
+                            </div>
+                        </div>`;
+                    }).join('')}
                 </div>
                 <input type="text" placeholder="اكتب المقاس واضغط Enter" onkeydown="window.handleVariantSizeKey(event, '${v.id}', this)" style="border: none; background: transparent; padding: 5px; outline: none; width: 100%; font-size: 0.8rem; color: #fff;">
             </div>
@@ -330,6 +344,15 @@ function renderColorVariants() {
 window.updateVariantName = (id, name) => {
     const v = colorVariants.find(v => String(v.id) === String(id));
     if (v) v.name = name;
+};
+
+window.updateVariantSizeQty = (id, size, qty) => {
+    const v = colorVariants.find(v => String(v.id) === String(id));
+    if (v) {
+        if (!v.sizeStock) v.sizeStock = {};
+        v.sizeStock[size] = Number(qty);
+        console.log(`📊 Updated ${v.name} - ${size} stock to: ${qty}`);
+    }
 };
 
 window.updateVariantSizes = (id, sizes) => {
@@ -526,11 +549,22 @@ if (saveProductForm) {
             parentCategory: document.getElementById('p-category').value,
             subCategory: document.getElementById('p-subcategory').value,
             sizes: document.getElementById('p-sizes').value.split(',').map(s => s.trim()).filter(s => s),
-            colorVariants: colorVariants.map(v => ({
-                name: v.name || "",
-                image: v.image || "",
-                sizes: v.sizes ? v.sizes.split(',').map(s => s.trim()).filter(s => s) : []
-            })),
+            colorVariants: colorVariants.map(v => {
+                const sizesArr = v.sizes ? v.sizes.split(',').map(s => s.trim()).filter(s => s) : [];
+                // Build robust sizeStock object for numerical management
+                const finalSizeStock = {};
+                sizesArr.forEach(s => {
+                    finalSizeStock[s] = (v.sizeStock && v.sizeStock[s] !== undefined) ? Number(v.sizeStock[s]) : 1;
+                });
+                
+                return {
+                    name: v.name || "",
+                    image: v.image || "",
+                    sizes: sizesArr,
+                    sizeStock: finalSizeStock,
+                    stock: Object.values(finalSizeStock).reduce((a, b) => a + b, 0)
+                };
+            }),
             colors: colorVariants.map(v => v.name || ""),
             badge: document.getElementById('p-badge').value || "",
             badge_ar: document.getElementById('p-badge-ar') ? document.getElementById('p-badge-ar').value || "" : "",
@@ -992,38 +1026,50 @@ async function shipToBosta(orderId) {
 
                     for (let q = 0; q < qtyToRemove; q++) {
                         if (!item.color || item.color === "" || item.color === "بدون لون" || item.color === "Default") {
+                            // If no color selected, we use the main sizes array (legacy behavior)
                             const index = updatedSizes.indexOf(item.size);
                             if (index !== -1) {
                                 updatedSizes.splice(index, 1);
                                 changed = true;
                             }
                         } else {
+                            // Professional Numerical Stock Deduction
                             const variantIndex = updatedColorVariants.findIndex(v => v.name === item.color || v.name_ar === item.color || v.name_en === item.color || (v.name && v.name.includes(item.color)) || (item.color && item.color.includes(v.name)));
+                            
                             if (variantIndex !== -1) {
                                 const variant = updatedColorVariants[variantIndex];
-                                let variantSizes = Array.isArray(variant.sizes) ? variant.sizes : [];
-                                const sizeIndex = variantSizes.indexOf(item.size);
-                                if (sizeIndex !== -1) {
-                                    variantSizes.splice(sizeIndex, 1);
-                                    updatedColorVariants[variantIndex].sizes = variantSizes;
+                                if (!variant.sizeStock) variant.sizeStock = {};
+                                
+                                // Decrement Number instead of Splicing String
+                                if (variant.sizeStock[item.size] && variant.sizeStock[item.size] > 0) {
+                                    variant.sizeStock[item.size] -= 1;
+                                    console.log(`📉 Decremented ${item.color} ${item.size} stock. Remaining: ${variant.sizeStock[item.size]}`);
+                                    
+                                    // Recalculate variant total stock
+                                    variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + b, 0);
                                     changed = true;
-                                }
-                            } else {
-                                const fallbackIndex = updatedSizes.indexOf(item.size);
-                                if (fallbackIndex !== -1) {
-                                    updatedSizes.splice(fallbackIndex, 1);
-                                    changed = true;
+                                } else {
+                                    // Fallback: if size exists in array but not in stock map, remove from array
+                                    const sizeIdx = (variant.sizes || []).indexOf(item.size);
+                                    if (sizeIdx !== -1) {
+                                        variant.sizes.splice(sizeIdx, 1);
+                                        changed = true;
+                                    }
                                 }
                             }
                         }
                     }
 
                     if (changed) {
+                        // Re-calculate total product stock
+                        const newTotalStock = updatedColorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+                        
                         await productRef.update({
                             sizes: updatedSizes,
-                            colorVariants: updatedColorVariants
+                            colorVariants: updatedColorVariants,
+                            stock: newTotalStock
                         });
-                        console.log(`✅ Stock updated for product ${item.id} (removed ${qtyToRemove} of ${item.size})`);
+                        console.log(`✅ Stock updated for product ${item.id} (New Total: ${newTotalStock})`);
                     }
                 }
             }
