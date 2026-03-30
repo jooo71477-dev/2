@@ -423,6 +423,7 @@ if (saveProductForm) {
             })),
             colors: colorVariants.map(v => v.name || ""),
             badge: document.getElementById('p-badge').value || "",
+            badge_ar: document.getElementById('p-badge-ar') ? document.getElementById('p-badge-ar').value || "" : "",
             updatedAt: new Date().toISOString()
         };
 
@@ -691,6 +692,7 @@ async function editProduct(id) {
     colorVariants = (p.colorVariants || (p.colors || []).map(c => ({ name: c, image: '', sizes: '' }))).map(v => ({ ...v, id: Math.random(), sizes: Array.isArray(v.sizes) ? v.sizes.join(', ') : (v.sizes || '') }));
     renderColorVariants();
     document.getElementById('p-badge').value = p.badge || '';
+    if (document.getElementById('p-badge-ar')) document.getElementById('p-badge-ar').value = p.badge_ar || '';
     document.getElementById('p-image-base64').value = p.image || "";
 
     const previewImg = document.getElementById('preview-img');

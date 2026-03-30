@@ -531,6 +531,7 @@ function openProductModal(id = null) {
         document.getElementById('p-price').value = p.price || '';
         document.getElementById('p-price-before').value = p.priceBefore || p.oldPrice || '';
         if (document.getElementById('p-badge')) document.getElementById('p-badge').value = p.badge || '';
+        if (document.getElementById('p-badge-ar')) document.getElementById('p-badge-ar').value = p.badge_ar || '';
 
         // --- Best Seller ---
         document.getElementById('p-best-seller').checked = !!p.isBestSeller;
@@ -573,6 +574,7 @@ function openProductModal(id = null) {
         document.getElementById('p-price-before').value = "";
         document.getElementById('p-price').value = "";
         if (document.getElementById('p-badge')) document.getElementById('p-badge').value = "";
+        if (document.getElementById('p-badge-ar')) document.getElementById('p-badge-ar').value = "";
         document.getElementById('p-best-seller').checked = false;
         document.getElementById('p-size-chart').value = "";
         document.getElementById('p-size-chart-preview').style.display = "none";
@@ -641,6 +643,7 @@ document.getElementById('product-form').onsubmit = async (e) => {
         priceBefore: finalPriceBefore,
         oldPrice: finalPriceBefore, // Backup for old code
         badge: document.getElementById('p-badge') ? document.getElementById('p-badge').value : '',
+        badge_ar: document.getElementById('p-badge-ar') ? document.getElementById('p-badge-ar').value : '',
         explicitMainImage: !!document.getElementById('p-image').value,
         colorVariants: variants,
         isBestSeller: document.getElementById('p-best-seller').checked,
