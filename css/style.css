@@ -3773,7 +3773,42 @@ footer {
     transform: scale(1) !important;
 }
 
-/* Size Buttons Stock States */
+/* Size Buttons Stock States & Badges */
+.size-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 15px !important;
+    position: relative;
+    min-width: 60px;
+}
+
+.size-count-badge {
+    background: var(--primary);
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: 900;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 2px;
+    box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+}
+
+.size-btn.selected .size-count-badge {
+    background: #fff;
+    color: var(--primary);
+}
+
+[data-theme="light"] .size-count-badge {
+    background: var(--primary);
+    color: #fff;
+}
+
 .size-btn.out-of-stock {
     opacity: 0.4;
     background: rgba(255, 255, 255, 0.04) !important;
@@ -3801,6 +3836,7 @@ footer {
     height: 2px;
     background: currentColor;
 }
+
 
 [data-theme="light"] .size-btn.out-of-stock {
     background: #f8f8f8 !important;

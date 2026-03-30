@@ -2440,20 +2440,22 @@ function renderModalSizes(p, color) {
     }
 
     const finalSizes = sizes.length > 0 ? sizes : standardSizes;
-    window._currentModalSizeStock = sizeStock; // Store for selectSizeForCart
+    window._currentModalSizeStock = sizeStock;
     
-    // Clear stock info when rendering new sizes
     const info = document.getElementById('size-stock-info');
     if (info) info.innerHTML = '';
 
     container.innerHTML = finalSizes.map(s => {
         const stock = sizeStock[s] !== undefined ? sizeStock[s] : 99;
         const isOutOfStock = stock <= 0;
+        const stockDisplay = stock < 99 ? `<span class="size-count-badge">${stock}</span>` : '';
+        
         return `
             <button class="size-btn ${isOutOfStock ? 'out-of-stock' : ''}" 
                     ${isOutOfStock ? 'disabled' : ''} 
                     onclick="selectSizeForCart('${s}', this)">
-                ${s}
+                <span class="size-name">${s}</span>
+                ${stockDisplay}
                 ${isOutOfStock ? '<span class="out-slash">/</span>' : ''}
             </button>`;
     }).join('');
