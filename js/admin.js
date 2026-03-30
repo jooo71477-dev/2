@@ -2218,36 +2218,112 @@ showSection = (id) => {
 function renderInventory(data = products) {
     const list = document.getElementById('inventory-list');
     if (!list) return;
+
     list.innerHTML = data.map(p => {
-        const stockStatus = p.stock <= 5 ? '<span style="color:var(--danger)">منخفض جداً</span>' : (p.stock <= 15 ? '<span style="color:var(--warning)">متوسط</span>' : '<span style="color:var(--success)">متوفر</span>');
+        const variants = p.colorVariants || [];
+        const isSoldOut = (Number(p.stock) || 0) <= 0;
+        const stockStatus = isSoldOut 
+            ? '<span class="status-badge badge-danger">نفذت الكمية</span>' 
+            : (Number(p.stock) < 10 ? '<span class="status-badge badge-warning">على وشك النفاذ</span>' : '<span class="status-badge badge-success">متوفر</span>');
+
+        // Render variants stock list
+        const variantsHTML = variants.map(v => {
+            const sizeStock = v.sizeStock || {};
+            const sizes = Object.entries(sizeStock);
+            
+            return `
+                <div class="inventory-variant-item" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 0; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.9rem; color: var(--primary);">
+                        <span style="width: 12px; height: 12px; border-radius: 50%; background: ${ColorSystem.getHex(v.name)}; border: 1px solid rgba(255,255,255,0.22);"></span>
+                        ${ColorSystem.translate(v.name, 'ar')}
+                        <span style="font-size: 0.75rem; opacity: 0.6; font-weight: 400; margin-right: 10px;">إجمالي: ${v.stock || 0}</span>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        ${sizes.length > 0 ? sizes.map(([size, qty]) => `
+                            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 5px 10px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 0.8rem; font-weight: 700; opacity: 0.7;">${size}:</span>
+                                <input type="number" 
+                                       value="${qty}" 
+                                       onchange="updateVariantSizeStock('${p.id}', '${v.name}', '${size}', this.value)"
+                                       style="width: 50px; padding: 2px 5px; background: #000; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; color: var(--primary); font-family: 'Cairo'; font-weight: 800; text-align: center;">
+                            </div>
+                        `).join('') : '<span style="font-size: 0.75rem; opacity: 0.5;">لا يوجد مقاسات بعد</span>'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
         return `
-            <tr>
-                <td>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="${p.image}" class="product-img">
-                        <span>${p.name}</span>
+            <tr style="vertical-align: top;">
+                <td style="padding: 20px 14px;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <img src="${p.image}" class="product-img" style="width: 60px; height: 60px; border-radius: 12px; border: 1.5px solid rgba(212,175,55,0.15);">
+                        <div>
+                            <div style="font-weight: 900; font-size: 1rem; color: #fff;">${p.name_ar || p.name}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 2px;">#${p.id.slice(0, 8)}</div>
+                        </div>
                     </div>
                 </td>
-                <td style="font-weight:bold; font-size:1.1rem;">${p.stock || 0}</td>
-                <td>
-                    <div style="display:flex; gap:5px;">
-                        <input type="number" id="quick-stock-${p.id}" value="${p.stock || 0}" style="width:70px; padding:5px;">
-                        <button onclick="updateQuickStock('${p.id}')" class="btn-primary" style="padding:5px 10px;"><i class="fas fa-save"></i></button>
+                <td style="padding: 10px 14px;">
+                    <div class="inventory-variants-grid">
+                        ${variantsHTML || '<div style="color: var(--danger); font-size: 0.85rem; padding: 15px;">⚠️ لم يتم إضافة ألوان لهذا المنتج بعد</div>'}
                     </div>
                 </td>
-                <td>${stockStatus}</td>
+                <td style="padding: 20px 14px; text-align: center;">
+                    ${stockStatus}
+                </td>
             </tr>
         `;
     }).join('');
 }
 
-window.updateQuickStock = async (id) => {
-    const newVal = Number(document.getElementById(`quick-stock-${id}`).value);
+window.updateVariantSizeStock = async (id, variantName, size, newVal) => {
+    const nVal = Number(newVal);
+    if (isNaN(nVal) || nVal < 0) return;
+
     try {
-        await db.collection('products').doc(id).update({ stock: newVal });
-        loadProducts(); // Reload to update state
-        alert("تم تحديث المخزون");
-    } catch (e) { alert("خطأ في التحديث"); }
+        const productRef = db.collection('products').doc(id);
+        
+        await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(productRef);
+            if (!doc.exists) return;
+            
+            const data = doc.data();
+            const variants = data.colorVariants || [];
+            const vIdx = variants.findIndex(v => v.name === variantName);
+            
+            if (vIdx !== -1) {
+                const v = variants[vIdx];
+                if (!v.sizeStock) v.sizeStock = {};
+                
+                v.sizeStock[size] = nVal;
+                
+                // Recalculate variant total
+                v.stock = Object.values(v.sizeStock).reduce((sum, val) => sum + (Number(val) || 0), 0);
+                
+                // Recalculate product total
+                const newTotalStock = variants.reduce((sum, vr) => sum + (Number(vr.stock) || 0), 0);
+                
+                transaction.update(productRef, {
+                    colorVariants: variants,
+                    stock: newTotalStock
+                });
+                
+                showToast(currentLang === 'ar' ? '✅ تم تحديث المخزون!' : '✅ Stock updated!');
+                
+                // Update local product data without reloading everything
+                const localP = products.find(p => p.id === id);
+                if (localP) {
+                    localP.colorVariants = variants;
+                    localP.stock = newTotalStock;
+                    // Optional: re-render this row or the whole list if needed
+                }
+            }
+        });
+    } catch (e) { 
+        console.error("Stock update error:", e);
+        alert("خطأ في التحديث"); 
+    }
 };
 
 document.getElementById('inventory-search')?.addEventListener('input', (e) => {

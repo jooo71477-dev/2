@@ -1467,6 +1467,10 @@ function setupEventListeners() {
             submitBtn.style.cursor = 'default';
             submitBtn.disabled = true;
 
+            // --- Inventory Check Before Starting ---
+            // Optional: You could check if items are still in stock here, 
+            // but for simplicity we proceed and handle deduction.
+
             const label = document.getElementById('btn-label');
             const scene = document.getElementById('btn-scene');
             const truck = document.getElementById('btn-truck');
@@ -1600,6 +1604,14 @@ function setupEventListeners() {
                         usedCount: firebase.firestore.FieldValue.increment(1)
                     });
                 }
+
+                // 2.1 Deduct Stock (NEW)
+                try {
+                    await deductStockFromOrder(cart);
+                } catch (stockErr) {
+                    console.error("Stock deduction failed:", stockErr);
+                    // We don't stop the order if stock update fails, but we log it.
+                }
                 
                 // 3. Format and Send to Telegram
                 let telegramMsg = `🔥 *فيه أوردر جديد على الموقع!*\n\n` +
@@ -1694,6 +1706,50 @@ function setupEventListeners() {
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.onclick = (e) => { e.preventDefault(); signOutUser(); };
+    }
+}
+
+async function deductStockFromOrder(items) {
+    if (!db) return;
+    
+    for (const item of items) {
+        try {
+            const productRef = db.collection('products').doc(item.id);
+            
+            await db.runTransaction(async (transaction) => {
+                const doc = await transaction.get(productRef);
+                if (!doc.exists) return;
+                
+                const data = doc.data();
+                const variants = data.colorVariants || [];
+                const variantIdx = variants.findIndex(v => v.name === item.color);
+                
+                if (variantIdx !== -1) {
+                    const v = variants[variantIdx];
+                    const qty = item.quantity || 1;
+                    
+                    // 1. Update Size Stock
+                    if (!v.sizeStock) v.sizeStock = {};
+                    const currentSizeStock = Number(v.sizeStock[item.size]) || 0;
+                    v.sizeStock[item.size] = Math.max(0, currentSizeStock - qty);
+                    
+                    // 2. Update Variant Total Stock
+                    v.stock = Object.values(v.sizeStock).reduce((sum, val) => sum + (Number(val) || 0), 0);
+                    
+                    // 3. Update Product Total Stock
+                    const newTotalStock = variants.reduce((sum, vr) => sum + (Number(vr.stock) || 0), 0);
+                    
+                    transaction.update(productRef, {
+                        colorVariants: variants,
+                        stock: newTotalStock
+                    });
+                    
+                    console.log(`📉 Stock decremented for ${item.name} (${item.size}): -${qty}`);
+                }
+            });
+        } catch (err) {
+            console.error(`❌ Error deducting stock for item ${item.cartId}:`, err);
+        }
     }
 }
 
