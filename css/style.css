@@ -3725,3 +3725,89 @@ footer {
         left: 10px;
     }
 }
+
+/* ====================================================
+   INVENTORY & SOLD OUT FEEDBACK (ADVANCED)
+   ==================================================== */
+.sold-out-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.88);
+    color: var(--primary);
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    font-weight: 900;
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    z-index: 100;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(212, 175, 55, 0.3);
+    pointer-events: none;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+}
+
+.sold-out-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: grayscale(1) blur(1px);
+    z-index: 50;
+    pointer-events: none;
+}
+
+.is-sold-out {
+    cursor: default !important;
+}
+
+.is-sold-out .product-info {
+    opacity: 0.5;
+    filter: grayscale(0.8);
+}
+
+.is-sold-out:hover .product-card-main-img {
+    transform: scale(1) !important;
+}
+
+/* Size Buttons Stock States */
+.size-btn.out-of-stock {
+    opacity: 0.4;
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: var(--text-muted) !important;
+    border: 1.5px dashed rgba(255, 255, 255, 0.15) !important;
+    cursor: not-allowed;
+    position: relative;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.size-btn.out-of-stock span.out-slash {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 2rem;
+    font-weight: 300;
+    color: rgba(255, 77, 77, 0.3);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 130%;
+    height: 2px;
+    background: currentColor;
+}
+
+[data-theme="light"] .size-btn.out-of-stock {
+    background: #f8f8f8 !important;
+    color: #bbb !important;
+    border-color: #eee !important;
+}
+
+[data-theme="light"] .size-btn.out-of-stock span.out-slash {
+    color: rgba(0, 0, 0, 0.1);
+}

@@ -1789,7 +1789,6 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
             : '';
 
         const mainImgRaw = firstImages[0] || '';
-        // Optimized Cloudinary image for Product Cards (400px is enough for grid)
         const mainImg = mainImgRaw ? getOptimizedImg(mainImgRaw, 400) : '';
         const translatedName = (currentLang === 'ar' && p.name_ar) ? p.name_ar : translateText(p.name);
         const translatedBadge = (currentLang === 'ar' && p.badge_ar) ? p.badge_ar : (p.badge ? translateText(p.badge) : '');
@@ -1797,18 +1796,24 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
         const catName = p.category || "";
         const seoAlt = `${translatedName} ${catName} - ${currentLang === 'ar' ? 'آي كلوث' : 'iCloth'}`;
 
+        const isSoldOut = (Number(p.stock) || 0) <= 0;
+        const soldOutBadge = isSoldOut ? `<div class="sold-out-badge">${currentLang === 'ar' ? 'نفذت الكمية' : 'SOLD OUT'}</div>` : '';
+        const soldOutOverlay = isSoldOut ? '<div class="sold-out-overlay"></div>' : '';
+
         return `
-        <div class="product-card" data-product-id="${p.id}" data-current-img="0" data-color-idx="${p.explicitMainImage ? '-1' : '0'}" onclick="openSizeModal('${p.id}')">
+        <div class="product-card ${isSoldOut ? 'is-sold-out' : ''}" data-product-id="${p.id}" data-current-img="0" data-color-idx="${p.explicitMainImage ? '-1' : '0'}" onclick="openSizeModal('${p.id}')">
             <div class="product-img-wrap" style="position:relative; overflow:hidden;">
-                ${badgeContent ? `<span class="badge-label">${badgeContent}</span>` : ''}
+                ${soldOutBadge}
+                ${soldOutOverlay}
+                ${badgeContent && !isSoldOut ? `<span class="badge-label">${badgeContent}</span>` : ''}
                 
-                ${p.isBestSeller === true ? '<div class="best-seller-badge"><i class="fas fa-fire"></i></div>' : ''}
+                ${p.isBestSeller === true && !isSoldOut ? '<div class="best-seller-badge"><i class="fas fa-fire"></i></div>' : ''}
 
                 <img class="product-card-main-img" src="${mainImg}" loading="lazy" alt="${seoAlt}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'400\\'><rect width=\\'400\\' height=\\'400\\' fill=\\'%23222\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23666\\' font-family=\\'Arial\\' font-size=\\'24\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>No Image</text></svg>'">
                 
                 <div class="card-overlay-name" data-translate-cache="${p.name}">${translatedName}</div>
 
-                ${hasMultipleImages ? `
+                ${hasMultipleImages && !isSoldOut ? `
                     <button class="img-nav-btn prev" onclick="event.stopPropagation(); cardPrevImg('${p.id}')"><i class="fas fa-chevron-left"></i></button>
                     <button class="img-nav-btn next" onclick="event.stopPropagation(); cardNextImg('${p.id}')"><i class="fas fa-chevron-right"></i></button>
                     <div class="carousel-dots">${firstImages.map((_, i) => `<span class="cdot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>
@@ -2424,20 +2429,29 @@ function renderModalSizes(p, color) {
     const container = document.querySelector('.size-options');
     const standardSizes = ['M', 'L', 'XL', 'XXL', '36', '38', '40', '42'];
     let sizes = p.sizes && p.sizes.length > 0 ? p.sizes : [];
+    let sizeStock = {};
 
     if (p.colorVariants) {
         const v = p.colorVariants.find(x => x.name === color);
-        if (v && v.sizes && v.sizes.length > 0) {
-            sizes = v.sizes;
+        if (v) {
+            if (v.sizes && v.sizes.length > 0) sizes = v.sizes;
+            sizeStock = v.sizeStock || {};
         }
     }
 
-    // Use standard sizes if no specific sizes are defined
     const finalSizes = sizes.length > 0 ? sizes : standardSizes;
 
-    container.innerHTML = finalSizes.map(s => 
-        `<button class="size-btn" onclick="selectSizeForCart('${s}', this)">${s}</button>`
-    ).join('');
+    container.innerHTML = finalSizes.map(s => {
+        const stock = sizeStock[s] !== undefined ? sizeStock[s] : 99; // Default high if no specific stock
+        const isOutOfStock = stock <= 0;
+        return `
+            <button class="size-btn ${isOutOfStock ? 'out-of-stock' : ''}" 
+                    ${isOutOfStock ? 'disabled' : ''} 
+                    onclick="selectSizeForCart('${s}', this)">
+                ${s}
+                ${isOutOfStock ? '<span class="out-slash">/</span>' : ''}
+            </button>`;
+    }).join('');
 }
 
 window.selectSizeForCart = (size, btn) => {

@@ -557,7 +557,8 @@ function openProductModal(id = null) {
                 v.images ? v.images.join('\n') : (v.image || ''),
                 v.sizes ? v.sizes.join(', ') : '',
                 v.stock !== undefined ? v.stock : (p.stock || 0),
-                v.thumbnail || ''
+                v.thumbnail || '',
+                v.sizeStock || {}
             );
             vContainer.appendChild(div);
             updateVariantPreviews(div);
@@ -601,12 +602,25 @@ document.getElementById('product-form').onsubmit = async (e) => {
     document.querySelectorAll('.variant-item').forEach(item => {
         const images = item.querySelector('.v-image').value.split('\n').map(s => s.trim()).filter(Boolean);
         const thumbnail = item.querySelector('.v-thumbnail')?.value || (images.length > 0 ? images[0] : '');
+        
+        // Collect Size Stock
+        const sizeStock = {};
+        const sizeInputs = item.querySelectorAll('.size-stock-input');
+        let variantStock = 0;
+        sizeInputs.forEach(input => {
+            const size = input.dataset.size;
+            const qty = Number(input.value) || 0;
+            sizeStock[size] = qty;
+            variantStock += qty;
+        });
+
         variants.push({
             name: item.querySelector('.v-name').value,
             images: images,
             thumbnail: thumbnail,
-            sizes: item.querySelector('.v-sizes').value.split(',').map(s => s.trim()).filter(s => s !== ""),
-            stock: Number(item.querySelector('.v-stock').value) || 0
+            sizes: Object.keys(sizeStock),
+            sizeStock: sizeStock,
+            stock: variantStock
         });
     });
 
@@ -791,9 +805,19 @@ window.filterAdminColors = (input) => {
 };
 
 
-function buildVariantHTML(name, images, sizes, stock, thumbnail) {
+function buildVariantHTML(name, images, sizesStr, stock, thumbnail, sizeStock = {}) {
     const sortedReg = [...ColorSystem.registry].sort((a,b) => a.hue - b.hue);
     
+    // Ensure we handle comma-separated sizes for legacy or default
+    let sizes = [];
+    if (typeof sizesStr === 'string' && sizesStr.trim()) {
+        sizes = sizesStr.split(',').map(s => s.trim()).filter(Boolean);
+    } else if (Array.isArray(sizesStr)) {
+        sizes = sizesStr;
+    } else {
+        sizes = ['M', 'L', 'XL', 'XXL', '36', '38', '40', '42'];
+    }
+
     const colorOptionsUI = sortedReg.map(c => `
         <div class="color-swatch-item-admin" 
              onclick="setQuickColor(this, '${c.nameAr}')" 
@@ -811,63 +835,128 @@ function buildVariantHTML(name, images, sizes, stock, thumbnail) {
     `;
 
     return `
-        <div class="form-grid">
-            <div class="form-group" style="position:relative;">
-                <label>اسم اللون (مثلاً: أسود)</label>
-                <div style="display:flex; gap:8px;">
-                    <input type="text" class="v-name" value="${name}" placeholder="..." required list="color-suggestions">
-                    ${colorDatalist}
-                    <button type="button" class="btn-mini" onclick="toggleColorPicker(this)" style="padding:0 12px; height:42px; display:flex; align-items:center; justify-content:center; background:rgba(212,175,55,0.1); border-color:var(--primary); color:var(--primary);">
-                        <i class="fas fa-palette"></i>
-                    </button>
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="column">
+                <div class="form-group" style="position:relative; margin-bottom: 15px;">
+                    <label>اسم اللون (مثلاً: أسود)</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" class="v-name" value="${name}" placeholder="..." required list="color-suggestions">
+                        ${colorDatalist}
+                        <button type="button" class="btn-mini" onclick="toggleColorPicker(this)" style="padding:0 12px; height:42px; display:flex; align-items:center; justify-content:center; background:rgba(212,175,55,0.1); border-color:var(--primary); color:var(--primary);">
+                            <i class="fas fa-palette"></i>
+                        </button>
+                    </div>
+                    <!-- Color Picker Popover -->
+                    <div class="color-picker-grid" style="display:none; position:absolute; top:calc(100% + 5px); right:0; z-index:1000; background:#1a1a1a; border:1px solid var(--border); border-radius:16px; padding:15px; flex-direction:column; gap:12px; box-shadow:0 15px 40px rgba(0,0,0,0.9); width:280px;">
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <div style="font-size: 0.8rem; font-weight:bold; color: var(--primary);">اختر لون اللون:</div>
+                            <input type="text" class="color-search-input" placeholder="بحث عن لون..." oninput="window.filterAdminColors(this)" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 12px; font-size:0.8rem; color:#fff; width:100%;">
+                        </div>
+                        <div class="swatches-container" style="display:grid; grid-template-columns: repeat(6, 1fr); gap:8px; max-height:200px; overflow-y:auto;">
+                            ${colorOptionsUI}
+                        </div>
+                    </div>
                 </div>
-                <!-- Color Picker Popover Enhanced -->
-                <div class="color-picker-grid" style="display:none; position:absolute; top:calc(100% + 5px); right:0; z-index:1000; background:#1a1a1a; border:1px solid var(--border); border-radius:16px; padding:15px; flex-direction:column; gap:12px; box-shadow:0 15px 40px rgba(0,0,0,0.9); width:280px;">
-                    <div style="display:flex; flex-direction:column; gap:8px;">
-                        <div style="font-size: 0.8rem; font-weight:bold; color: var(--primary);">اختر لون اللون:</div>
-                        <input type="text" class="color-search-input" placeholder="بحث عن لون..." oninput="window.filterAdminColors(this)" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 12px; font-size:0.8rem; color:#fff; width:100%;">
+                <div class="form-group">
+                    <label><i class="fas fa-images" style="color:var(--primary);"></i> صور هذا اللون</label>
+                    <textarea class="v-image" rows="3" placeholder="روابط الصور (مفصولة بسطر جديد)" style="font-size:0.75rem;direction:ltr;">${images}</textarea>
+                    <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                        <label class="btn-mini" style="cursor:pointer; display:flex; align-items:center; gap:5px;">
+                            <i class="fas fa-upload"></i> رفع
+                            <input type="file" hidden accept="image/*" multiple onchange="uploadVariantImages(this)">
+                        </label>
+                        <button type="button" class="btn-mini" onclick="clearVariantImages(this)" style="color:var(--danger);"><i class="fas fa-trash"></i> مسح</button>
                     </div>
-                    <div class="swatches-container" style="display:grid; grid-template-columns: repeat(6, 1fr); gap:8px; max-height:200px; overflow-y:auto; padding-right:5px; scrollbar-width: thin; scrollbar-color: var(--primary) transparent;">
-                        ${colorOptionsUI}
-                    </div>
-                    <div style="font-size: 0.7rem; color: var(--text-dim); opacity:0.6; text-align:center; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;">
-                        يوجد ${ColorSystem.registry.length} لون متاح
-                    </div>
+                    <div class="variant-img-preview" style="display:flex; gap:5px; flex-wrap:wrap; margin-top:10px;"></div>
                 </div>
             </div>
-            <div class="form-group">
-                <label>المقاسات (خاصة بهذا اللون)</label>
-                <input type="text" class="v-sizes" value="${sizes}" placeholder="M, L, XL">
-                <div style="display:flex; gap:6px; margin-top:5px; flex-wrap:wrap;">
-                    <button type="button" class="btn-mini" onclick="setQuickSizes(this, 'M, L, XL, XXL, 3XL')"><i class="fas fa-font"></i> حروف</button>
-                    <button type="button" class="btn-mini" onclick="setQuickSizes(this, '36, 38, 40, 42, 44')"><i class="fas fa-hashtag"></i> أرقام</button>
-                    <button type="button" class="btn-mini" onclick="setQuickSizes(this, '')" style="color:var(--danger); border-color:rgba(244,67,54,0.3); background:rgba(244,67,54,0.1);"><i class="fas fa-eraser"></i> مسح</button>
+
+            <div class="column">
+                <label style="margin-bottom: 10px; display: block; font-weight: bold; color: var(--primary);">مخزون المقاسات</label>
+                <div class="size-stock-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; border: 1px solid var(--border); min-height: 100px;">
+                    ${sizes.map(s => `
+                        <div class="size-stock-item" style="background: rgba(255,255,255,0.03); padding: 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+                            <div style="font-size: 0.7rem; color: var(--primary); margin-bottom: 2px;">${s}</div>
+                            <input type="number" class="size-stock-input" data-size="${s}" value="${sizeStock[s] || 0}" min="0" 
+                                   style="width: 100%; background: transparent; border: none; color: #fff; font-weight: bold; text-align: center; font-size: 0.9rem;">
+                        </div>
+                    `).join('')}
                 </div>
-            </div>
-            <div class="form-group">
-                <label>الكمية (خاصة بهذا اللون)</label>
-                <input type="number" class="v-stock" value="${stock}">
+                <div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap;">
+                    <button type="button" class="btn-mini" onclick="addCustomSize(this)"><i class="fas fa-plus"></i> مقاس مخصص</button>
+                    <button type="button" class="btn-mini" onclick="resetSizes(this, 'alphabet')">M-XXL</button>
+                    <button type="button" class="btn-mini" onclick="resetSizes(this, 'numeric')">36-42</button>
+                </div>
+                <div style="margin-top: 15px; padding: 10px; background: rgba(212,175,55,0.05); border-radius: 10px; border: 1px solid rgba(212,175,55,0.1); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.8rem; color: var(--text-dim);">إجمالي المخزون للون:</span>
+                    <span style="font-weight: 900; color: var(--primary);" class="v-total-stock-display">${stock}</span>
+                </div>
+                <input type="hidden" class="v-stock" value="${stock}">
+                <input type="hidden" class="v-thumbnail" value="${thumbnail || ''}">
             </div>
         </div>
-        <input type="hidden" class="v-thumbnail" value="${thumbnail || ''}">
-        <div class="form-group" style="margin-top:10px;">
-            <label><i class="fas fa-images" style="color:var(--primary);"></i> صور هذا اللون (يمكن رفع أكثر من صورة)</label>
-            <textarea class="v-image" rows="2" placeholder="روابط الصور (مفصولة بسطر جديد) - أو ارفع من الزر" style="font-size:0.75rem;direction:ltr;">${images}</textarea>
-            <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; align-items:center;">
-                <label class="btn-primary" style="padding:8px 14px; cursor:pointer; font-size:0.82rem; gap:6px; display:flex; align-items:center;">
-                    <i class="fas fa-upload"></i> رفع صورة
-                    <input type="file" hidden accept="image/*" multiple onchange="uploadVariantImages(this)">
-                </label>
-                <button type="button" onclick="clearVariantImages(this)" style="padding:8px 14px; background:rgba(244,67,54,0.1); border:1px solid rgba(244,67,54,0.3); color:#f44336; border-radius:10px; cursor:pointer; font-size:0.82rem;">
-                    <i class="fas fa-trash"></i> مسح الصور
-                </button>
-                <span style="font-size:0.75rem; color:var(--text-dim); opacity:0.7;">⚡ الصور تُضغط تلقائياً لتوفير المساحة</span>
-            </div>
-            <div class="variant-img-preview" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div>
-        </div>
-        <button type="button" onclick="this.closest('.variant-item').remove()" style="margin-top:12px; color:var(--danger); background:none; border:none; cursor:pointer; font-size:0.85rem;"><i class="fas fa-times"></i> حذف هذا اللون</button>
+        <button type="button" onclick="this.closest('.variant-item').remove(); updateVariantHint();" style="margin-top:15px; color:var(--danger); background:none; border:none; cursor:pointer; font-size:0.8rem; display:flex; align-items:center; gap:5px;">
+            <i class="fas fa-trash-alt"></i> حذف هذا اللون بالكامل
+        </button>
     `;
 }
+
+window.addCustomSize = (btn) => {
+    const size = prompt("أدخل اسم المقاس (مثال: S أو 44):");
+    if (size && size.trim()) {
+        const grid = btn.closest('.variant-item').querySelector('.size-stock-grid');
+        const item = document.createElement('div');
+        item.className = 'size-stock-item';
+        item.style = 'background: rgba(255,255,255,0.03); padding: 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center;';
+        item.innerHTML = `
+            <div style="font-size: 0.7rem; color: var(--primary); margin-bottom: 2px;">${size}</div>
+            <input type="number" class="size-stock-input" data-size="${size}" value="0" min="0" 
+                   style="width: 100%; background: transparent; border: none; color: #fff; font-weight: bold; text-align: center; font-size: 0.9rem;">
+        `;
+        grid.appendChild(item);
+    }
+};
+
+window.resetSizes = (btn, type) => {
+    const grid = btn.closest('.variant-item').querySelector('.size-stock-grid');
+    const sizes = type === 'alphabet' ? ['M', 'L', 'XL', 'XXL', '3XL'] : ['36', '38', '40', '42', '44'];
+    grid.innerHTML = sizes.map(s => `
+        <div class="size-stock-item" style="background: rgba(255,255,255,0.03); padding: 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+            <div style="font-size: 0.7rem; color: var(--primary); margin-bottom: 2px;">${s}</div>
+            <input type="number" class="size-stock-input" data-size="${s}" value="0" min="0" 
+                   style="width: 100%; background: transparent; border: none; color: #fff; font-weight: bold; text-align: center; font-size: 0.9rem;">
+        </div>
+    `).join('');
+};
+
+function updateVariantPreviews(item) {
+    if (!item) return;
+    const textarea = item.querySelector('.v-image');
+    const previewWrap = item.querySelector('.variant-img-preview');
+    if (!textarea || !previewWrap) return;
+
+    const urls = textarea.value.split('\n').map(s => s.trim()).filter(Boolean);
+    previewWrap.innerHTML = urls.map(url => `
+        <div style="width: 50px; height: 60px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); position: relative;">
+            <img src="${url}" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+    `).join('');
+}
+
+// Global listener for quantity changes
+document.addEventListener('input', (e) => {
+    if (e.target.classList.contains('size-stock-input')) {
+        const item = e.target.closest('.variant-item');
+        const inputs = item.querySelectorAll('.size-stock-input');
+        let total = 0;
+        inputs.forEach(inp => total += Number(inp.value) || 0);
+        
+        const display = item.querySelector('.v-total-stock-display');
+        const hidden = item.querySelector('.v-stock');
+        if (display) display.innerText = total;
+        if (hidden) hidden.value = total;
+    }
+});
 
 
 // 🚀 Cloudinary Configuration - Double Check your Cloud Name in Dashboard
