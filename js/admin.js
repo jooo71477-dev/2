@@ -300,16 +300,35 @@ async function initDashboard(role = 'all') {
 }
 
 // Data Loaders
+let productsListener = null;
+let ordersListener = null;
+
 async function loadProducts() {
-    const snapshot = await db.collection('products').get();
-    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderProducts();
+    if (productsListener) return; // Already listening
+    
+    console.log("📡 Starting Real-time Product Listener (Primary)...");
+    productsListener = db.collection('products').orderBy('sortOrder', 'asc').onSnapshot(snapshot => {
+        products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderProducts();
+        updateStats();
+    }, err => {
+        console.error("Firebase Products Snap Error:", err);
+    });
 }
 
 async function loadOrders() {
-    const snapshot = await db.collection('orders').orderBy('createdAt', 'desc').get();
-    orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderOrders();
+    if (ordersListener) return; // Already listening
+
+    console.log("📡 Starting Real-time Order Listener (Primary)...");
+    ordersListener = db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+        orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderOrders();
+        renderRecentOrders();
+        renderTopSelling();
+        updateStats();
+    }, err => {
+        console.error("Firebase Orders Snap Error:", err);
+    });
 }
 
 async function loadUsers() {

@@ -640,111 +640,92 @@ if (saveProductForm) {
     };
 }
 
-async function fetchProducts() {
-    let allP = [];
-
-    // 1. Load Local Products (Backup/Manual)
-    try {
-        const local = JSON.parse(localStorage.getItem('icloth_products') || '[]');
-        allP = [...local];
-    } catch (e) { console.error("Local load error", e); }
-
-    // 2. Load Firebase Products (Live)
-    if (isFirebaseReady && db) {
-        try {
-            const snapshot = await db.collection('products').get();
-            const remote = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            console.log(`Fetched ${remote.length} products from Firebase`);
-
-            // Merge: Remote products overwrite local if IDs match, otherwise add
-            remote.forEach(rp => {
-                const idx = allP.findIndex(lp => lp.id === rp.id);
-                if (idx !== -1) allP[idx] = rp;
-                else allP.push(rp);
-            });
-        } catch (error) {
-            console.error("Firebase fetch error:", error);
-        }
-    }
-
-    // 3. Fallback to hardcoded products if everything is empty
-    if (allP.length === 0 && typeof products !== 'undefined' && products.length > 0) {
-        console.log("Using fallback products data");
-        allP = products;
-    }
-
-    console.log(`Total products loaded: ${allP.length}`);
-    remoteProducts = allP;
-    return allP;
-}
+let productsListener = null;
 
 async function loadProducts() {
     // Safety check for UI elements
     if (!productsListBody) productsListBody = document.getElementById('products-list-body');
-    if (!productsListBody) return; // Still not ready
+    if (!productsListBody) return; 
 
     if (adminRole !== 'all' && adminRole !== 'products') return;
-    try {
-        let allProducts = await fetchProducts(); // Use the new fetchProducts function
 
-        // Ensure unique products after merging
-        const uniqueProds = Array.from(new Map(allProducts.map(item => [item.id, item])).values());
-        // Sort by sortOrder (asc), items without sortOrder go to the end
-        uniqueProds.sort((a, b) => {
-            const orderA = a.sortOrder !== undefined ? a.sortOrder : 999999;
-            const orderB = b.sortOrder !== undefined ? b.sortOrder : 999999;
-            return orderA - orderB;
+    // Use onSnapshot for REAL-TIME updates
+    if (isFirebaseReady && db && !productsListener) {
+        console.log("📡 Starting Real-time Product Listener...");
+        productsListener = db.collection('products').orderBy('sortOrder', 'asc').onSnapshot(snapshot => {
+            remoteProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderProductsUI(remoteProducts);
+        }, err => {
+            console.error("Firebase Snap Error:", err);
+            // Fallback if snap fails
+            fetchProducts().then(all => renderProductsUI(all));
         });
+    } else if (!isFirebaseReady) {
+        // Local strategy
+        let allProducts = await fetchProducts();
+        renderProductsUI(allProducts);
+    }
+}
 
-        let html = '';
-        let cats = { clothes: 0, shoes: 0, pants: 0 };
-        uniqueProds.forEach(p => {
-            const cat = p.parentCategory || 'clothes';
-            cats[cat] = (cats[cat] || 0) + 1;
-            const isHidden = p.status === 'hidden' || p.active === false || p.active === "false";
+function renderProductsUI(allProducts) {
+    if (!productsListBody) return;
+    
+    // Ensure unique products
+    const uniqueProds = Array.from(new Map(allProducts.map(item => [item.id, item])).values());
+    
+    // RemoteProducts is used for global state
+    remoteProducts = uniqueProds;
 
-            html += `
-                <tr data-id="${p.id}" style="${isHidden ? 'opacity: 0.6; background: rgba(0,0,0,0.1);' : ''}">
-                    <td class="drag-handle" style="cursor: move; padding-right: 15px; color: var(--accent);"><i class="fas fa-grip-vertical"></i></td>
-                    <td><img src="${p.image || ''}" class="product-thumb" style="cursor:pointer" onclick="editProduct('${p.id}')"></td>
-                    <td style="cursor:pointer" onclick="editProduct('${p.id}')">
-                        <strong>${p.name || 'بدون اسم'}</strong>
-                        ${isHidden ? '<br><span style="font-size:0.7rem; color:#888;">(مخفي من الموقع)</span>' : ''}
-                    </td>
-                    <td style="color:#d4af37; font-weight:bold;">${p.price || 0} ج.م</td>
-                    <td>${p.subCategory || '-'}</td>
-                    <td class="actions">
-                        <i class="fas ${isHidden ? 'fa-eye-slash' : 'fa-eye'}" 
-                           style="color: ${isHidden ? '#888' : '#4CAF50'}; cursor: pointer; font-size: 1.2rem;" 
-                           onclick="toggleVisibility('${p.id}', ${!isHidden})" 
-                           title="${isHidden ? 'إظهار المنتج' : 'إخفاء المنتج'}"></i>
-                        <i class="fas fa-edit btn-edit" style="font-size: 1.2rem;" onclick="editProduct('${p.id}')" title="تعديل"></i>
-                        <i class="fas fa-trash-alt btn-delete" style="font-size: 1.2rem;" onclick="deleteProduct('${p.id}')" title="حذف نهائي"></i>
-                    </td>
-                </tr>`;
+    let html = '';
+    let cats = { clothes: 0, shoes: 0, pants: 0 };
+    uniqueProds.forEach(p => {
+        const cat = p.parentCategory || 'clothes';
+        cats[cat] = (cats[cat] || 0) + 1;
+        const isHidden = p.status === 'hidden' || p.active === false || p.active === "false";
+
+        html += `
+            <tr data-id="${p.id}" style="${isHidden ? 'opacity: 0.6; background: rgba(0,0,0,0.1);' : ''}">
+                <td class="drag-handle" style="cursor: move; padding-right: 15px; color: var(--accent);"><i class="fas fa-grip-vertical"></i></td>
+                <td><img src="${p.image || ''}" class="product-thumb" style="cursor:pointer" onclick="editProduct('${p.id}')"></td>
+                <td style="cursor:pointer" onclick="editProduct('${p.id}')">
+                    <strong>${p.name || 'بدون اسم'}</strong>
+                    ${isHidden ? '<br><span style="font-size:0.7rem; color:#888;">(مخفي من الموقع)</span>' : ''}
+                </td>
+                <td style="color:#d4af37; font-weight:bold;">${p.price || 0} ج.م</td>
+                <td>${p.subCategory || '-'}</td>
+                <td class="actions">
+                    <i class="fas ${isHidden ? 'fa-eye-slash' : 'fa-eye'}" 
+                       style="color: ${isHidden ? '#888' : '#4CAF50'}; cursor: pointer; font-size: 1.2rem;" 
+                       onclick="toggleVisibility('${p.id}', ${!isHidden})" 
+                       title="${isHidden ? 'إظهار المنتج' : 'إخفاء المنتج'}"></i>
+                    <i class="fas fa-edit btn-edit" style="font-size: 1.2rem;" onclick="editProduct('${p.id}')" title="تعديل"></i>
+                    <i class="fas fa-trash-alt btn-delete" style="font-size: 1.2rem;" onclick="deleteProduct('${p.id}')" title="حذف نهائي"></i>
+                </td>
+            </tr>`;
+    });
+    
+    productsListBody.innerHTML = html || '<tr><td colspan="5" style="text-align:center">لا توجد منتجات.</td></tr>';
+
+    const totalEl = document.getElementById('stat-total');
+    const clothesEl = document.getElementById('stat-clothes');
+    const shoesEl = document.getElementById('stat-shoes');
+
+    if (totalEl) totalEl.innerText = uniqueProds.length;
+    if (clothesEl) clothesEl.innerText = cats.clothes;
+    if (shoesEl) shoesEl.innerText = cats.shoes;
+
+    // --- Initialize Drag and Drop (Only once) ---
+    if (window.Sortable && productsListBody && !productsListBody._sortableInited) {
+        new Sortable(productsListBody, {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: async function() {
+                console.log("🔄 Order changed, syncing with DB...");
+                await syncProductOrder();
+            }
         });
-        productsListBody.innerHTML = html || '<tr><td colspan="5" style="text-align:center">لا توجد منتجات.</td></tr>';
-
-        const totalEl = document.getElementById('stat-total');
-        const clothesEl = document.getElementById('stat-clothes');
-        const shoesEl = document.getElementById('stat-shoes');
-
-        if (totalEl) totalEl.innerText = uniqueProds.length;
-        if (clothesEl) clothesEl.innerText = cats.clothes;
-        if (shoesEl) shoesEl.innerText = cats.shoes;
-
-        // --- Initialize Drag and Drop ---
-        if (window.Sortable && productsListBody) {
-            new Sortable(productsListBody, {
-                handle: '.drag-handle',
-                animation: 150,
-                onEnd: async function() {
-                    console.log("🔄 Order changed, syncing with DB...");
-                    await syncProductOrder();
-                }
-            });
-        }
-    } catch (err) { console.error(err); }
+        productsListBody._sortableInited = true;
+    }
 }
 
 async function syncProductOrder() {
@@ -906,12 +887,18 @@ async function resetStore() {
 function showLoader(show) { if (globalLoader) globalLoader.style.display = show ? 'flex' : 'none'; }
 
 // Order functions
+let ordersListener = null;
+
 async function loadOrders() {
     if (!isFirebaseReady) return;
     if (adminRole !== 'all' && adminRole !== 'orders') return;
     const ordersList = document.getElementById('orders-list');
-    if (!ordersList) return; // UI not ready yet
-    db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+    if (!ordersList) return; 
+
+    if (ordersListener) return; // Already listening
+
+    console.log("📡 Starting Real-time Orders Listener...");
+    ordersListener = db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
         let html = ''; let newCount = 0;
         if (snapshot.empty) { ordersList.innerHTML = '<div style="text-align: center; padding: 50px; opacity: 0.5;">لا توجد طلبات بعد.</div>'; return; }
         snapshot.forEach(doc => {
