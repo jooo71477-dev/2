@@ -722,7 +722,8 @@
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 70%, #000000 100%);
+            background: linear-gradient(-45deg, #0d1b2a, #050a11, #12091c, #0a1128);
+            background-size: 400% 400%;
             z-index: 10001;
             display: flex;
             justify-content: center;
@@ -730,46 +731,64 @@
             overflow: hidden;
             font-family: 'Cairo', sans-serif;
             padding: 20px;
+            animation: bgGradient 15s ease infinite;
         }
 
-        /* Ambient glow behind the card */
+        @keyframes bgGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         .ambient-glow {
             position: absolute;
-            width: 50vw;
-            height: 50vw;
+            width: 70vw;
+            height: 70vw;
             background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 60%);
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 1;
+            animation: pulseGlow 8s infinite alternate;
+        }
+        @keyframes pulseGlow {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; }
+            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
         }
 
-        /* Floating luxury images */
+        /* Animated Floating Images */
         .float-item {
             position: absolute;
             border-radius: 20px;
             object-fit: cover;
-            opacity: 0.6;
-            filter: drop-shadow(0 15px 35px rgba(0,0,0,0.8)) brightness(0.85);
-            animation: floatLuxury 8s ease-in-out infinite alternate;
+            opacity: 0.8;
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            animation: imagePulse floatLuxury infinite ease-in-out alternate;
             pointer-events: none;
             user-select: none;
-            border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
         }
-        @keyframes floatLuxury {
-            0%   { transform: translateY(0px) rotate(var(--rot, 0deg)); }
-            100% { transform: translateY(-20px) rotate(calc(var(--rot, 0deg) + 2deg)); }
+
+        @keyframes imagePulse {
+            0% { 
+                filter: drop-shadow(0 0 10px rgba(0,0,0,0.8)) brightness(0.8); 
+                transform: translateY(0) rotate(var(--rot, 0deg)) scale(1);
+                border-color: rgba(212, 175, 55, 0.1);
+            }
+            100% { 
+                filter: drop-shadow(0 0 35px rgba(212,175,55,0.4)) brightness(1.1); 
+                transform: translateY(-25px) rotate(calc(var(--rot, 0deg) + 4deg)) scale(1.06);
+                border-color: rgba(212, 175, 55, 0.4);
+            }
         }
 
         .login-box {
-            background: rgba(15, 23, 42, 0.45);
-            backdrop-filter: blur(24px) saturate(120%);
-            -webkit-backdrop-filter: blur(24px) saturate(120%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            border-left: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(10, 15, 30, 0.5);
+            backdrop-filter: blur(25px) saturate(150%);
+            -webkit-backdrop-filter: blur(25px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-left: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 30px;
             padding: 50px 40px;
             width: 100%;
@@ -777,21 +796,28 @@
             text-align: center;
             position: relative;
             z-index: 10;
-            box-shadow: 0 40px 80px -20px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.02);
+            box-shadow: 0 40px 80px -20px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(255,255,255,0.02);
+            transform: translateY(0);
+            animation: boxFloat 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes boxFloat {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-8px); }
         }
 
         .brand-subtitle {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             letter-spacing: 5px;
             text-transform: uppercase;
             color: #d4af37;
             margin-bottom: 35px;
-            font-weight: 600;
-            opacity: 0.9;
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
         }
 
         .login-box input {
-            background: rgba(0,0,0,0.3) !important;
+            background: rgba(0,0,0,0.4) !important;
             border: 1px solid rgba(255,255,255,0.08) !important;
             color: #fff !important;
             padding: 16px 20px !important;
@@ -804,47 +830,80 @@
         }
         .login-box input::placeholder { color: rgba(255,255,255,0.3); letter-spacing: 0.5px; }
         .login-box input:focus {
-            border-color: rgba(212, 175, 55, 0.5) !important;
-            background: rgba(0,0,0,0.5) !important;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.1) !important;
-            transform: translateY(-1px);
+            border-color: #d4af37 !important;
+            background: rgba(0,0,0,0.6) !important;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2) !important;
+            transform: scale(1.02);
         }
 
+        /* Animated Primary Button */
         .login-box .btn-primary {
-            background: linear-gradient(135deg, #d4af37, #b28a24, #d4af37) !important;
-            background-size: 200% auto !important;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #d4af37, #f3e5ab, #d4af37, #b28a24) !important;
+            background-size: 300% 300% !important;
             border: none !important;
             border-radius: 14px !important;
             color: #000 !important;
             font-size: 1.1rem !important;
-            font-weight: 800 !important;
+            font-weight: 900 !important;
             letter-spacing: 1px;
             cursor: pointer;
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.25) !important;
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3) !important;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
             padding: 16px;
             text-transform: uppercase;
+            animation: goldGradient 4s ease infinite;
+            margin-top: 10px;
         }
+
+        @keyframes goldGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .login-box .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(45deg) translateY(-100%);
+            animation: buttonShine 3s infinite;
+        }
+        @keyframes buttonShine {
+            0% { transform: rotate(45deg) translateY(-100%); }
+            20% { transform: rotate(45deg) translateY(100%); }
+            100% { transform: rotate(45deg) translateY(100%); }
+        }
+
         .login-box .btn-primary:hover { 
-            background-position: right center !important;
-            box-shadow: 0 15px 35px rgba(212, 175, 55, 0.4) !important;
-            transform: translateY(-2px);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.6) !important;
+        }
+        .login-box .btn-primary:active {
+            transform: scale(0.96);
         }
 
         .divider {
             display: flex;
             align-items: center;
             gap: 15px;
-            color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.4);
             font-size: 0.8rem;
             margin: 25px 0;
+            text-shadow: 0 0 5px rgba(255,255,255,0.2);
         }
         .divider hr {
             flex: 1;
             border: 0;
-            border-top: 1px solid rgba(255,255,255,0.08);
+            border-top: 1px solid rgba(255,255,255,0.15);
         }
 
+        /* Animated Google Button */
         .google-btn {
             display: flex;
             align-items: center;
@@ -853,38 +912,43 @@
             width: 100%;
             padding: 15px;
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 14px;
-            color: rgba(255,255,255,0.8);
+            color: rgba(255,255,255,0.9);
             font-family: 'Cairo', sans-serif;
             font-size: 0.95rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: borderPulse 3s infinite alternate;
         }
+        @keyframes borderPulse {
+            0% { border-color: rgba(255, 255, 255, 0.05); box-shadow: 0 0 0 rgba(255,255,255,0); }
+            100% { border-color: rgba(255, 255, 255, 0.25); box-shadow: 0 0 15px rgba(255,255,255,0.1); }
+        }
+
         .google-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.1);
             color: #fff;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .forgot-btn {
             background: none;
             border: none;
-            color: rgba(255,255,255,0.4);
+            color: rgba(255,255,255,0.5);
             margin-top: 25px;
             cursor: pointer;
             font-size: 0.85rem;
             font-family: 'Cairo';
             letter-spacing: 0.5px;
             transition: all 0.3s;
-            text-decoration: none;
         }
         .forgot-btn:hover {
             color: #d4af37;
-            text-decoration: underline;
+            text-shadow: 0 0 8px rgba(212,175,55,0.5);
+            transform: scale(1.05);
         }
 
         #login-error {
@@ -896,6 +960,13 @@
             padding: 12px;
             border-radius: 10px;
             border: 1px solid rgba(255, 77, 77, 0.2);
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
 
         @media (max-width: 480px) {
@@ -908,26 +979,26 @@
         <!-- Ambient Glow Background -->
         <div class="ambient-glow"></div>
 
-        <!-- Luxury Floating Images (High-End Fashion) -->
-        <img class="float-item" style="height:220px; width:150px; top:8%; left:4%; --rot:-4deg; animation-delay:0s;" src="https://images.unsplash.com/photo-1595777457583-95e059f19f09?w=400&q=80">
-        <img class="float-item" style="height:160px; width:120px; top:45%; left:8%; --rot:6deg; animation-delay:1.5s;" src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400&q=80">
-        <img class="float-item" style="height:200px; width:140px; bottom:8%; left:3%; --rot:-5deg; animation-delay:0.8s;" src="https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=400&q=80">
-        <img class="float-item" style="height:180px; width:130px; top:12%; right:5%; --rot:7deg; animation-delay:2s;" src="https://images.unsplash.com/photo-1584472584717-1c0a52fde1b7?w=400&q=80">
-        <img class="float-item" style="height:240px; width:160px; top:40%; right:2%; --rot:-3deg; animation-delay:0.5s;" src="https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=400&q=80">
-        <img class="float-item" style="height:170px; width:120px; bottom:10%; right:7%; --rot:5deg; animation-delay:1.2s;" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80">
+        <!-- Working Luxury Images with varying animation styles -->
+        <img class="float-item" style="height:220px; width:150px; top:8%; left:4%; --rot:-4deg; animation-duration: 5s;" src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80">
+        <img class="float-item" style="height:160px; width:120px; top:45%; left:8%; --rot:6deg; animation-duration: 7s;" src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80">
+        <img class="float-item" style="height:200px; width:140px; bottom:8%; left:3%; --rot:-5deg; animation-duration: 6s;" src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&q=80">
+        <img class="float-item" style="height:180px; width:130px; top:12%; right:5%; --rot:7deg; animation-duration: 4.5s;" src="https://images.unsplash.com/photo-1550614000-4b95d4ed8302?w=400&q=80">
+        <img class="float-item" style="height:240px; width:160px; top:40%; right:2%; --rot:-3deg; animation-duration: 6.5s;" src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400&q=80">
+        <img class="float-item" style="height:170px; width:120px; bottom:10%; right:7%; --rot:5deg; animation-duration: 5.5s;" src="https://images.unsplash.com/photo-1509180766-3d2b2708b58a?w=400&q=80">
 
         <div class="login-box">
-            <!-- Sleek Logo integration -->
+            <!-- Glowing Logo integration -->
             <div style="margin-bottom: 5px;">
-                <img src="images/logo/logo2..png" width="65" style="filter: drop-shadow(0 0 10px rgba(212,175,55,0.3));">
+                <img src="images/logo/logo2..png" width="75" style="filter: drop-shadow(0 0 15px rgba(212,175,55,0.6)); animation: pulseGlow 3s infinite alternate;">
             </div>
-            <h2 style="margin-bottom: 2px; font-weight: 800; font-size: 2rem; letter-spacing: 2px; background: linear-gradient(to right, #ffffff, #d4af37); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">iCloth</h2>
+            <h2 style="margin-bottom: 2px; font-weight: 900; font-size: 2.2rem; letter-spacing: 3px; background: linear-gradient(to right, #ffffff, #d4af37, #ffffff); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: goldGradient 4s linear infinite;">iCloth</h2>
             <div class="brand-subtitle">Exclusive Management</div>
             
             <form id="login-form" style="display: flex; flex-direction: column; gap: 18px;">
                 <input type="email" id="login-email" placeholder="البريد الإلكتروني" required>
                 <input type="password" id="login-password" placeholder="كلمة المرور" required>
-                <button type="submit" class="btn-primary" style="justify-content: center; margin-top: 8px;">دخول آمن</button>
+                <button type="submit" class="btn-primary" style="justify-content: center;">دخول آمن</button>
             </form>
 
             <div class="divider">
