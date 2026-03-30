@@ -1631,29 +1631,48 @@ async function shipToBosta(orderId) {
                     let changed = false;
 
                     const qtyToRemove = item.quantity || 1;
+                    const orderColor = String(item.color || "").trim();
+                    const orderSize = String(item.size || "").trim();
+
+                    console.log(`🧐 Processing: ${item.name} (${orderColor} - ${orderSize}) x${qtyToRemove}`);
 
                     for (let q = 0; q < qtyToRemove; q++) {
-                        if (!item.color || item.color === "" || item.color === "بدون لون" || item.color === "Default") {
-                            const index = updatedSizes.indexOf(item.size);
-                            if (index !== -1) {
-                                updatedSizes.splice(index, 1);
+                        // 1. Find Variant robustly
+                        const variantIndex = updatedColorVariants.findIndex(v => {
+                            const vName = String(v.name || "").toLowerCase().trim();
+                            const vNameAr = String(v.name_ar || "").trim();
+                            const target = orderColor.toLowerCase().trim();
+                            return vName === target || vNameAr === target || vName.includes(target) || target.includes(vName) || vNameAr.includes(target) || target.includes(vNameAr);
+                        });
+
+                        if (variantIndex !== -1) {
+                            const variant = updatedColorVariants[variantIndex];
+                            if (!variant.sizeStock) variant.sizeStock = {};
+                            
+                            let currentQty = Number(variant.sizeStock[orderSize]);
+                            if (isNaN(currentQty)) {
+                                // Fallback logic: check if size exists in variant.sizes
+                                currentQty = (variant.sizes || []).includes(orderSize) ? 10 : 0; 
+                            }
+
+                            if (currentQty > 0) {
+                                variant.sizeStock[orderSize] = Math.max(0, currentQty - 1);
+                                console.log(`📉 [Admin] Decreased ${orderColor} ${orderSize}: ${currentQty} -> ${variant.sizeStock[orderSize]}`);
+                                variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
                                 changed = true;
+                            } else {
+                                console.warn(`🛑 [Admin] Already 0 for ${orderColor} ${orderSize}`);
                             }
                         } else {
-                            const variantIndex = updatedColorVariants.findIndex(v => v.name === item.color || v.name_ar === item.color || v.name_en === item.color || (v.name && v.name.includes(item.color)) || (item.color && item.color.includes(v.name)));
-                            if (variantIndex !== -1) {
-                                const variant = updatedColorVariants[variantIndex];
-                                let variantSizes = Array.isArray(variant.sizes) ? variant.sizes : [];
-                                const sizeIndex = variantSizes.indexOf(item.size);
-                                if (sizeIndex !== -1) {
-                                    variantSizes.splice(sizeIndex, 1);
-                                    updatedColorVariants[variantIndex].sizes = variantSizes;
-                                    changed = true;
-                                }
+                            // Fallback for Products without Color Variants
+                            console.warn(`❌ No variant for ${orderColor}. Checking main sizes...`);
+                            if (!pData.sizeStock) {
+                                // If main sizeStock doesn't exist, we don't delete sizes anymore (per user request)
+                                console.log("Skipping deletion - switching to numerical stock only.");
                             } else {
-                                const fallbackIndex = updatedSizes.indexOf(item.size);
-                                if (fallbackIndex !== -1) {
-                                    updatedSizes.splice(fallbackIndex, 1);
+                                let mainQty = Number(pData.sizeStock[orderSize]) || 0;
+                                if (mainQty > 0) {
+                                    pData.sizeStock[orderSize] = mainQty - 1;
                                     changed = true;
                                 }
                             }
@@ -1661,11 +1680,13 @@ async function shipToBosta(orderId) {
                     }
 
                     if (changed) {
+                        const newTotalStock = updatedColorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
                         await productRef.update({
+                            colorVariants: updatedColorVariants,
                             sizes: updatedSizes,
-                            colorVariants: updatedColorVariants
+                            stock: newTotalStock
                         });
-                        console.log(`✅ Stock updated for product ${item.id} (removed ${qtyToRemove} of ${item.size})`);
+                        console.log(`✅ Stock saved! Product new total: ${newTotalStock}`);
                     }
                 }
             }

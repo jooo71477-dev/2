@@ -1048,56 +1048,40 @@ async function shipToBosta(orderId) {
                         const orderColor = String(item.color || "").trim();
                         const orderSize = String(item.size || "").trim();
                         
-                        console.log(`🧐 Order wants color: "${orderColor}", size: "${orderSize}"`);
+                        // Robust matching (Arabic/English/Case)
+                        const variantIndex = updatedColorVariants.findIndex(v => {
+                            const vName = String(v.name || "").toLowerCase().trim();
+                            const vNameAr = String(v.name_ar || "").trim();
+                            const target = orderColor.toLowerCase().trim();
+                            return vName === target || vNameAr === target || vName.includes(target) || target.includes(vName) || vNameAr.includes(target) || target.includes(vNameAr);
+                        });
+                        
+                        if (variantIndex !== -1) {
+                            const variant = updatedColorVariants[variantIndex];
+                            if (!variant.sizeStock) variant.sizeStock = {};
+                            
+                            let currentQty = Number(variant.sizeStock[orderSize]);
+                            if (isNaN(currentQty)) {
+                                // Migration: if not in sizeStock, count in sizes array
+                                const sa = Array.isArray(variant.sizes) ? variant.sizes : 
+                                           (typeof variant.sizes === 'string' ? variant.sizes.split(',').map(s => s.trim()) : []);
+                                currentQty = sa.filter(x => x === orderSize).length || 10;
+                            }
 
-                        if (!orderColor || orderColor === "" || orderColor === "بدون لون" || orderColor === "Default") {
-                            const index = updatedSizes.indexOf(orderSize);
-                            if (index !== -1) {
-                                updatedSizes.splice(index, 1);
+                            if (currentQty > 0) {
+                                variant.sizeStock[orderSize] = Math.max(0, currentQty - 1);
+                                console.log(`📉 [Panel] Decreased: ${orderSize} (${orderColor}) -> ${variant.sizeStock[orderSize]}`);
+                                variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
                                 changed = true;
-                                console.log("✅ Removed from main sizes array");
                             }
                         } else {
-                            // Find variant with multiple matches for flexibility
-                            const variantIndex = updatedColorVariants.findIndex(v => {
-                                const vName = String(v.name || "").trim();
-                                const vNameAr = String(v.name_ar || "").trim();
-                                const vNameEn = String(v.name_en || "").trim();
-                                return vName === orderColor || vNameAr === orderColor || vNameEn === orderColor || 
-                                       vName.includes(orderColor) || orderColor.includes(vName);
-                            });
-                            
-                            if (variantIndex !== -1) {
-                                const variant = updatedColorVariants[variantIndex];
-                                console.log(`✅ Found matching variant: ${variant.name}`);
-                                
-                                if (!variant.sizeStock) variant.sizeStock = {};
-                                
-                                // Robust Stock Management
-                                let currentQty = Number(variant.sizeStock[orderSize]);
-                                
-                                // If not found in stock map but found in sizes array, migrate it
-                                if (isNaN(currentQty) || currentQty === undefined) {
-                                    const sa = Array.isArray(variant.sizes) ? variant.sizes : [];
-                                    currentQty = sa.filter(x => x === orderSize).length || 1;
-                                    console.log(`⚠️ Stock was missing for size ${orderSize}, defaulting to ${currentQty}`);
-                                }
-
-                                if (currentQty > 0) {
-                                    variant.sizeStock[orderSize] = currentQty - 1;
-                                    console.log(`📉 Stock decreased: ${currentQty} -> ${variant.sizeStock[orderSize]}`);
-                                    
-                                    // Sycn with sizes array (Keep it for display, but site should check stock)
-                                    // If we want it to stay (faded), we DON'T splice from variant.sizes
-                                    
-                                    // Recalculate variant total stock
-                                    variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
+                            // Fallback for non-variant products
+                            if (pData.sizeStock) {
+                                let mainQty = Number(pData.sizeStock[orderSize]) || 0;
+                                if (mainQty > 0) {
+                                    pData.sizeStock[orderSize] = mainQty - 1;
                                     changed = true;
-                                } else {
-                                    console.warn(`🛑 Stock for ${orderSize} is already 0!`);
                                 }
-                            } else {
-                                console.warn(`❌ No variant found matching: ${orderColor}`);
                             }
                         }
                     }

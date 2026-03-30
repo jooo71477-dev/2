@@ -1722,16 +1722,30 @@ async function deductStockFromOrder(items) {
                 
                 const data = doc.data();
                 const variants = data.colorVariants || [];
-                const variantIdx = variants.findIndex(v => v.name === item.color);
+                
+                // Robust matching (Arabic/English/Case)
+                const variantIdx = variants.findIndex(v => {
+                    const vName = String(v.name || "").toLowerCase().trim();
+                    const vNameAr = String(v.name_ar || "").trim();
+                    const target = item.color.toLowerCase().trim();
+                    return vName === target || vNameAr === target || vName.includes(target) || target.includes(vName) || vNameAr.includes(target) || target.includes(vNameAr);
+                });
                 
                 if (variantIdx !== -1) {
                     const v = variants[variantIdx];
                     const qty = item.quantity || 1;
+                    const sizeKey = String(item.size).trim();
                     
                     // 1. Update Size Stock
-                    if (!v.sizeStock) v.sizeStock = {};
-                    const currentSizeStock = Number(v.sizeStock[item.size]) || 0;
-                    v.sizeStock[item.size] = Math.max(0, currentSizeStock - qty);
+                    if (!v.sizeStock) {
+                        v.sizeStock = {};
+                        // One-time migration for old data
+                        (v.sizes || []).forEach(s => v.sizeStock[s] = 10);
+                    }
+                    
+                    const currentSizeStock = Number(v.sizeStock[sizeKey]);
+                    const startQty = isNaN(currentSizeStock) ? 10 : currentSizeStock;
+                    v.sizeStock[sizeKey] = Math.max(0, startQty - qty);
                     
                     // 2. Update Variant Total Stock
                     v.stock = Object.values(v.sizeStock).reduce((sum, val) => sum + (Number(val) || 0), 0);
@@ -1744,7 +1758,7 @@ async function deductStockFromOrder(items) {
                         stock: newTotalStock
                     });
                     
-                    console.log(`📉 Stock decremented for ${item.name} (${item.size}): -${qty}`);
+                    console.log(`📉 [Storefront] Stock decremented: ${item.name} (${item.color}, ${item.size}) -${qty}`);
                 }
             });
         } catch (err) {
