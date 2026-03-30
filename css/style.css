@@ -1083,11 +1083,15 @@ body.announcement-active .navbar.scrolled {
 }
 
 .add-plus-btn {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--text-main);
     cursor: pointer;
     line-height: 1;
-    opacity: 0.5;
+    opacity: 0.8;
+}
+
+[data-theme="light"] .add-plus-btn {
+    color: #444;
 }
 
 .price-color-row {

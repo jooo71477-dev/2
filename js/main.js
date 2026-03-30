@@ -1893,7 +1893,7 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
                 <div class="product-info-stack">
                     <div class="name-row">
                         <h3 data-translate-cache="${p.name}">${translatedName}</h3>
-                        <div class="add-plus-btn">+</div>
+                        <div class="add-plus-btn"><i class="fas fa-shopping-basket"></i></div>
                     </div>
                     <div class="price-color-row">
                         <div class="price-box">
