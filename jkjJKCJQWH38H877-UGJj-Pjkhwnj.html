@@ -35,46 +35,137 @@
             overflow-x: hidden;
         }
 
-        /* SIDEBAR */
+        /* Premium Next.js Style Sidebar */
         .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-bg);
-            border-left: 1px solid var(--border);
+            width: 270px;
+            background: rgba(8, 8, 12, 0.7);
+            backdrop-filter: blur(24px) saturate(120%);
+            -webkit-backdrop-filter: blur(24px) saturate(120%);
+            border-left: 1px solid rgba(255, 255, 255, 0.04);
             display: flex;
             flex-direction: column;
             height: 100vh;
             position: fixed;
             right: 0; top: 0;
             z-index: 100;
-            transition: transform 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.5);
         }
 
-        .sidebar-header { padding: 22px 18px; text-align: center; border-bottom: 1px solid var(--border); }
-        .sidebar-header img { width: 52px; margin-bottom: 8px; }
-        .sidebar-header h2 { font-size: 1.2rem; font-weight: 900; color: var(--primary); }
+        .sidebar-header { 
+            padding: 30px 20px 20px; 
+            text-align: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
+            background: linear-gradient(to bottom, rgba(212,175,55,0.03), transparent);
+        }
+        .sidebar-header img { 
+            width: 60px; 
+            margin-bottom: 10px; 
+            filter: drop-shadow(0 0 10px rgba(212,175,55,0.3));
+            transition: filter 0.3s ease;
+        }
+        .sidebar-header img:hover { filter: drop-shadow(0 0 20px rgba(212,175,55,0.6)); }
+        
+        .sidebar-header h2 { 
+            font-size: 1.3rem; 
+            font-weight: 900; 
+            background: linear-gradient(to left, #ffffff, #d4af37);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
 
-        .nav-links { list-style: none; padding: 14px 8px; flex-grow: 1; overflow-y: auto; }
-        .nav-links li { margin-bottom: 3px; }
+        .nav-links { 
+            list-style: none; 
+            padding: 20px 12px; 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+        .nav-links::-webkit-scrollbar { width: 4px; }
+        .nav-links::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .nav-links::-webkit-scrollbar-track { background: transparent; }
+        
+        .nav-links li { margin-bottom: 6px; position: relative; }
         .nav-links a {
-            display: flex; align-items: center; gap: 12px;
-            padding: 10px 16px; color: var(--text-dim);
+            display: flex; align-items: center; gap: 14px;
+            padding: 12px 18px; color: rgba(255, 255, 255, 0.45);
             text-decoration: none; border-radius: 10px;
-            transition: 0.25s; font-weight: 600; font-size: 0.92rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600; font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid transparent;
         }
-        .nav-links a:hover, .nav-links a.active { background: var(--card-bg); color: var(--text); }
-        .nav-links a.active { border-right: 4px solid var(--primary); background: rgba(212,175,55,0.1); }
-        .nav-links a i, .nav-links i { width: 20px; text-align: center; }
+        
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background: rgba(212, 175, 55, 0.05);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 10px;
+            z-index: 0;
+        }
 
-        .sidebar-footer { padding: 14px; border-top: 1px solid var(--border); }
-        .logout-btn {
-            width: 100%; padding: 11px;
-            background: rgba(212,175,55,0.05); color: var(--primary);
-            border: 1px solid var(--primary); border-radius: 10px;
-            cursor: pointer; font-weight: bold;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            transition: 0.25s; font-family: 'Cairo';
+        .nav-links a:hover { 
+            color: #fff; 
+            transform: translateX(-5px);
+            background: rgba(255,255,255,0.02);
+            border-color: rgba(255,255,255,0.05);
         }
-        .logout-btn:hover { background: var(--primary); color: #000; }
+        .nav-links a:hover::before { transform: scaleX(1); }
+        .nav-links a:hover i { color: #d4af37; transform: scale(1.1); filter: drop-shadow(0 0 5px rgba(212,175,55,0.4)); }
+
+        .nav-links a.active { 
+            color: #fff; 
+            background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(212,175,55,0.15));
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-right: 3px solid #d4af37;
+            box-shadow: inset -10px 0 20px -10px rgba(212,175,55,0.5);
+            font-weight: 700;
+        }
+        
+        .nav-links i { 
+            position: relative;
+            z-index: 1;
+            width: 20px; 
+            text-align: center; 
+            font-size: 1.1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-links span { position: relative; z-index: 1; }
+
+        .nav-links a.active i { 
+            color: #d4af37; 
+            filter: drop-shadow(0 0 8px rgba(212,175,55,0.8));
+            transform: scale(1.15);
+        }
+
+        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .logout-btn {
+            width: 100%; padding: 14px;
+            background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+            cursor: pointer; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'Cairo';
+            position: relative;
+            overflow: hidden;
+        }
+        .logout-btn:hover { 
+            background: rgba(244, 67, 54, 0.1); 
+            color: #f44336; 
+            border-color: rgba(244, 67, 54, 0.3);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.15);
+            transform: translateY(-2px);
+        }
+        .logout-btn i { transition: transform 0.3s ease; }
+        .logout-btn:hover i { transform: translateX(4px); }
 
         /* MAIN CONTENT */
         .main-content { flex-grow: 1; margin-right: 260px; padding: 35px; min-width: 0; overflow-x: hidden; }
@@ -677,25 +768,28 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img src="images/logo/logo2..png" alt="iCloth">
+            <img src="images/logo/logo2..png" alt="iCloth Logo">
             <h2>iCloth Dashboard</h2>
         </div>
         <ul class="nav-links">
-            <li><a href="#overview" class="active"><i class="fas fa-chart-line"></i> نظرة عامة</a></li>
-            <li><a href="#products"><i class="fas fa-box"></i> المنتجات</a></li>
-            <li><a href="#categories"><i class="fas fa-tags"></i> الأقسام</a></li>
-            <li><a href="#orders"><i class="fas fa-shopping-cart"></i> الطلبات</a></li>
-            <li><a href="#users"><i class="fas fa-users"></i> المستخدمين</a></li>
-            <li><a href="#inventory"><i class="fas fa-warehouse"></i> المخزون</a></li>
-            <li><a href="#analytics"><i class="fas fa-chart-pie"></i> التحليلات</a></li>
-            <li><a href="#coupons"><i class="fas fa-ticket-alt"></i> الكوبونات</a></li>
-            <li><a href="#shipping"><i class="fas fa-truck"></i> أسعار الشحن</a></li>
-            <li><a href="#announcements"><i class="fas fa-bullhorn"></i> التنبيهات</a></li>
-            <li><a href="#cms"><i class="fas fa-file-alt"></i> المحتوى</a></li>
-            <li><a href="#settings"><i class="fas fa-cog"></i> الإعدادات</a></li>
+            <li><a href="#overview" class="active"><i class="fas fa-chart-line"></i> <span>نظرة عامة</span></a></li>
+            <li><a href="#products"><i class="fas fa-box"></i> <span>المنتجات</span></a></li>
+            <li><a href="#categories"><i class="fas fa-tags"></i> <span>الأقسام</span></a></li>
+            <li><a href="#orders"><i class="fas fa-shopping-cart"></i> <span>الطلبات</span></a></li>
+            <li><a href="#users"><i class="fas fa-users"></i> <span>المستخدمين</span></a></li>
+            <li><a href="#inventory"><i class="fas fa-warehouse"></i> <span>المخزون</span></a></li>
+            <li><a href="#analytics"><i class="fas fa-chart-pie"></i> <span>التحليلات</span></a></li>
+            <li><a href="#coupons"><i class="fas fa-ticket-alt"></i> <span>الكوبونات</span></a></li>
+            <li><a href="#shipping"><i class="fas fa-truck"></i> <span>أسعار الشحن</span></a></li>
+            <li><a href="#announcements"><i class="fas fa-bullhorn"></i> <span>التنبيهات</span></a></li>
+            <li><a href="#cms"><i class="fas fa-file-alt"></i> <span>المحتوى</span></a></li>
+            <li><a href="#settings"><i class="fas fa-cog"></i> <span>الإعدادات</span></a></li>
         </ul>
         <div class="sidebar-footer">
-            <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </button>
         </div>
     </aside>
 
