@@ -1042,6 +1042,120 @@ body.announcement-active .navbar.scrolled {
     box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
 }
 
+/* Security Badge - custom animated female-only style with screw details */
+.security-badge {
+    position: fixed;
+    top: 140px;
+    right: 20px;
+    width: 160px;
+    padding: 12px;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #0d2945, #0f3f69);
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35), inset 0 0 15px rgba(255,255,255,0.08);
+    color: #fff;
+    z-index: 9999;
+    overflow: hidden;
+    animation: badgeFloat 4s ease-in-out infinite;
+    backdrop-filter: blur(4px);
+}
+
+.security-badge::before,
+.security-badge::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff, #9fc9ff 75%);
+    box-shadow: 0 0 12px rgba(255,255,255,0.6);
+    animation: screwGlow 2.4s ease-in-out infinite;
+}
+
+.security-badge::before { top: 8px; left: 8px; }
+.security-badge::after  { bottom: 8px; right: 8px; }
+
+.security-badge .screw {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #7d8aa7, #c4cff9);
+    box-shadow: 0 0 6px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    position: absolute;
+}
+
+.security-badge .screw.s1 { top: 8px; right: 8px; }
+.security-badge .screw.s2 { top: 8px; left: 8px; }
+.security-badge .screw.s3 { bottom: 8px; right: 8px; }
+.security-badge .screw.s4 { bottom: 8px; left: 8px; }
+
+.security-badge .shield {
+    width: 50px;
+    height: 50px;
+    border-radius: 50% 50% 48% 48%;
+    background: linear-gradient(160deg, #75b4ff, #125eaf);
+    border: 2px solid rgba(255,255,255,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    animation: shieldPulse 2.2s ease-in-out infinite;
+}
+
+.security-badge .shield .icon {
+    font-size: 22px;
+    color: #fff;
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.8));
+}
+
+.security-badge .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.5);
+    margin: 0 auto 8px;
+}
+
+.security-badge .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.02);
+}
+
+.security-badge h4 {
+    margin: 0;
+    color: #f4f9ff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+.security-badge p {
+    margin: 4px 0 0;
+    color: #cfe5ff;
+    font-size: 0.68rem;
+    text-align: center;
+}
+
+@keyframes badgeFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-6px) scale(1.02); }
+}
+
+@keyframes screwGlow {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes shieldPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
 .product-info {
     padding: 10px 12px 6px;
     text-align: left;
