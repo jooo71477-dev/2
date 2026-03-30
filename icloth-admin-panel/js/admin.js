@@ -834,11 +834,30 @@ async function editProduct(id) {
     document.getElementById('p-subcategory').value = p.subCategory;
     document.getElementById('p-sizes').value = (p.sizes || []).join(', ');
     renderMainSizes();
-    colorVariants = (p.colorVariants || (p.colors || []).map(c => ({ name: c, image: '', sizes: '' }))).map(v => ({ 
-        ...v, 
-        id: v.id || (Date.now() + "_" + Math.floor(Math.random() * 1000)), 
-        sizes: Array.isArray(v.sizes) ? v.sizes.join(', ') : (v.sizes || '') 
-    }));
+    colorVariants = (p.colorVariants || (p.colors || []).map(c => ({ name: c, image: '', sizes: '' }))).map(v => {
+        const sizesRaw = Array.isArray(v.sizes) ? v.sizes.join(', ') : (v.sizes || '');
+        const sizesArr = sizesRaw.split(',').map(s => s.trim()).filter(s => s);
+        
+        // Ensure sizeStock exists and has all sizes
+        const sizeStock = v.sizeStock || {};
+        sizesArr.forEach(s => {
+            if (sizeStock[s] === undefined) {
+                // If it was a legacy array of repeated strings, count them
+                if (Array.isArray(v.sizes)) {
+                    sizeStock[s] = v.sizes.filter(x => x === s).length;
+                } else {
+                    sizeStock[s] = 1;
+                }
+            }
+        });
+
+        return { 
+            ...v, 
+            id: v.id || (Date.now() + "_" + Math.floor(Math.random() * 1000)), 
+            sizes: sizesRaw,
+            sizeStock: sizeStock
+        };
+    });
     renderColorVariants();
     document.getElementById('p-badge').value = p.badge || '';
     if (document.getElementById('p-badge-ar')) document.getElementById('p-badge-ar').value = p.badge_ar || '';
@@ -1024,52 +1043,75 @@ async function shipToBosta(orderId) {
 
                     const qtyToRemove = item.quantity || 1;
 
+                    console.log(`🔍 Checking items for product: ${item.id}`);
                     for (let q = 0; q < qtyToRemove; q++) {
-                        if (!item.color || item.color === "" || item.color === "بدون لون" || item.color === "Default") {
-                            // If no color selected, we use the main sizes array (legacy behavior)
-                            const index = updatedSizes.indexOf(item.size);
+                        const orderColor = String(item.color || "").trim();
+                        const orderSize = String(item.size || "").trim();
+                        
+                        console.log(`🧐 Order wants color: "${orderColor}", size: "${orderSize}"`);
+
+                        if (!orderColor || orderColor === "" || orderColor === "بدون لون" || orderColor === "Default") {
+                            const index = updatedSizes.indexOf(orderSize);
                             if (index !== -1) {
                                 updatedSizes.splice(index, 1);
                                 changed = true;
+                                console.log("✅ Removed from main sizes array");
                             }
                         } else {
-                            // Professional Numerical Stock Deduction
-                            const variantIndex = updatedColorVariants.findIndex(v => v.name === item.color || v.name_ar === item.color || v.name_en === item.color || (v.name && v.name.includes(item.color)) || (item.color && item.color.includes(v.name)));
+                            // Find variant with multiple matches for flexibility
+                            const variantIndex = updatedColorVariants.findIndex(v => {
+                                const vName = String(v.name || "").trim();
+                                const vNameAr = String(v.name_ar || "").trim();
+                                const vNameEn = String(v.name_en || "").trim();
+                                return vName === orderColor || vNameAr === orderColor || vNameEn === orderColor || 
+                                       vName.includes(orderColor) || orderColor.includes(vName);
+                            });
                             
                             if (variantIndex !== -1) {
                                 const variant = updatedColorVariants[variantIndex];
+                                console.log(`✅ Found matching variant: ${variant.name}`);
+                                
                                 if (!variant.sizeStock) variant.sizeStock = {};
                                 
-                                // Decrement Number instead of Splicing String
-                                if (variant.sizeStock[item.size] && variant.sizeStock[item.size] > 0) {
-                                    variant.sizeStock[item.size] -= 1;
-                                    console.log(`📉 Decremented ${item.color} ${item.size} stock. Remaining: ${variant.sizeStock[item.size]}`);
+                                // Robust Stock Management
+                                let currentQty = Number(variant.sizeStock[orderSize]);
+                                
+                                // If not found in stock map but found in sizes array, migrate it
+                                if (isNaN(currentQty) || currentQty === undefined) {
+                                    const sa = Array.isArray(variant.sizes) ? variant.sizes : [];
+                                    currentQty = sa.filter(x => x === orderSize).length || 1;
+                                    console.log(`⚠️ Stock was missing for size ${orderSize}, defaulting to ${currentQty}`);
+                                }
+
+                                if (currentQty > 0) {
+                                    variant.sizeStock[orderSize] = currentQty - 1;
+                                    console.log(`📉 Stock decreased: ${currentQty} -> ${variant.sizeStock[orderSize]}`);
+                                    
+                                    // Sycn with sizes array (Keep it for display, but site should check stock)
+                                    // If we want it to stay (faded), we DON'T splice from variant.sizes
                                     
                                     // Recalculate variant total stock
-                                    variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + b, 0);
+                                    variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
                                     changed = true;
                                 } else {
-                                    // Fallback: if size exists in array but not in stock map, remove from array
-                                    const sizeIdx = (variant.sizes || []).indexOf(item.size);
-                                    if (sizeIdx !== -1) {
-                                        variant.sizes.splice(sizeIdx, 1);
-                                        changed = true;
-                                    }
+                                    console.warn(`🛑 Stock for ${orderSize} is already 0!`);
                                 }
+                            } else {
+                                console.warn(`❌ No variant found matching: ${orderColor}`);
                             }
                         }
                     }
 
                     if (changed) {
-                        // Re-calculate total product stock
                         const newTotalStock = updatedColorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
-                        
                         await productRef.update({
                             sizes: updatedSizes,
                             colorVariants: updatedColorVariants,
                             stock: newTotalStock
                         });
-                        console.log(`✅ Stock updated for product ${item.id} (New Total: ${newTotalStock})`);
+                        console.log(`🎉 Success! Product stock saved to Firestore. New total: ${newTotalStock}`);
+                    } else {
+                        console.log("⏸️ No changes were made to the stock.");
                     }
                 }
             }
