@@ -718,302 +718,344 @@
 <body>
 
     <style>
-        #login-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: linear-gradient(-45deg, #0d1b2a, #050a11, #12091c, #0a1128);
-            background-size: 400% 400%;
-            z-index: 10001;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            font-family: 'Cairo', sans-serif;
-            padding: 20px;
-            animation: bgGradient 15s ease infinite;
-        }
+/* Reset & Setup */
+#login-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000000;
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(212, 175, 55, 0.05), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(108, 99, 255, 0.05), transparent 25%);
+    z-index: 10001;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Cairo', system-ui, sans-serif;
+    overflow: hidden;
+}
 
-        @keyframes bgGradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+/* Next.js style animated grid background */
+.grid-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-size: 40px 40px;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+    z-index: 0;
+    animation: gridMove 20s linear infinite;
+}
+@keyframes gridMove {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(40px); }
+}
 
-        .ambient-glow {
-            position: absolute;
-            width: 70vw;
-            height: 70vw;
-            background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 60%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 1;
-            animation: pulseGlow 8s infinite alternate;
-        }
-        @keyframes pulseGlow {
-            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; }
-            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-        }
+/* Glowing Orbs */
+.glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: 0;
+    animation: orbFloat 10s ease-in-out infinite alternate;
+}
+.orb-1 { width: 400px; height: 400px; background: rgba(212, 175, 55, 0.08); top: -100px; left: -100px; }
+.orb-2 { width: 300px; height: 300px; background: rgba(108, 99, 255, 0.08); bottom: -50px; right: -50px; animation-delay: -5s; }
 
-        /* Animated Floating Images */
-        .float-item {
-            position: absolute;
-            border-radius: 20px;
-            object-fit: cover;
-            opacity: 0.8;
-            border: 2px solid rgba(255, 255, 255, 0.05);
-            animation: imagePulse floatLuxury infinite ease-in-out alternate;
-            pointer-events: none;
-            user-select: none;
-        }
+@keyframes orbFloat {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(30px, -50px) scale(1.2); }
+}
 
-        @keyframes imagePulse {
-            0% { 
-                filter: drop-shadow(0 0 10px rgba(0,0,0,0.8)) brightness(0.8); 
-                transform: translateY(0) rotate(var(--rot, 0deg)) scale(1);
-                border-color: rgba(212, 175, 55, 0.1);
-            }
-            100% { 
-                filter: drop-shadow(0 0 35px rgba(212,175,55,0.4)) brightness(1.1); 
-                transform: translateY(-25px) rotate(calc(var(--rot, 0deg) + 4deg)) scale(1.06);
-                border-color: rgba(212, 175, 55, 0.4);
-            }
-        }
+/* 3D Floating Images Container */
+.images-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    perspective: 1000px;
+}
 
-        .login-box {
-            background: rgba(10, 15, 30, 0.5);
-            backdrop-filter: blur(25px) saturate(150%);
-            -webkit-backdrop-filter: blur(25px) saturate(150%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            border-left: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 30px;
-            padding: 50px 40px;
-            width: 100%;
-            max-width: 420px;
-            text-align: center;
-            position: relative;
-            z-index: 10;
-            box-shadow: 0 40px 80px -20px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(255,255,255,0.02);
-            transform: translateY(0);
-            animation: boxFloat 6s ease-in-out infinite alternate;
-        }
+.premium-img {
+    position: absolute;
+    border-radius: 20px;
+    object-fit: cover;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.05);
+    animation: float3D 12s ease-in-out infinite alternate;
+    opacity: 0.7;
+}
 
-        @keyframes boxFloat {
-            0% { transform: translateY(0px); }
-            100% { transform: translateY(-8px); }
-        }
+@keyframes float3D {
+    0% { transform: translateY(0) translateZ(0) rotateX(2deg) rotateY(-2deg); border-color: rgba(212,175,55,0.1); }
+    100% { transform: translateY(-30px) translateZ(50px) rotateX(-2deg) rotateY(2deg); border-color: rgba(212,175,55,0.3); }
+}
 
-        .brand-subtitle {
-            font-size: 0.8rem;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            color: #d4af37;
-            margin-bottom: 35px;
-            font-weight: 700;
-            text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
-        }
+/* Central Login Card (Ultra Glassmorphism) */
+.login-card {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 420px;
+    padding: 50px 40px;
+    background: rgba(10, 10, 15, 0.4);
+    backdrop-filter: blur(40px) saturate(150%);
+    -webkit-backdrop-filter: blur(40px) saturate(150%);
+    border-radius: 32px;
+    box-shadow: 
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 30px 60px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    text-align: center;
+    animation: cardEntrance 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform: translateY(40px);
+    opacity: 0;
+}
 
-        .login-box input {
-            background: rgba(0,0,0,0.4) !important;
-            border: 1px solid rgba(255,255,255,0.08) !important;
-            color: #fff !important;
-            padding: 16px 20px !important;
-            border-radius: 14px !important;
-            font-size: 0.95rem !important;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            outline: none;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .login-box input::placeholder { color: rgba(255,255,255,0.3); letter-spacing: 0.5px; }
-        .login-box input:focus {
-            border-color: #d4af37 !important;
-            background: rgba(0,0,0,0.6) !important;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2) !important;
-            transform: scale(1.02);
-        }
+@keyframes cardEntrance {
+    to { transform: translateY(0); opacity: 1; }
+}
 
-        /* Animated Primary Button */
-        .login-box .btn-primary {
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, #d4af37, #f3e5ab, #d4af37, #b28a24) !important;
-            background-size: 300% 300% !important;
-            border: none !important;
-            border-radius: 14px !important;
-            color: #000 !important;
-            font-size: 1.1rem !important;
-            font-weight: 900 !important;
-            letter-spacing: 1px;
-            cursor: pointer;
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3) !important;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            padding: 16px;
-            text-transform: uppercase;
-            animation: goldGradient 4s ease infinite;
-            margin-top: 10px;
-        }
+.login-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 32px;
+    padding: 2px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0) 50%, rgba(212,175,55,0.15));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
 
-        @keyframes goldGradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+/* Logo & Title */
+.brand-logo {
+    width: 65px;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 0 20px rgba(212,175,55,0.5));
+    animation: pulseLogo 4s infinite alternate;
+}
+@keyframes pulseLogo {
+    0% { filter: drop-shadow(0 0 10px rgba(212,175,55,0.3)) scale(0.98); }
+    100% { filter: drop-shadow(0 0 25px rgba(212,175,55,0.7)) scale(1.02); }
+}
 
-        .login-box .btn-primary::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: rotate(45deg) translateY(-100%);
-            animation: buttonShine 3s infinite;
-        }
-        @keyframes buttonShine {
-            0% { transform: rotate(45deg) translateY(-100%); }
-            20% { transform: rotate(45deg) translateY(100%); }
-            100% { transform: rotate(45deg) translateY(100%); }
-        }
+.brand-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    margin: 0 0 5px 0;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #ffffff 30%, #d4af37 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
 
-        .login-box .btn-primary:hover { 
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 15px 40px rgba(212, 175, 55, 0.6) !important;
-        }
-        .login-box .btn-primary:active {
-            transform: scale(0.96);
-        }
+.brand-subtitle {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 5px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 35px;
+}
 
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: rgba(255,255,255,0.4);
-            font-size: 0.8rem;
-            margin: 25px 0;
-            text-shadow: 0 0 5px rgba(255,255,255,0.2);
-        }
-        .divider hr {
-            flex: 1;
-            border: 0;
-            border-top: 1px solid rgba(255,255,255,0.15);
-        }
+/* Inputs */
+.input-group {
+    position: relative;
+    margin-bottom: 18px;
+}
 
-        /* Animated Google Button */
-        .google-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            width: 100%;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            color: rgba(255,255,255,0.9);
-            font-family: 'Cairo', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: borderPulse 3s infinite alternate;
-        }
-        @keyframes borderPulse {
-            0% { border-color: rgba(255, 255, 255, 0.05); box-shadow: 0 0 0 rgba(255,255,255,0); }
-            100% { border-color: rgba(255, 255, 255, 0.25); box-shadow: 0 0 15px rgba(255,255,255,0.1); }
-        }
+.input-group input {
+    width: 100%;
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    outline: none;
+}
 
-        .google-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+.input-group input:focus {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(212, 175, 55, 0.5);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    transform: translateY(-1px);
+}
 
-        .forgot-btn {
-            background: none;
-            border: none;
-            color: rgba(255,255,255,0.5);
-            margin-top: 25px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-family: 'Cairo';
-            letter-spacing: 0.5px;
-            transition: all 0.3s;
-        }
-        .forgot-btn:hover {
-            color: #d4af37;
-            text-shadow: 0 0 8px rgba(212,175,55,0.5);
-            transform: scale(1.05);
-        }
+.input-group input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
 
-        #login-error {
-            color: #ff4d4d;
-            margin-top: 20px;
-            font-size: 0.85rem;
-            display: none;
-            background: rgba(255, 77, 77, 0.1);
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 77, 77, 0.2);
-            animation: shake 0.5s;
-        }
+/* Next.js inspired animated button */
+.btn-submit {
+    position: relative;
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #d4af37, #b28a24);
+    color: #000;
+    font-size: 1.05rem;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 10px 25px -5px rgba(212, 175, 55, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
+.btn-submit::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transform: translateX(-100%) skewX(-15deg);
+    animation: shimmer 3s infinite;
+}
 
-        @media (max-width: 480px) {
-            .float-item { display: none; }
-            .login-box { padding: 40px 25px; border-radius: 20px; border: none; background: rgba(15, 23, 42, 0.6); }
-        }
-    </style>
+@keyframes shimmer {
+    100% { transform: translateX(100%) skewX(-15deg); }
+}
 
-    <div id="login-overlay">
-        <!-- Ambient Glow Background -->
-        <div class="ambient-glow"></div>
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px -5px rgba(212, 175, 55, 0.5);
+}
+.btn-submit:active {
+    transform: translateY(1px);
+}
 
-        <!-- Working Luxury Images with varying animation styles -->
-        <img class="float-item" style="height:220px; width:150px; top:8%; left:4%; --rot:-4deg; animation-duration: 5s;" src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80">
-        <img class="float-item" style="height:160px; width:120px; top:45%; left:8%; --rot:6deg; animation-duration: 7s;" src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80">
-        <img class="float-item" style="height:200px; width:140px; bottom:8%; left:3%; --rot:-5deg; animation-duration: 6s;" src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&q=80">
-        <img class="float-item" style="height:180px; width:130px; top:12%; right:5%; --rot:7deg; animation-duration: 4.5s;" src="https://images.unsplash.com/photo-1550614000-4b95d4ed8302?w=400&q=80">
-        <img class="float-item" style="height:240px; width:160px; top:40%; right:2%; --rot:-3deg; animation-duration: 6.5s;" src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400&q=80">
-        <img class="float-item" style="height:170px; width:120px; bottom:10%; right:7%; --rot:5deg; animation-duration: 5.5s;" src="https://images.unsplash.com/photo-1509180766-3d2b2708b58a?w=400&q=80">
+/* Separator */
+.separator {
+    display: flex;
+    align-items: center;
+    margin: 25px 0;
+    color: rgba(255,255,255,0.3);
+    font-size: 0.8rem;
+}
+.separator::before, .separator::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+}
+.separator span {
+    padding: 0 15px;
+}
 
-        <div class="login-box">
-            <!-- Glowing Logo integration -->
-            <div style="margin-bottom: 5px;">
-                <img src="images/logo/logo2..png" width="75" style="filter: drop-shadow(0 0 15px rgba(212,175,55,0.6)); animation: pulseGlow 3s infinite alternate;">
-            </div>
-            <h2 style="margin-bottom: 2px; font-weight: 900; font-size: 2.2rem; letter-spacing: 3px; background: linear-gradient(to right, #ffffff, #d4af37, #ffffff); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: goldGradient 4s linear infinite;">iCloth</h2>
-            <div class="brand-subtitle">Exclusive Management</div>
-            
-            <form id="login-form" style="display: flex; flex-direction: column; gap: 18px;">
-                <input type="email" id="login-email" placeholder="البريد الإلكتروني" required>
-                <input type="password" id="login-password" placeholder="كلمة المرور" required>
-                <button type="submit" class="btn-primary" style="justify-content: center;">دخول آمن</button>
-            </form>
+/* Google OAuth Button */
+.btn-google {
+    width: 100%;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
 
-            <div class="divider">
-                <hr> <span>أو</span> <hr>
-            </div>
+.btn-google:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
 
-            <button onclick="loginWithGoogle()" class="google-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C40,22.659,39.652,21.362,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.652,21.362,43.611,20.083z"/></svg>
-                المتابعة كمسؤول
-            </button>
-            
-            <button onclick="forgotPassword()" class="forgot-btn">نسيت كلمة المرور؟</button>
-            <p id="login-error"></p>
-        </div>
+.forgot-link {
+    display: inline-block;
+    margin-top: 25px;
+    color: rgba(255,255,255,0.4);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.forgot-link:hover {
+    color: #d4af37;
+    text-shadow: 0 0 10px rgba(212,175,55,0.4);
+}
+
+@media (max-width: 768px) {
+    .images-container { display: none; }
+    .grid-bg { opacity: 0.5; }
+    .login-card { padding: 40px 25px; border-radius: 24px; }
+}
+</style>
+
+<div id="login-overlay">
+    <div class="grid-bg"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    
+    <div class="images-container">
+        <!-- Premium Pexels Fashion Images -->
+        <img class="premium-img" style="width: 140px; height: 190px; top: 12%; left: 8%; animation-delay: 0s;" src="https://images.pexels.com/photos/2983464/pexels-photo-2983464.jpeg?auto=compress&cs=tinysrgb&w=400">
+        <img class="premium-img" style="width: 160px; height: 230px; top: 48%; left: 12%; animation-delay: -3s;" src="https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?auto=compress&cs=tinysrgb&w=400">
+        <img class="premium-img" style="width: 130px; height: 170px; bottom: 8%; left: 4%; animation-delay: -6s;" src="https://images.pexels.com/photos/1055691/pexels-photo-1055691.jpeg?auto=compress&cs=tinysrgb&w=400">
+        
+        <img class="premium-img" style="width: 170px; height: 250px; top: 18%; right: 9%; animation-delay: -1s;" src="https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?auto=compress&cs=tinysrgb&w=400">
+        <img class="premium-img" style="width: 140px; height: 180px; bottom: 12%; right: 14%; animation-delay: -4s;" src="https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400">
     </div>
+
+    <div class="login-card">
+        <img src="images/logo/logo2..png" alt="iCloth Logo" class="brand-logo">
+        <h1 class="brand-title">iCloth</h1>
+        <div class="brand-subtitle">Exclusive Management</div>
+
+        <form id="login-form">
+            <div class="input-group">
+                <input type="email" id="login-email" placeholder="البريد الإلكتروني" required autocomplete="email">
+            </div>
+            <div class="input-group">
+                <input type="password" id="login-password" placeholder="كلمة المرور" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-submit">
+                <span>دخول آمن</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+        </form>
+
+        <div class="separator"><span>أو</span></div>
+
+        <button type="button" class="btn-google" onclick="loginWithGoogle()">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            المتابعة كمسؤول
+        </button>
+
+        <button type="button" class="forgot-link" onclick="forgotPassword()">نسيت كلمة المرور؟</button>
+        <p id="login-error" style="color: #ff4d4d; margin-top: 15px; font-size: 0.85rem; display: none; padding: 12px; background: rgba(255, 77, 77, 0.1); border-radius: 10px; border: 1px solid rgba(255, 77, 77, 0.2);"></p>
+    </div>
+</div>
 
     <div class="sidebar-overlay" onclick="window.toggleSidebar()"></div>
     <!-- Sidebar -->
