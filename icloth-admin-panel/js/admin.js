@@ -297,10 +297,10 @@ function addColorVariant(name = '', image = '') {
     renderColorVariants();
 }
 
-function removeColorVariant(id) {
+window.removeColorVariant = (id) => {
     colorVariants = colorVariants.filter(v => v.id !== id);
     renderColorVariants();
-}
+};
 
 function renderColorVariants() {
     if (!colorVariantsContainer) return;
@@ -314,7 +314,7 @@ function renderColorVariants() {
             <label style="font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 5px;">مقاسات هذا اللون (اضغط Enter أو Space):</label>
             <div style="border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); border-radius: 8px; padding: 5px; min-height: 40px; margin-bottom: 10px;">
                 <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px;">
-                    ${(v.sizes || '').split(',').map(s => s.trim()).filter(s => s).map(s => `<span style="background: var(--accent); color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px;">${s} <i class="fas fa-times" style="cursor: pointer;" onclick="removeVariantSize(${v.id}, '${s}')"></i></span>`).join('')}
+                    ${(v.sizes || '').split(',').map(s => s.trim()).filter(s => s).map((s, sIdx) => `<span style="background: var(--accent); color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px;">${s} <i class="fas fa-times" style="cursor: pointer;" onclick="removeVariantSize(${v.id}, ${sIdx})"></i></span>`).join('')}
                 </div>
                 <input type="text" placeholder="اكتب المقاس واضغط Enter" onkeydown="handleVariantSizeKey(event, ${v.id}, this)" style="border: none; background: transparent; padding: 5px; outline: none; width: 100%; font-size: 0.8rem; color: #fff;">
             </div>
@@ -326,17 +326,17 @@ function renderColorVariants() {
     `).join('');
 }
 
-function updateVariantName(id, name) {
+window.updateVariantName = (id, name) => {
     const v = colorVariants.find(v => v.id === id);
     if (v) v.name = name;
-}
+};
 
-function updateVariantSizes(id, sizes) {
+window.updateVariantSizes = (id, sizes) => {
     const v = colorVariants.find(v => v.id === id);
     if (v) v.sizes = sizes;
-}
+};
 
-function handleVariantSizeKey(e, id, input) {
+window.handleVariantSizeKey = (e, id, input) => {
     if (e.key === 'Enter' || e.key === ' ' || e.key === ',') {
         e.preventDefault();
         const val = input.value.trim().replace(/,/g, '');
@@ -347,25 +347,44 @@ function handleVariantSizeKey(e, id, input) {
                 currentSizes.push(val);
                 v.sizes = currentSizes.join(', ');
                 renderColorVariants();
-                // Focus will be lost, so maybe wait and focus again? (or user just clicks)
+                // Stay focused on the same input after re-render
+                setTimeout(() => {
+                    const inputs = document.querySelectorAll('#color-variants-container input[type="text"]');
+                    // Find the input that belongs to this variant
+                    const variantInputs = Array.from(inputs).filter(inp => inp.getAttribute('onkeydown')?.includes(id));
+                    if (variantInputs.length > 0) variantInputs[variantInputs.length - 1].focus();
+                }, 10);
+            }
+        }
+    } else if (e.key === 'Backspace' && input.value === '') {
+        const v = colorVariants.find(v => v.id === id);
+        if (v) {
+            let currentSizes = (v.sizes || '').split(',').map(s => s.trim()).filter(s => s);
+            if (currentSizes.length > 0) {
+                currentSizes.pop();
+                v.sizes = currentSizes.join(', ');
+                renderColorVariants();
+                setTimeout(() => {
+                    const inputs = document.querySelectorAll('#color-variants-container input[type="text"]');
+                    const variantInputs = Array.from(inputs).filter(inp => inp.getAttribute('onkeydown')?.includes(id));
+                    if (variantInputs.length > 0) variantInputs[variantInputs.length - 1].focus();
+                }, 10);
             }
         }
     }
-}
+};
 
-function removeVariantSize(id, sizeToRemove) {
+window.removeVariantSize = (id, idxToRemove) => {
     const v = colorVariants.find(v => v.id === id);
     if (v) {
         let currentSizes = (v.sizes || '').split(',').map(s => s.trim()).filter(s => s);
-        // Find index and remove only the FIRST occurrence
-        const idx = currentSizes.indexOf(sizeToRemove);
-        if (idx !== -1) {
-            currentSizes.splice(idx, 1);
+        if (idxToRemove >= 0 && idxToRemove < currentSizes.length) {
+            currentSizes.splice(idxToRemove, 1);
             v.sizes = currentSizes.join(', ');
             renderColorVariants();
         }
     }
-}
+};
 
 // Global Main Sizes Tags logic
 function renderMainSizes() {
@@ -405,12 +424,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     inputEl.value = '';
                     renderMainSizes();
                 }
+            } else if (e.key === 'Backspace' && inputEl.value === '') {
+                const inputHidden = document.getElementById('p-sizes');
+                let sizes = inputHidden.value.split(',').map(s => s.trim()).filter(s => s);
+                if (sizes.length > 0) {
+                    sizes.pop();
+                    inputHidden.value = sizes.join(', ');
+                    renderMainSizes();
+                }
             }
         });
     }
 });
 
-async function handleVariantImage(input, id) {
+window.handleVariantImage = async (input, id) => {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = async (e) => {
@@ -425,7 +452,7 @@ async function handleVariantImage(input, id) {
         };
         reader.readAsDataURL(input.files[0]);
     }
-}
+};
 
 async function compressImage(base64, maxWidth = 1200) {
     return new Promise((resolve) => {

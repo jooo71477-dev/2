@@ -805,6 +805,26 @@ window.filterAdminColors = (input) => {
 };
 
 
+window.removeSizeItem = (btn) => {
+    if (!confirm("هل تريد حذف هذا المقاس من هذا اللون؟")) return;
+    const item = btn.closest('.size-stock-item');
+    const variantItem = btn.closest('.variant-item');
+    item.remove();
+
+    // Recalculate total stock for this variant color
+    if (variantItem) {
+        const inputs = variantItem.querySelectorAll('.size-stock-input');
+        let total = 0;
+        inputs.forEach(inp => total += (Number(inp.value) || 0));
+
+        const display = variantItem.querySelector('.v-total-stock-display');
+        const hidden = variantItem.querySelector('.v-stock');
+        if (display) display.innerText = total;
+        if (hidden) hidden.value = total;
+    }
+};
+
+
 function buildVariantHTML(name, images, sizesStr, stock, thumbnail, sizeStock = {}) {
     const sortedReg = [...ColorSystem.registry].sort((a,b) => a.hue - b.hue);
     
@@ -875,8 +895,8 @@ function buildVariantHTML(name, images, sizesStr, stock, thumbnail, sizeStock = 
                 <label style="margin-bottom: 10px; display: block; font-weight: bold; color: var(--primary);">مخزون المقاسات</label>
                 <div class="size-stock-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; border: 1px solid var(--border); min-height: 100px;">
                     ${sizes.map(s => `
-                        <div class="size-stock-item" style="position: relative; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
-                            <button type="button" onclick="window.removeCustomSize(this)" style="position: absolute; top: -5px; right: -5px; background: #f44336; color: #fff; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;"><i class="fas fa-times"></i></button>
+                        <div class="size-stock-item" style="background: rgba(255,255,255,0.03); padding: 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center; position: relative;">
+                            <i class="fas fa-times" onclick="window.removeSizeItem(this)" style="position: absolute; top: -5px; right: -5px; background: #f44336; color: #fff; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; cursor: pointer; border: 1px solid rgba(0,0,0,0.2); z-index: 10;"></i>
                             <div style="font-size: 0.7rem; color: var(--primary); margin-bottom: 2px;">${s}</div>
                             <input type="number" class="size-stock-input" data-size="${s}" value="${sizeStock[s] || 0}" min="0" 
                                    style="width: 100%; background: transparent; border: none; color: #fff; font-weight: bold; text-align: center; font-size: 0.9rem;">
@@ -908,9 +928,9 @@ window.addCustomSize = (btn) => {
         const grid = btn.closest('.variant-item').querySelector('.size-stock-grid');
         const item = document.createElement('div');
         item.className = 'size-stock-item';
-        item.style = 'position: relative; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center;';
+        item.style = 'background: rgba(255,255,255,0.03); padding: 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center; position: relative;';
         item.innerHTML = `
-            <button type="button" onclick="window.removeCustomSize(this)" style="position: absolute; top: -5px; right: -5px; background: #f44336; color: #fff; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;"><i class="fas fa-times"></i></button>
+            <i class="fas fa-times" onclick="window.removeSizeItem(this)" style="position: absolute; top: -5px; right: -5px; background: #f44336; color: #fff; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; cursor: pointer; border: 1px solid rgba(0,0,0,0.2); z-index: 10;"></i>
             <div style="font-size: 0.7rem; color: var(--primary); margin-bottom: 2px;">${size}</div>
             <input type="number" class="size-stock-input" data-size="${size}" value="0" min="0" 
                    style="width: 100%; background: transparent; border: none; color: #fff; font-weight: bold; text-align: center; font-size: 0.9rem;">
@@ -923,8 +943,8 @@ window.resetSizes = (btn, type) => {
     const grid = btn.closest('.variant-item').querySelector('.size-stock-grid');
     const sizes = type === 'alphabet' ? ['M', 'L', 'XL', 'XXL', '3XL'] : ['36', '38', '40', '42', '44'];
     grid.innerHTML = sizes.map(s => `
-        <div class="size-stock-item" style="position: relative; background: rgba(255,255,255,0.03); padding: 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
-            <button type="button" onclick="window.removeCustomSize(this)" style="position: absolute; top: -5px; right: -5px; background: #f44336; color: #fff; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;"><i class="fas fa-times"></i></button>
+        <div class="size-stock-item" style="background: rgba(255,255,255,0.03); padding: 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center; position: relative;">
+            <i class="fas fa-times" onclick="window.removeSizeItem(this)" style="position: absolute; top: -5px; right: -5px; background: #f44336; color: #fff; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; cursor: pointer; border: 1px solid rgba(0,0,0,0.2); z-index: 10;"></i>
             <div style="font-size: 0.7rem; color: var(--primary); margin-bottom: 2px;">${s}</div>
             <input type="number" class="size-stock-input" data-size="${s}" value="0" min="0" 
                    style="width: 100%; background: transparent; border: none; color: #fff; font-weight: bold; text-align: center; font-size: 0.9rem;">
@@ -945,26 +965,6 @@ function updateVariantPreviews(item) {
         </div>
     `).join('');
 }
-
-window.removeCustomSize = (btn) => {
-    // Confirm delete
-    if(!confirm("هل أنت متأكد من حذف هذا المقاس نهائياً؟")) return;
-    const item = btn.closest('.variant-item');
-    btn.parentElement.remove();
-    // Update totals
-    if (item) {
-        const firstInput = item.querySelector('.size-stock-input');
-        if (firstInput) {
-            // Trigger input event to re-calculate total variant stock
-            firstInput.dispatchEvent(new Event('input', { bubbles: true }));
-        } else {
-            const display = item.querySelector('.v-total-stock-display');
-            const hidden = item.querySelector('.v-stock');
-            if (display) display.innerText = '0';
-            if (hidden) hidden.value = '0';
-        }
-    }
-};
 
 // Global listener for quantity changes
 document.addEventListener('input', (e) => {
