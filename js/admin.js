@@ -3131,3 +3131,61 @@ window.saveShippingRates = async () => {
         btn.disabled = false;
     }
 };
+
+// --- Account Security Management ---
+document.getElementById('admin-password-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPass = document.getElementById('new-admin-password').value;
+    const user = firebase.auth().currentUser;
+
+    if (!user) {
+        alert("⚠️ يجب تسجيل الدخول أولاً كمدير لتغيير كلمة المرور.");
+        return;
+    }
+
+    const btn = e.target.querySelector('button');
+    const originalContent = btn.innerHTML;
+    
+    // Safety check: is it an admin or requests email?
+    const isAdmin = ["jooo714777@gmail.com", "jooo71477@gmail.com"].includes(user.email);
+    const isRequests = user.email === "products@icloth-fashion-store.com";
+
+    if (!isAdmin && !isRequests) {
+        alert("⚠️ عذراً، لا تمتلك الصلاحية لتغيير كلمة المرور من هذه الواجهة.");
+        return;
+    }
+
+    if (!confirm(`هل أنت متأكد من تغيير كلمة المرور لحسابك (${user.email})؟`)) return;
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
+    btn.disabled = true;
+
+    try {
+        await user.updatePassword(newPass);
+        alert(`✅ تم تحديث كلمة مرور (${user.email}) بنجاح!\nيرجى استخدامها في المرة القادمة.`);
+        document.getElementById('new-admin-password').value = '';
+    } catch (error) {
+        console.error("Password change error:", error);
+        if (error.code === 'auth/requires-recent-login') {
+            alert("🔒 حماية أمنية: لتغيير كلمة المرور، يجب عليك تسجيل الخروج والعودة لتسجيل الدخول فوراً ثم المحاولة مرة أخرى.");
+        } else {
+            alert("❌ فشل التحديث: " + error.message);
+        }
+    } finally {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    }
+});
+
+window.sendResetEmail = (email) => {
+    if (!confirm(`هل تريد إرسال رابط إعادة تعيين كلمة المرور إلى ${email}؟`)) return;
+    
+    firebase.auth().sendPasswordResetEmail(email)
+        .then(() => {
+            alert(`✅ تم إرسال رابط تغيير الباسورد بنجاح!\nيرجى مراجعة البريد (${email}) وفحص الـ Spam أيضاً.`);
+        })
+        .catch(err => {
+            console.error("Reset email error:", err);
+            alert("❌ فشل في الإرسال: " + err.message);
+        });
+};
