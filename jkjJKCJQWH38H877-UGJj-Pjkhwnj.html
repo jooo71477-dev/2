@@ -1058,31 +1058,89 @@
                 </div>
 
                 <!-- Column 4: Account Security -->
-                <div class="table-container" style="background: linear-gradient(145deg, rgba(30,30,30,0.9), rgba(20,20,20,1)); border: 1px solid rgba(212,175,55,0.15);">
-                    <h3 style="color: var(--primary); margin-bottom: 20px;"><i class="fas fa-shield-alt"></i> إدارة حماية الحسابات</h3>
+                <div class="table-container" style="background: linear-gradient(145deg, rgba(15,15,15,1), rgba(10,10,10,1)); border: 1px solid rgba(212,175,55,0.2); grid-column: 1 / -1;">
+                    <h3 style="color: var(--primary); margin-bottom: 25px; display:flex; align-items:center; gap:10px;">
+                        <i class="fas fa-shield-alt"></i> إدارة كلمات مرور الحسابات
+                        <span style="font-size:0.75rem; font-weight:400; opacity:0.5; margin-right:auto;">الإعدادات تظهر للأدمن الكامل فقط</span>
+                    </h3>
                     
-                    <!-- Admin Password -->
-                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
-                        <h4 style="font-size: 0.9rem; color: #fff; margin-bottom: 10px;"><i class="fas fa-user-shield" style="color:var(--primary);"></i> حساب المدير الرئيسي</h4>
-                        <p style="font-size: 0.75rem; opacity: 0.6; margin-bottom: 12px;">jooo714777@gmail.com</p>
-                        <form id="admin-password-form">
-                            <div class="form-group" style="margin-bottom: 10px;">
-                                <input type="password" id="new-admin-password" placeholder="كلمة المرور الجديدة" required style="font-size: 0.85rem; padding: 10px;">
-                            </div>
-                            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; font-size: 0.85rem; padding: 10px; background: rgba(212,175,55,0.1); color: var(--primary); border: 1px solid var(--primary);">
-                                <i class="fas fa-key"></i> تحديث كلمة المرور
-                            </button>
-                        </form>
-                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
 
-                    <!-- Requests Account Password -->
-                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                        <h4 style="font-size: 0.9rem; color: #fff; margin-bottom: 10px;"><i class="fas fa-shopping-bag" style="color:#00d2ff;"></i> حساب الطلبات</h4>
-                        <p style="font-size: 0.75rem; opacity: 0.6; margin-bottom: 12px;">products@icloth-fashion-store.com</p>
-                        <button type="button" onclick="sendResetEmail('products@icloth-fashion-store.com')" class="btn-primary" style="width: 100%; justify-content: center; font-size: 0.85rem; padding: 10px; background: rgba(0,210,255,0.1); color: #00d2ff; border: 1px solid #00d2ff;">
-                            <i class="fas fa-envelope"></i> إرسال رابط تعيين الباسورد
-                        </button>
-                        <p style="font-size: 0.7rem; opacity: 0.5; margin-top: 10px; text-align: center;">سيصلك بريد إلكتروني يحتوي على رابط لتغيير كلمة المرور فوراً.</p>
+                        <!-- Admin Account -->
+                        <div style="background: rgba(212,175,55,0.04); padding: 20px; border-radius: 14px; border: 1px solid rgba(212,175,55,0.15);">
+                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                                <div style="width:40px; height:40px; border-radius:50%; background: rgba(212,175,55,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <i class="fas fa-crown" style="color:var(--primary); font-size:1rem;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:900; font-size:0.95rem;">الأدمن الكامل</div>
+                                    <div style="font-size:0.72rem; opacity:0.5; direction:ltr; text-align:right;">jooo714777@gmail.com</div>
+                                </div>
+                                <span class="status-badge badge-success" style="margin-right:auto; font-size:0.7rem;">مسجل دخوله</span>
+                            </div>
+                            <form id="admin-password-form">
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label style="font-size:0.8rem;">الباسورد الحالي</label>
+                                    <div style="position:relative;">
+                                        <input type="password" id="current-admin-password" placeholder="أدخل باسوردك الحالي..." required style="font-size: 0.85rem; border-color: rgba(212,175,55,0.3); padding-left: 40px;">
+                                        <button type="button" onclick="togglePw('current-admin-password', this)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:rgba(255,255,255,0.4); cursor:pointer; font-size:0.95rem; padding:0; line-height:1;"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label style="font-size:0.8rem;">الباسورد الجديد</label>
+                                    <div style="position:relative;">
+                                        <input type="password" id="new-admin-password" placeholder="أدخل الباسورد الجديد..." required style="font-size: 0.85rem; padding-left: 40px;">
+                                        <button type="button" onclick="togglePw('new-admin-password', this)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:rgba(255,255,255,0.4); cursor:pointer; font-size:0.95rem; padding:0; line-height:1;"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                <button type="submit" id="admin-pass-btn" class="btn-primary" style="width: 100%; justify-content: center; background: rgba(212,175,55,0.12); color: var(--primary); border: 1px solid rgba(212,175,55,0.4);">
+                                    <i class="fas fa-key"></i> تغيير الباسورد مباشرة
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Products Account -->
+                        <div style="background: rgba(0,210,255,0.04); padding: 20px; border-radius: 14px; border: 1px solid rgba(0,210,255,0.15);">
+                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                                <div style="width:40px; height:40px; border-radius:50%; background: rgba(0,210,255,0.1); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <i class="fas fa-box-open" style="color:#00d2ff; font-size:1rem;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:900; font-size:0.95rem;">حساب المنتجات</div>
+                                    <div style="font-size:0.72rem; opacity:0.5; direction:ltr; text-align:right;">products@icloth-fashion-store.com</div>
+                                </div>
+                                <span class="status-badge badge-info" style="margin-right:auto; font-size:0.7rem;">منتجات فقط</span>
+                            </div>
+                            <form id="products-password-form">
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label style="font-size:0.8rem;"><i class="fas fa-crown" style="color:var(--primary);"></i> باسورد الأدمن الحالي (للتأكيد)</label>
+                                    <div style="position:relative;">
+                                        <input type="password" id="products-admin-confirm" placeholder="أدخل باسورد حسابك الأدمن..." required style="font-size: 0.85rem; border-color: rgba(212,175,55,0.3); padding-left: 40px;">
+                                        <button type="button" onclick="togglePw('products-admin-confirm', this)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:rgba(255,255,255,0.4); cursor:pointer; font-size:0.95rem; padding:0; line-height:1;"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label style="font-size:0.8rem;">الباسورد الحالي لحساب المنتجات</label>
+                                    <div style="position:relative;">
+                                        <input type="password" id="products-current-password" placeholder="أدخل الباسورد الحالي للمنتجات..." required style="font-size: 0.85rem; border-color: rgba(0,210,255,0.3); padding-left: 40px;">
+                                        <button type="button" onclick="togglePw('products-current-password', this)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:rgba(255,255,255,0.4); cursor:pointer; font-size:0.95rem; padding:0; line-height:1;"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label style="font-size:0.8rem;">الباسورد الجديد لحساب المنتجات</label>
+                                    <div style="position:relative;">
+                                        <input type="password" id="products-new-password" placeholder="أدخل الباسورد الجديد..." required style="font-size: 0.85rem; border-color: rgba(0,210,255,0.3); padding-left: 40px;">
+                                        <button type="button" onclick="togglePw('products-new-password', this)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:rgba(255,255,255,0.4); cursor:pointer; font-size:0.95rem; padding:0; line-height:1;"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                <button type="submit" id="products-pass-btn" class="btn-primary" style="width: 100%; justify-content: center; background: rgba(0,210,255,0.1); color: #00d2ff; border: 1px solid rgba(0,210,255,0.4);">
+                                    <i class="fas fa-key"></i> تغيير الباسورد مباشرة
+                                </button>
+                            </form>
+                            <p style="font-size:0.7rem; opacity:0.4; margin-top:10px; text-align:center;">
+                                <i class="fas fa-info-circle"></i> الكود هيدخل للحساب مؤقتاً ويغير الباسورد فوراً
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

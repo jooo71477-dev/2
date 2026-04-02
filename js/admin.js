@@ -3132,44 +3132,66 @@ window.saveShippingRates = async () => {
     }
 };
 
+// Toggle password visibility (eye icon)
+window.togglePw = (inputId, btn) => {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (!input) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+        btn.style.color = 'rgba(255,255,255,0.8)';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+        btn.style.color = 'rgba(255,255,255,0.4)';
+    }
+};
+
 // --- Account Security Management ---
 document.getElementById('admin-password-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const currentPass = document.getElementById('current-admin-password').value;
     const newPass = document.getElementById('new-admin-password').value;
     const user = firebase.auth().currentUser;
+    const btn = document.getElementById('admin-pass-btn');
+    const originalContent = btn.innerHTML;
 
     if (!user) {
-        alert("⚠️ يجب تسجيل الدخول أولاً كمدير لتغيير كلمة المرور.");
+        alert("⚠️ يجب تسجيل الدخول أولاً كمدير.");
         return;
     }
 
-    const btn = e.target.querySelector('button');
-    const originalContent = btn.innerHTML;
-    
-    // Safety check: is it an admin or requests email?
-    const isAdmin = ["jooo714777@gmail.com", "jooo71477@gmail.com"].includes(user.email);
-    const isRequests = user.email === "products@icloth-fashion-store.com";
-
-    if (!isAdmin && !isRequests) {
-        alert("⚠️ عذراً، لا تمتلك الصلاحية لتغيير كلمة المرور من هذه الواجهة.");
+    if (!["jooo714777@gmail.com", "jooo71477@gmail.com"].includes(user.email)) {
+        alert("⚠️ هذا الخيار للأدمن الكامل فقط.");
         return;
     }
 
-    if (!confirm(`هل أنت متأكد من تغيير كلمة المرور لحسابك (${user.email})؟`)) return;
+    if (newPass.length < 6) {
+        alert("⚠️ الباسورد الجديد لازم يكون 6 أحرف على الأقل.");
+        return;
+    }
 
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
     btn.disabled = true;
 
     try {
+        // Re-authenticate with current password first (avoids requires-recent-login error)
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPass);
+        await user.reauthenticateWithCredential(credential);
+
+        // Now change the password
         await user.updatePassword(newPass);
-        alert(`✅ تم تحديث كلمة مرور (${user.email}) بنجاح!\nيرجى استخدامها في المرة القادمة.`);
+
+        alert(`✅ تم تغيير الباسورد بنجاح!`);
+        document.getElementById('current-admin-password').value = '';
         document.getElementById('new-admin-password').value = '';
     } catch (error) {
         console.error("Password change error:", error);
-        if (error.code === 'auth/requires-recent-login') {
-            alert("🔒 حماية أمنية: لتغيير كلمة المرور، يجب عليك تسجيل الخروج والعودة لتسجيل الدخول فوراً ثم المحاولة مرة أخرى.");
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            alert("❌ الباسورد الحالي غلط. تحقق منه وحاول مرة تانية.");
         } else {
-            alert("❌ فشل التحديث: " + error.message);
+            alert("❌ فشل التغيير: " + error.message);
         }
     } finally {
         btn.innerHTML = originalContent;
@@ -3177,15 +3199,108 @@ document.getElementById('admin-password-form')?.addEventListener('submit', async
     }
 });
 
+
 window.sendResetEmail = (email) => {
-    if (!confirm(`هل تريد إرسال رابط إعادة تعيين كلمة المرور إلى ${email}؟`)) return;
-    
+    const btn = document.getElementById('products-reset-btn');
+    if (!confirm(`إرسال رابط تغيير الباسورد إلى:\n${email}`)) return;
+
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+        btn.disabled = true;
+    }
+
     firebase.auth().sendPasswordResetEmail(email)
         .then(() => {
-            alert(`✅ تم إرسال رابط تغيير الباسورد بنجاح!\nيرجى مراجعة البريد (${email}) وفحص الـ Spam أيضاً.`);
+            alert(`✅ تم الإرسال بنجاح!\nراجع البريد الإلكتروني (${email})\nوفحص مجلد الـ Spam لو مش لاقيه.`);
         })
         .catch(err => {
             console.error("Reset email error:", err);
-            alert("❌ فشل في الإرسال: " + err.message);
+            if (err.code === 'auth/user-not-found') {
+                alert("❌ الإيميل ده مش موجود في Firebase Authentication.");
+            } else {
+                alert("❌ فشل في الإرسال: " + err.message);
+            }
+        })
+        .finally(() => {
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال رابط تغيير الباسورد';
+                btn.disabled = false;
+            }
         });
 };
+
+// Direct password change for products account (fully automatic)
+document.getElementById('products-password-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const adminConfirmPass = document.getElementById('products-admin-confirm').value;
+    const currentPass = document.getElementById('products-current-password').value;
+    const newPass = document.getElementById('products-new-password').value;
+    const btn = document.getElementById('products-pass-btn');
+    const adminUser = firebase.auth().currentUser;
+    const adminEmail = adminUser ? adminUser.email : null;
+
+    if (!adminEmail || !["jooo714777@gmail.com", "jooo71477@gmail.com"].includes(adminEmail)) {
+        alert("⚠️ هذا الخيار للأدمن الكامل فقط.");
+        return;
+    }
+
+    if (newPass.length < 6) {
+        alert("⚠️ الباسورد الجديد لازم يكون 6 أحرف على الأقل.");
+        return;
+    }
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التغيير...';
+    btn.disabled = true;
+
+    const PRODUCTS_EMAIL = "products@icloth-fashion-store.com";
+
+    try {
+        // 1. Sign into products account temporarily
+        const productsUserCred = await firebase.auth().signInWithEmailAndPassword(PRODUCTS_EMAIL, currentPass);
+
+        // 2. Change the password
+        await productsUserCred.user.updatePassword(newPass);
+
+        // 3. Automatically sign back into admin account using the saved field value
+        await firebase.auth().signInWithEmailAndPassword(adminEmail, adminConfirmPass);
+
+        alert("✅ تم تغيير باسورد حساب المنتجات بنجاح!\nورجعنا تلقائياً لحساب الأدمن.");
+
+        // 4. Clear all fields
+        document.getElementById('products-admin-confirm').value = '';
+        document.getElementById('products-current-password').value = '';
+        document.getElementById('products-new-password').value = '';
+
+    } catch (error) {
+        console.error("Products password change error:", error);
+
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            // Decide which step failed based on auth state
+            const currentUser = firebase.auth().currentUser;
+            if (currentUser && currentUser.email === PRODUCTS_EMAIL) {
+                // We're still in products → admin password was wrong, try to fix
+                alert("⚠️ تم تغيير باسورد المنتجات لكن باسورد الأدمن غلط!\nسيتم تسجيل الخروج — سجل دخول يدوياً.");
+                await firebase.auth().signOut();
+            } else {
+                alert("❌ الباسورد الحالي لحساب المنتجات غلط. تحقق منه وحاول مرة تانية.");
+            }
+        } else if (error.code === 'auth/user-not-found') {
+            alert("❌ حساب المنتجات مش موجود في Firebase.");
+        } else {
+            alert("❌ خطأ غير متوقع: " + error.message);
+            // Try to restore admin session silently
+            try {
+                await firebase.auth().signInWithEmailAndPassword(adminEmail, adminConfirmPass);
+            } catch(e) {
+                await firebase.auth().signOut();
+            }
+        }
+    } finally {
+        btn.innerHTML = '<i class="fas fa-key"></i> تغيير الباسورد مباشرة';
+        btn.disabled = false;
+    }
+});
+
+
+
