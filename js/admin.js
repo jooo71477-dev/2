@@ -74,6 +74,32 @@ auth.onAuthStateChanged(async (user) => {
                     a.classList.toggle('active', a.getAttribute('href') === '#products');
                 });
             }
+
+            // ✅ FIX: Auto-trigger loader for current section on page reload
+            const currentHash = window.location.hash.replace('#', '') || 'overview';
+            const sectionLoadersMap = {
+                'settings':     () => typeof loadSettings === 'function' && loadSettings(),
+                'cms':          () => typeof loadCMS === 'function' && loadCMS(),
+                'inventory':    () => typeof renderInventory === 'function' && renderInventory(),
+                'coupons':      () => typeof loadCoupons === 'function' && loadCoupons(),
+                'shipping':     () => typeof loadShippingRates === 'function' && loadShippingRates(),
+                'categories':   () => typeof loadCategories === 'function' && loadCategories(),
+                'analytics':    () => typeof initAnalytics === 'function' && initAnalytics(),
+                'announcements':() => typeof loadAnnouncements === 'function' && loadAnnouncements(),
+                'users':        () => typeof renderUsers === 'function' && renderUsers(),
+            };
+            if (sectionLoadersMap[currentHash]) {
+                // Wait a tick so products/orders data is loaded first
+                setTimeout(() => {
+                    showSection(currentHash);
+                    sectionLoadersMap[currentHash]();
+                    // Sync navigation active state
+                    document.querySelectorAll('.nav-links a, .mob-nav-item').forEach(a => {
+                        a.classList.toggle('active', a.getAttribute('href') === `#${currentHash}`);
+                    });
+                }, 600);
+            }
+
         } else {
             console.warn("🚫 Unauthorized access attempt:", user.email);
             alert("عذراً، هذا الحساب ليس له صلاحيات أدمن ⛔");
@@ -86,6 +112,7 @@ auth.onAuthStateChanged(async (user) => {
         if (sidebar) sidebar.style.display = 'none';
     }
 });
+
 
 function applyRoleRestrictions(role) {
     const navLinks = document.querySelectorAll('.nav-links a');
