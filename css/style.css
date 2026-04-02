@@ -1868,9 +1868,9 @@ footer {
 .modal {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.25);
-    /* Very light dim to show site clearly */
-    z-index: 9999;
+    background: rgba(0, 0, 0, 0.4);
+    /* Darker dim for better focus */
+    z-index: 200002 !important;
     display: none;
     justify-content: center;
     align-items: flex-start;

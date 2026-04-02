@@ -2384,7 +2384,7 @@ function showToast(message, duration = 2500) {
         font-size: 1rem;
         font-weight: 700;
         font-family: 'Cairo', sans-serif;
-        z-index: 99999;
+        z-index: 200001;
         border: 1px solid rgba(212, 175, 55, 0.4);
         box-shadow: 0 10px 40px rgba(0,0,0,0.4);
         opacity: 0;
@@ -2765,6 +2765,12 @@ function openMyOrdersModal() {
     if (!modal) {
         console.error("❌ modal الطلبات غير موجود");
         return;
+    }
+
+    // 🚀 Auto-close sidebar if it's open
+    const sidebar = document.getElementById('side-menu');
+    if (sidebar && sidebar.classList.contains('active')) {
+        if (window.toggleSidebarMenu) window.toggleSidebarMenu();
     }
 
     modal.classList.add('active');
