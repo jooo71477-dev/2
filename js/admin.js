@@ -397,19 +397,40 @@ function updateStats() {
     document.getElementById('stat-sales').innerText = `${totalSales.toLocaleString()} ج.م`;
 }
 
+window.adminActiveProductFilterCategory = 'all';
+
+window.filterAdminProductsByCategory = () => {
+    const filterEl = document.getElementById('admin-product-category-filter');
+    if (filterEl) {
+        window.adminActiveProductFilterCategory = filterEl.value;
+        renderProducts();
+    }
+};
+
 function renderProducts(data = products) {
     const list = document.getElementById('products-list');
     if (!list) return;
-    console.log("📊 Rendering Admin Products:", data.length);
     
-    // Sort by sortOrder (asc), items without sortOrder go to the end
-    data.sort((a, b) => {
+    let renderData = [...data];
+    if (window.adminActiveProductFilterCategory !== 'all') {
+        renderData = renderData.filter(p => p.category === window.adminActiveProductFilterCategory || p.parentCategory === window.adminActiveProductFilterCategory);
+    }
+    
+    // Sort by Category Name/ID first if "all", then by sortOrder
+    renderData.sort((a, b) => {
+        if (window.adminActiveProductFilterCategory === 'all') {
+            const catA = a.category || "";
+            const catB = b.category || "";
+            if (catA !== catB) return catA.localeCompare(catB);
+        }
         const orderA = a.sortOrder !== undefined ? a.sortOrder : 999999;
         const orderB = b.sortOrder !== undefined ? b.sortOrder : 999999;
         return orderA - orderB;
     });
 
-    list.innerHTML = data.map(p => {
+    console.log("📊 Rendering Admin Products:", renderData.length);
+
+    list.innerHTML = renderData.map(p => {
         // Log individual product price to console for debugging
         if (p.oldPrice) console.log(`🔍 Product [${p.name}] has oldPrice: ${p.oldPrice}`);
 
@@ -420,7 +441,7 @@ function renderProducts(data = products) {
             || '';
         return `
         <tr data-id="${p.id}">
-            <td class="drag-handle" style="cursor: move; text-align: center; width: 40px; color: var(--primary); font-size: 1.1rem; border-right: 1px solid rgba(255,255,255,0.05);"><i class="fas fa-bars"></i></td>
+            <td class="drag-handle" style="${window.adminActiveProductFilterCategory === 'all' ? 'cursor: not-allowed; opacity: 0.3;' : 'cursor: move; color: var(--primary);'} text-align: center; width: 40px; font-size: 1.1rem; border-right: 1px solid rgba(255,255,255,0.05);" title="${window.adminActiveProductFilterCategory === 'all' ? 'اختر قسماً محدداً لترتيب منتجاته بحرية' : 'اسحب لترتيب المنتج'}"><i class="fas fa-bars"></i></td>
             <td>${displayImg ? `<img src="${displayImg}" class="product-img" onerror="this.style.display='none'">` : '<div style="width:40px;height:40px;background:rgba(255,255,255,0.05);border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="opacity:0.3;"></i></div>'}</td>
             <td>
                 <div style="display:flex; align-items:center; gap:5px;">
@@ -465,9 +486,11 @@ function renderProducts(data = products) {
 
     // --- Initialize Drag and Drop ---
     if (window.Sortable && list) {
-        new Sortable(list, {
+        if (window._productsSortable) window._productsSortable.destroy();
+        window._productsSortable = new Sortable(list, {
             handle: '.drag-handle',
             animation: 150,
+            disabled: window.adminActiveProductFilterCategory === 'all', // Disable sorting if viewing all categories
             onEnd: async function() {
                 console.log("🔄 Order changed, syncing with DB...");
                 await syncProductOrder();
@@ -477,6 +500,7 @@ function renderProducts(data = products) {
 }
 
 async function syncProductOrder() {
+    if (window.adminActiveProductFilterCategory === 'all') return; // Should not happen, but safeguard
     const rows = document.querySelectorAll('#products-list tr');
     const batch = db.batch();
     
@@ -2991,25 +3015,33 @@ function renderCategories() {
     list.innerHTML = '';
     const roots = categories.filter(c => !c.parentId);
     
+    roots.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    
     roots.forEach(root => {
         renderCategoryBranch(root, 0, list);
     });
 }
 
 function renderCategoryBranch(cat, level, container) {
-    const children = categories.filter(c => c.parentId === cat.id);
+    let children = categories.filter(c => c.parentId === cat.id);
+    children.sort((a,b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    
     const productCount = products.filter(p => p.category === cat.id || p.subCategory === cat.id).length;
     
     const row = document.createElement('tr');
     const indent = level * 30;
     const isParent = children.length > 0;
+    const sortVal = typeof cat.sortOrder !== 'undefined' ? cat.sortOrder : '0';
+    const hiddenBadge = cat.active === false ? '<span style="color:var(--danger); font-size:0.75rem; margin-right:8px; background:rgba(255,0,0,0.1); padding:2px 6px; border-radius:4px;">مخفي بالموقع</span>' : '';
     
     row.innerHTML = `
         <td style="padding-right: ${indent + 15}px;">
             <div style="display:flex; align-items:center; gap:10px;">
                 ${isParent ? '<i class="fas fa-chevron-down" style="font-size:0.7rem; opacity:0.5;"></i>' : '<i class="far fa-circle" style="font-size:0.5rem; opacity:0.3;"></i>'}
-                <span style="font-weight: ${level === 0 ? '900' : '600'}; font-size: ${level === 0 ? '1rem' : '0.9rem'};">
+                <span style="font-weight: ${level === 0 ? '900' : '600'}; font-size: ${level === 0 ? '1rem' : '0.9rem'}; display:flex; align-items:center; gap:8px;">
+                    <span style="background:var(--primary); color:#000; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold;">${sortVal}</span>
                     ${cat.name}
+                    ${hiddenBadge}
                 </span>
             </div>
         </td>
@@ -3065,6 +3097,9 @@ window.openCategoryModal = (id = null) => {
         document.getElementById('cat-name-ar').value = cat.name_ar || "";
         parentSelect.value = cat.parentId || "";
         
+        if (document.getElementById('cat-order')) document.getElementById('cat-order').value = (typeof cat.sortOrder !== 'undefined') ? cat.sortOrder : "";
+        if (document.getElementById('cat-active')) document.getElementById('cat-active').checked = (typeof cat.active !== 'undefined') ? cat.active : true;
+        
         // Handle Category Image
         const catImageInput = document.getElementById('cat-image');
         const catImagePreview = document.getElementById('cat-image-preview');
@@ -3084,6 +3119,9 @@ window.openCategoryModal = (id = null) => {
     } else {
         form.reset();
         idInput.value = "";
+        
+        if (document.getElementById('cat-order')) document.getElementById('cat-order').value = "";
+        if (document.getElementById('cat-active')) document.getElementById('cat-active').checked = true;
         
         // Reset Category Image
         const catImageInput = document.getElementById('cat-image');
@@ -3111,6 +3149,14 @@ document.getElementById('category-form').onsubmit = async (e) => {
         name_ar: document.getElementById('cat-name-ar').value,
         parentId: document.getElementById('cat-parent').value || null
     };
+
+    if (document.getElementById('cat-order')) {
+        const orderVal = document.getElementById('cat-order').value;
+        data.sortOrder = orderVal ? parseInt(orderVal, 10) : 0;
+    }
+    if (document.getElementById('cat-active')) {
+        data.active = document.getElementById('cat-active').checked;
+    }
     
     const catImage = document.getElementById('cat-image');
     if (catImage && catImage.value) {
@@ -3138,9 +3184,15 @@ window.deleteCategory = async (id) => {
 
 function updateCatDropdowns() {
     const pCatSelect = document.getElementById('p-category');
-    if (!pCatSelect) return;
+    const filterSelect = document.getElementById('admin-product-category-filter');
     
-    pCatSelect.innerHTML = '<option value="" disabled selected>اختر القسم (رئيسي أو فرعي)...</option>';
+    if (pCatSelect) pCatSelect.innerHTML = '<option value="" disabled selected>اختر القسم (رئيسي أو فرعي)...</option>';
+    if (filterSelect) {
+        const currVal = filterSelect.value;
+        filterSelect.innerHTML = '<option value="all">جميع الأقسام</option>';
+        // Restore value later if any
+        window._tempFilterVal = currVal; 
+    }
     
     // Build tree
     const roots = categories.filter(c => !c.parentId);
@@ -3148,16 +3200,30 @@ function updateCatDropdowns() {
     const addOptions = (cat, level) => {
         // Use non-breaking spaces for proper indentation in RTL/LTR mix
         const indent = level > 0 ? "\u00A0\u00A0".repeat(level) + "↳ " : "";
-        const option = document.createElement('option');
-        option.value = cat.id;
-        option.innerText = indent + cat.name;
-        pCatSelect.appendChild(option);
+        
+        if (pCatSelect) {
+            const tempOpt = document.createElement('option');
+            tempOpt.value = cat.id;
+            tempOpt.innerText = indent + cat.name;
+            pCatSelect.appendChild(tempOpt);
+        }
+        
+        if (filterSelect) {
+            const filterOpt = document.createElement('option');
+            filterOpt.value = cat.id;
+            filterOpt.innerText = indent + cat.name;
+            filterSelect.appendChild(filterOpt);
+        }
         
         const children = categories.filter(c => c.parentId === cat.id);
         children.forEach(child => addOptions(child, level + 1));
     };
 
     roots.forEach(root => addOptions(root, 0));
+    
+    if (filterSelect && window._tempFilterVal) {
+        filterSelect.value = window._tempFilterVal;
+    }
 }
 
 // Sub-products dropdown is no longer needed since p-category handles the whole tree

@@ -805,7 +805,9 @@ function attachRealTimeListeners() {
 
     // Real-time Categories
     db.collection('categories').onSnapshot(snapshot => {
-        dynamicCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        dynamicCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(c => c.active !== false)
+            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
         renderDynamicFilters();
     });
 
@@ -1024,7 +1026,9 @@ let dynamicCategories = [];
 async function loadDynamicCategories() {
     if (db) {
         const snapshot = await db.collection('categories').get();
-        dynamicCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        dynamicCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(c => c.active !== false)
+            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
         renderDynamicFilters();
     }
 }
@@ -1147,8 +1151,8 @@ function renderDynamicFilters() {
                 
                 html += `
                     <div class="subcategory-card" onclick="openCategoryProducts('${s.id}', '${subTitle}')" style="cursor: pointer; background: #081a44; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-                        <div style="width: 100%; height: 250px; background-image: url('${imgUrl}'); background-size: cover; background-position: center; transition: transform 0.5s;"></div>
-                        <div style="padding: 15px; text-align: center; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); margin-top: -55px; z-index: 2; position: relative;">
+                        <div style="width: 100%; height: 400px; background-image: url('${imgUrl}'); background-size: cover; background-position: center; transition: transform 0.5s;"></div>
+                        <div style="padding: 20px 15px; text-align: center; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); margin-top: -60px; z-index: 2; position: relative;">
                             <h3 style="color: #fff; font-weight: 900; text-transform: uppercase; font-size: 1.1rem; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">${subTitle}</h3>
                         </div>
                     </div>
@@ -1159,8 +1163,8 @@ function renderDynamicFilters() {
             const imgUrl = mainCat.imageUrl || 'images/placeholder-collection.jpg';
             html += `
                 <div class="subcategory-card" onclick="openCategoryProducts('${mainCat.id}', '${mainCatTitle}')" style="cursor: pointer; background: #081a44; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-                    <div style="width: 100%; height: 250px; background-image: url('${imgUrl}'); background-size: cover; background-position: center;"></div>
-                    <div style="padding: 15px; text-align: center; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); margin-top: -55px; z-index: 2; position: relative;">
+                    <div style="width: 100%; height: 400px; background-image: url('${imgUrl}'); background-size: cover; background-position: center;"></div>
+                    <div style="padding: 20px 15px; text-align: center; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); margin-top: -60px; z-index: 2; position: relative;">
                          <h3 style="color: #fff; font-weight: 900; text-transform: uppercase; font-size: 1.1rem; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">${currentLang === 'ar' ? 'جميع المنتجات' : 'View All'}</h3>
                     </div>
                 </div>
