@@ -64,7 +64,7 @@ auth.onAuthStateChanged(async (user) => {
             
             // Re-initialize 
             if (products.length === 0) {
-                initDashboard(role);
+                await initDashboard(role);
             }
 
             // FORCE VIEW FOR PRODUCTS ROLE
@@ -88,16 +88,14 @@ auth.onAuthStateChanged(async (user) => {
                 'announcements':() => typeof loadAnnouncements === 'function' && loadAnnouncements(),
                 'users':        () => typeof renderUsers === 'function' && renderUsers(),
             };
+            
             if (sectionLoadersMap[currentHash]) {
-                // Wait a tick so products/orders data is loaded first
-                setTimeout(() => {
-                    showSection(currentHash);
-                    sectionLoadersMap[currentHash]();
-                    // Sync navigation active state
-                    document.querySelectorAll('.nav-links a, .mob-nav-item').forEach(a => {
-                        a.classList.toggle('active', a.getAttribute('href') === `#${currentHash}`);
-                    });
-                }, 600);
+                showSection(currentHash);
+                sectionLoadersMap[currentHash]();
+                // Sync navigation active state
+                document.querySelectorAll('.nav-links a, .mob-nav-item').forEach(a => {
+                    a.classList.toggle('active', a.getAttribute('href') === `#${currentHash}`);
+                });
             }
 
         } else {
@@ -334,12 +332,26 @@ async function loadProducts() {
     if (productsListener) return; // Already listening
     
     console.log("📡 Starting Real-time Product Listener (Primary)...");
-    productsListener = db.collection('products').orderBy('sortOrder', 'asc').onSnapshot(snapshot => {
-        products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderProducts();
-        updateStats();
-    }, err => {
-        console.error("Firebase Products Snap Error:", err);
+    return new Promise((resolve) => {
+        let isFirstLoad = true;
+        productsListener = db.collection('products').orderBy('sortOrder', 'asc').onSnapshot(snapshot => {
+            products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderProducts();
+            updateStats();
+            
+            // If viewing inventory section on load, re-render it so it populates
+            if (window.location.hash === '#inventory') {
+                if (typeof renderInventory === 'function') renderInventory();
+            }
+
+            if (isFirstLoad) {
+                isFirstLoad = false;
+                resolve();
+            }
+        }, err => {
+            console.error("Firebase Products Snap Error:", err);
+            resolve(); // resolve anyway to unblock startup
+        });
     });
 }
 
@@ -347,16 +359,25 @@ async function loadOrders() {
     if (ordersListener) return; // Already listening
 
     console.log("📡 Starting Real-time Order Listener (Primary)...");
-    ordersListener = db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-        orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderOrders();
-        renderRecentOrders();
-        renderTopSelling();
-        updateStats();
-    }, err => {
-        console.error("Firebase Orders Snap Error:", err);
+    return new Promise((resolve) => {
+        let isFirstLoad = true;
+        ordersListener = db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+            orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderOrders();
+            renderRecentOrders();
+            renderTopSelling();
+            updateStats();
+            if (isFirstLoad) {
+                isFirstLoad = false;
+                resolve();
+            }
+        }, err => {
+            console.error("Firebase Orders Snap Error:", err);
+            resolve();
+        });
     });
 }
+
 
 async function loadUsers() {
     try {
@@ -2345,15 +2366,22 @@ document.getElementById('cms-form').onsubmit = async (e) => {
 const originalShowSection = showSection;
 showSection = (id) => {
     originalShowSection(id);
-    if (id === 'users') renderUsers();
-    if (id === 'coupons') loadCoupons();
-    if (id === 'settings') loadSettings();
-    if (id === 'shipping') loadShippingRates();
-    if (id === 'cms') loadCMS();
-    if (id === 'categories') loadCategories();
-    if (id === 'inventory') renderInventory();
-    if (id === 'analytics') initAnalytics();
-    if (id === 'announcements') loadAnnouncements();
+    
+    const sectionLoadersMap = {
+        'settings':     () => typeof loadSettings === 'function' && loadSettings(),
+        'cms':          () => typeof loadCMS === 'function' && loadCMS(),
+        'inventory':    () => typeof renderInventory === 'function' && renderInventory(),
+        'coupons':      () => typeof loadCoupons === 'function' && loadCoupons(),
+        'shipping':     () => typeof loadShippingRates === 'function' && loadShippingRates(),
+        'categories':   () => typeof loadCategories === 'function' && loadCategories(),
+        'analytics':    () => typeof initAnalytics === 'function' && initAnalytics(),
+        'announcements':() => typeof loadAnnouncements === 'function' && loadAnnouncements(),
+        'users':        () => typeof renderUsers === 'function' && renderUsers(),
+    };
+    
+    if (sectionLoadersMap[id]) {
+        sectionLoadersMap[id]();
+    }
 
     // Fix: Close sidebar on mobile after clicking
     if (window.innerWidth <= 992) {
