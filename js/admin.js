@@ -1258,6 +1258,35 @@ window.uploadSizeChart = uploadSizeChart;
 
 window.uploadProductImage = uploadProductImage;
 
+window.uploadCategoryImage = async function(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const parentBtn = input.parentElement;
+    const originalHTML = parentBtn.innerHTML;
+    
+    parentBtn.style.pointerEvents = 'none';
+    parentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...';
+
+    try {
+        const imageUrl = await uploadToCloudinary(file);
+        
+        document.getElementById('cat-image').value = imageUrl;
+        const preview = document.getElementById('cat-image-preview');
+        preview.src = imageUrl;
+        preview.style.display = 'block';
+
+        console.log("✅ Category image uploaded to Cloudinary!");
+    } catch (e) {
+        alert("فشل رفع الصورة برجاء المحاولة مرة أخرى");
+        console.error(e);
+    } finally {
+        parentBtn.innerHTML = originalHTML;
+        parentBtn.style.pointerEvents = 'auto';
+        input.value = ''; // Reset input so same file can be chosen again
+    }
+};
+
 async function compressImage(file, maxWidth, quality) {
     return new Promise((resolve, reject) => {
         // دعم base64 string مباشرة (للضغط الإضافي)
@@ -3035,10 +3064,36 @@ window.openCategoryModal = (id = null) => {
         document.getElementById('cat-name').value = cat.name || "";
         document.getElementById('cat-name-ar').value = cat.name_ar || "";
         parentSelect.value = cat.parentId || "";
+        
+        // Handle Category Image
+        const catImageInput = document.getElementById('cat-image');
+        const catImagePreview = document.getElementById('cat-image-preview');
+        if (catImageInput && catImagePreview) {
+            if (cat.imageUrl) {
+                catImageInput.value = cat.imageUrl;
+                catImagePreview.src = cat.imageUrl;
+                catImagePreview.style.display = 'block';
+            } else {
+                catImageInput.value = "";
+                catImagePreview.src = "";
+                catImagePreview.style.display = 'none';
+            }
+        }
+        
         title.innerText = "تعديل القسم";
     } else {
         form.reset();
         idInput.value = "";
+        
+        // Reset Category Image
+        const catImageInput = document.getElementById('cat-image');
+        const catImagePreview = document.getElementById('cat-image-preview');
+        if (catImageInput && catImagePreview) {
+            catImageInput.value = "";
+            catImagePreview.src = "";
+            catImagePreview.style.display = 'none';
+        }
+        
         title.innerText = "إضافة قسم جديد";
     }
     modal.style.display = 'flex';
@@ -3056,6 +3111,13 @@ document.getElementById('category-form').onsubmit = async (e) => {
         name_ar: document.getElementById('cat-name-ar').value,
         parentId: document.getElementById('cat-parent').value || null
     };
+    
+    const catImage = document.getElementById('cat-image');
+    if (catImage && catImage.value) {
+        data.imageUrl = catImage.value;
+    } else {
+        data.imageUrl = null; // Clear it if no image
+    }
     try {
         if (id) {
             await db.collection('categories').doc(id).update(data);

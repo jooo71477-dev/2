@@ -1662,6 +1662,18 @@
                         <!-- Main cats populated here -->
                     </select>
                 </div>
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label>صورة القسم (اختياري)</label>
+                    <input type="hidden" id="cat-image">
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:5px;">
+                        <label class="btn-primary" style="cursor:pointer; padding:8px 15px; background:rgba(212,175,55,0.1); color:var(--primary); border:1px solid var(--primary);">
+                            <i class="fas fa-upload"></i> رفع صورة
+                            <input type="file" hidden accept="image/*" onchange="uploadCategoryImage(this)">
+                        </label>
+                        <img id="cat-image-preview" src="" style="width:50px; height:50px; object-fit:cover; border-radius:8px; display:none;">
+                        <button type="button" onclick="document.getElementById('cat-image').value=''; document.getElementById('cat-image-preview').style.display='none'; document.getElementById('cat-image-preview').src='';" style="padding:8px; background:none; border:none; color:var(--danger); cursor:pointer;"><i class="fas fa-times"></i> حذف</button>
+                    </div>
+                </div>
                 <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">حفظ القسم</button>
             </form>
         </div>

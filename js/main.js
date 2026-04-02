@@ -1029,11 +1029,17 @@ function renderDynamicFilters() {
     if (!container) return;
     
     const mainCats = dynamicCategories.filter(c => !c.parentId);
-    container.innerHTML = `<button class="main-filter-btn active" data-parent="all" onclick="applyMainFilter('all', this)" data-i18n="all">${translations[currentLang].all}</button>` +
-        mainCats.map(c => {
-            const translatedCat = (currentLang === 'ar' && c.name_ar) ? c.name_ar : translateText(c.name);
-            return `<button class="main-filter-btn" data-parent="${c.id}" onclick="applyMainFilter('${c.id}', this)" data-translate-cache="${c.name}">${translatedCat}</button>`;
-        }).join('');
+    
+    if (activeCategory === 'all' && mainCats.length > 0) {
+        activeCategory = mainCats[0].id;
+        setTimeout(() => filterAndRender('men', activeCategory, 'all'), 50);
+    }
+    
+    container.innerHTML = mainCats.map((c, index) => {
+        const translatedCat = (currentLang === 'ar' && c.name_ar) ? c.name_ar : translateText(c.name);
+        const isActiveStr = c.id === activeCategory ? 'active' : '';
+        return `<button class="main-filter-btn ${isActiveStr}" data-parent="${c.id}" onclick="applyMainFilter('${c.id}', this)" data-translate-cache="${c.name}">${translatedCat}</button>`;
+    }).join('');
     
     renderSidebarCategories();
 }
@@ -1214,8 +1220,21 @@ window.applyMainFilter = (parentId, btn) => {
 
 window.applySubFilter = (parent, sub, btn, level) => {
     // 1. Mark current row active
-    btn.parentElement.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    if (btn) {
+        if (btn.classList.contains('sub-btn')) {
+            btn.parentElement.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        } else if (btn.classList.contains('subcategory-card')) {
+            btn.parentElement.querySelectorAll('.subcategory-card').forEach(b => {
+                b.style.transform = 'scale(1)';
+                b.style.boxShadow = 'none';
+                b.style.filter = 'brightness(0.7)';
+            });
+            btn.style.transform = 'scale(1.02)';
+            btn.style.boxShadow = '0 10px 20px rgba(0,0,0,0.5)';
+            btn.style.filter = 'brightness(1)';
+        }
+    }
     
     // 2. Filter products
     const filterId = (sub === 'all') ? parent : sub;
@@ -1244,18 +1263,42 @@ function renderSubFilters(parentId, level = 0) {
     const row = document.createElement('div');
     row.className = 'sub-filter-row';
     row.dataset.level = level;
-    row.style.display = 'flex';
-    row.style.gap = '10px';
-    row.style.flexWrap = 'wrap';
-    row.style.justifyContent = 'center';
-    row.style.marginTop = '15px';
     row.style.width = '100%';
 
-    row.innerHTML = `<button class="sub-btn active" onclick="applySubFilter('${parentId}', 'all', this, ${level})" data-i18n="all">${translations[currentLang].all}</button>` +
-        subs.map(s => {
+    const hasImages = subs.some(s => s.imageUrl);
+
+    if (hasImages) {
+        row.style.display = 'grid';
+        row.style.gridTemplateColumns = 'repeat(auto-fit, minmax(250px, 1fr))';
+        row.style.gap = '15px';
+        row.style.marginTop = '25px';
+        row.style.marginBottom = '25px';
+        
+        row.innerHTML = subs.map(s => {
             const translatedCat = (currentLang === 'ar' && s.name_ar) ? s.name_ar : translateText(s.name);
-            return `<button class="sub-btn" onclick="applySubFilter('${parentId}', '${s.id}', this, ${level})" data-translate-cache="${s.name}">${translatedCat}</button>`;
+            const imgUrl = s.imageUrl || 'images/placeholder-collection.jpg';
+            return `
+                <div class="subcategory-card" onclick="applySubFilter('${parentId}', '${s.id}', this, ${level})" style="cursor: pointer; background: #081a44; border-radius: 0; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s; filter: brightness(0.9);">
+                    <div style="width: 100%; height: 350px; background-image: url('${imgUrl}'); background-size: cover; background-position: center; border-bottom: 3px solid #000;"></div>
+                    <div style="padding: 20px 15px; text-align: center; color: #fff; font-weight: 900; text-transform: uppercase; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; min-height: 80px; letter-spacing: 1px;">
+                        ${translatedCat}
+                    </div>
+                </div>
+            `;
         }).join('');
+    } else {
+        row.style.display = 'flex';
+        row.style.gap = '10px';
+        row.style.flexWrap = 'wrap';
+        row.style.justifyContent = 'center';
+        row.style.marginTop = '15px';
+
+        row.innerHTML = subs.map((s, index) => {
+                const translatedCat = (currentLang === 'ar' && s.name_ar) ? s.name_ar : translateText(s.name);
+                const isActiveStr = index === 0 ? 'active' : '';
+                return `<button class="sub-btn ${isActiveStr}" onclick="applySubFilter('${parentId}', '${s.id}', this, ${level})" data-translate-cache="${s.name}">${translatedCat}</button>`;
+            }).join('');
+    }
 
     subFiltersContainer.appendChild(row);
     subFiltersContainer.classList.add('active');
