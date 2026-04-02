@@ -947,10 +947,15 @@ function initElements() {
             const found = remoteProducts.find(x => x.id === targetId || toSlug(x.name) === toSlug(productSlug));
             if (found) window.openSizeModal(found.id);
         } else if (catSlug) {
-            const filterBtns = document.querySelectorAll('.main-filter-btn');
-            filterBtns.forEach(btn => {
-                if (toSlug(btn.innerText.trim()) === toSlug(catSlug)) btn.click();
-            });
+            const targetCat = dynamicCategories.find(c => toSlug(c.name) === toSlug(catSlug) || (c.name_ar && toSlug(c.name_ar) === toSlug(catSlug)));
+            if (targetCat) {
+                const translatedTitle = (currentLang === 'ar' && targetCat.name_ar) ? targetCat.name_ar : translateText(targetCat.name);
+                openCategoryProducts(targetCat.id, translatedTitle);
+            } else {
+                showCategoriesView();
+            }
+        } else {
+            showCategoriesView();
         }
     });
 }
@@ -1024,22 +1029,131 @@ async function loadDynamicCategories() {
     }
 }
 
-function renderDynamicFilters() {
-    const container = document.getElementById('main-filters-container');
-    if (!container) return;
+window.showCategoriesView = () => {
+    const catsView = document.getElementById('home-categories-view');
+    const prodsView = document.getElementById('home-products-view');
+    if(catsView) catsView.style.display = 'block';
+    if(prodsView) prodsView.style.display = 'none';
+
+    // Update URL gracefully to home
+    const isLocal = window.location.protocol === 'file:';
+    if (!isLocal) {
+        const url = new URL(window.location.origin + '/');
+        window.history.pushState({}, '', url);
+        try { updateCanonical(url.href); } catch(e){}
+    }
+};
+
+window.showProductsView = (title) => {
+    const catsView = document.getElementById('home-categories-view');
+    const prodsView = document.getElementById('home-products-view');
+    const titleEl = document.getElementById('current-category-title');
     
-    const mainCats = dynamicCategories.filter(c => !c.parentId);
+    if(catsView) catsView.style.display = 'none';
+    if(prodsView) prodsView.style.display = 'block';
+    if(titleEl && title) titleEl.innerText = title;
+};
+
+window.openCategoryProducts = (catId, title) => {
+    showProductsView(title);
+    activeCategory = catId;
+    filterAndRender('men', catId, 'all');
     
-    if (activeCategory === 'all' && mainCats.length > 0) {
-        activeCategory = mainCats[0].id;
-        setTimeout(() => filterAndRender('men', activeCategory, 'all'), 50);
+    const prodsView = document.getElementById('home-products-view');
+    if (prodsView) {
+        prodsView.scrollIntoView({ behavior: 'smooth' });
     }
     
-    container.innerHTML = mainCats.map((c, index) => {
-        const translatedCat = (currentLang === 'ar' && c.name_ar) ? c.name_ar : translateText(c.name);
-        const isActiveStr = c.id === activeCategory ? 'active' : '';
-        return `<button class="main-filter-btn ${isActiveStr}" data-parent="${c.id}" onclick="applyMainFilter('${c.id}', this)" data-translate-cache="${c.name}">${translatedCat}</button>`;
-    }).join('');
+    const isLocal = window.location.protocol === 'file:';
+    if (!isLocal) {
+        const url = new URL(window.location.origin + `/category/${toSlug(title || catId)}`);
+        window.history.pushState({}, '', url);
+        try { updateCanonical(url.href); } catch(e){}
+    } else {
+        const url = new URL(window.location);
+        url.searchParams.set('cat', toSlug(title || catId));
+        window.history.pushState({}, '', url);
+    }
+};
+
+function renderDynamicFilters() {
+    const categoriesView = document.getElementById('home-categories-view');
+    if (!categoriesView) {
+        renderSidebarCategories();
+        return;
+    }
+    
+    const mainCats = dynamicCategories.filter(c => !c.parentId);
+    let html = '';
+    
+    // Setup initial routing if URL has category
+    let initialCatSlug = null;
+    if (window.location.pathname.includes('/category/')) {
+        initialCatSlug = decodeURIComponent(window.location.pathname.split('/category/')[1]);
+    } else {
+        const params = new URLSearchParams(window.location.search);
+        initialCatSlug = params.get('cat');
+    }
+    
+    let hasMatch = false;
+
+    mainCats.forEach((mainCat, index) => {
+        const mainCatTitle = (currentLang === 'ar' && mainCat.name_ar) ? mainCat.name_ar : translateText(mainCat.name);
+        if (initialCatSlug && toSlug(mainCat.name) === initialCatSlug) {
+             hasMatch = true;
+             setTimeout(() => openCategoryProducts(mainCat.id, mainCatTitle), 100);
+        }
+
+        const subs = dynamicCategories.filter(c => c.parentId === mainCat.id);
+        
+        html += `
+            <div style="margin-bottom: 60px;">
+                <h2 style="font-size: 2rem; font-weight: 900; margin-bottom: 25px; text-transform: uppercase; color: var(--text-main); letter-spacing: 2px; border-bottom: 2px solid rgba(212,175,55,0.2); padding-bottom: 10px;">${mainCatTitle}</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+        `;
+        
+        if (subs.length > 0) {
+            subs.forEach(s => {
+                const subTitle = (currentLang === 'ar' && s.name_ar) ? s.name_ar : translateText(s.name);
+                const imgUrl = s.imageUrl || 'images/placeholder-collection.jpg';
+                if (initialCatSlug && toSlug(s.name) === initialCatSlug) {
+                     hasMatch = true;
+                     setTimeout(() => openCategoryProducts(s.id, subTitle), 100);
+                }
+                
+                html += `
+                    <div class="subcategory-card" onclick="openCategoryProducts('${s.id}', '${subTitle}')" style="cursor: pointer; background: #081a44; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                        <div style="width: 100%; height: 400px; background-image: url('${imgUrl}'); background-size: cover; background-position: center; transition: transform 0.5s;"></div>
+                        <div style="padding: 20px 15px; text-align: center; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); margin-top: -60px; z-index: 2; position: relative;">
+                            <h3 style="color: #fff; font-weight: 900; text-transform: uppercase; font-size: 1.1rem; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">${subTitle}</h3>
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            // Un-nested main category
+            const imgUrl = mainCat.imageUrl || 'images/placeholder-collection.jpg';
+            html += `
+                <div class="subcategory-card" onclick="openCategoryProducts('${mainCat.id}', '${mainCatTitle}')" style="cursor: pointer; background: #081a44; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                    <div style="width: 100%; height: 400px; background-image: url('${imgUrl}'); background-size: cover; background-position: center;"></div>
+                    <div style="padding: 20px 15px; text-align: center; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); margin-top: -60px; z-index: 2; position: relative;">
+                         <h3 style="color: #fff; font-weight: 900; text-transform: uppercase; font-size: 1.1rem; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">${currentLang === 'ar' ? 'جميع المنتجات' : 'View All'}</h3>
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += `
+                </div>
+            </div>
+        `;
+    });
+    
+    categoriesView.innerHTML = html;
+    
+    if (!initialCatSlug && !hasMatch) {
+        showCategoriesView(); // Default to categories view on load if no specific hash
+    }
     
     renderSidebarCategories();
 }
@@ -1144,43 +1258,22 @@ window.toggleMenuBranch = (el, e) => {
 
 const applySideFilter = (parent, sub) => {
     toggleSidebarMenu();
-    activeCategory = parent;
     
-    // 1. Update Main Filter (Top Row)
-    const mainBtn = document.querySelector(`.main-filter-btn[data-parent="${parent}"]`);
-    if (mainBtn) {
-        document.querySelectorAll('.main-filter-btn').forEach(b => b.classList.remove('active'));
-        mainBtn.classList.add('active');
-    }
-
-    // 2. Clear and Render Sub-filters
-    if (subFiltersContainer) subFiltersContainer.innerHTML = '';
+    const targetId = sub === 'all' ? parent : sub;
+    const cat = dynamicCategories.find(c => c.id === targetId);
+    const title = cat ? ((currentLang === 'ar' && cat.name_ar) ? cat.name_ar : translateText(cat.name)) : '';
     
-    if (sub !== 'all') {
-        // If it's a deep sub, we need to show the path
-        // For simplicity, let's just render the descendants of the top parent
-        renderSubFilters(parent, 0);
-        
-        // Find and click the sub button to trigger its children (if any)
-        setTimeout(() => {
-            const subBtn = document.querySelector(`.sub-btn[onclick*="'${sub}'"]`);
-            if (subBtn) {
-                // This will trigger applySubFilter which handles further levels
-                subBtn.click();
-            }
-        }, 150);
-    } else {
-        renderSubFilters(parent, 0);
-    }
-    
-    filterAndRender('men', sub === 'all' ? parent : sub, 'all');
-    document.getElementById('men-products')?.scrollIntoView({ behavior: 'smooth' });
+    window.openCategoryProducts(targetId, title);
 }
 
 const applyBestSellerFilter = (catId) => {
     toggleSidebarMenu();
+    const cat = dynamicCategories.find(c => c.id === catId);
+    const title = cat ? ((currentLang === 'ar' && cat.name_ar) ? cat.name_ar : translateText(cat.name)) : 'Best Sellers';
+    
+    showProductsView(title + " 🔥");
     filterAndRender('men', catId, 'all', true); // Pass isBestSellerOnly = true
-    document.getElementById('men-products')?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('home-products-view')?.scrollIntoView({ behavior: 'smooth' });
 }
 
 window.applyMainFilter = (parentId, btn) => {

@@ -257,18 +257,25 @@
             <div class="section-title">
                 <span data-i18n="available_categories">Available Categories</span>
                 <h2 data-i18n="featured_collection">Our Featured Collection</h2>
-                <div class="filter-wrapper">
-                    <div class="main-filters" id="main-filters-container">
-                        <!-- Dynamic -->
-                    </div>
-                    <!-- Sub filters container (filled via JS) -->
-                    <div class="sub-filters" id="sub-filters-container"></div>
+                <div id="home-categories-view" style="width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 15px;">
+                    <!-- Categories will be injected here -->
                 </div>
-            </div>
-            <div class="products-grid" id="men-products" data-legacy-id="products-list">
-                <!-- Products via JS -->
-            </div>
-        </section>
+
+                <div id="home-products-view" style="display: none; width: 100%;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; padding: 0 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">
+                        <button class="btn-primary" onclick="showCategoriesView()" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 8px 15px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-arrow-right"></i>
+                            <span data-i18n="back_to_categories">الرجوع للأقسام</span>
+                        </button>
+                        <h3 id="current-category-title" style="margin: 0; color: var(--primary); font-size: 1.5rem; text-transform: uppercase;"></h3>
+                        <div style="width: 100px;"></div><!-- placeholder for symmetry -->
+                    </div>
+                    
+                    <div class="products-grid" id="men-products" data-legacy-id="products-list">
+                        <!-- Products via JS -->
+                    </div>
+                </div>
+            </section>
 
 
         <!-- About Us Section -->
