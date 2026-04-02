@@ -1084,7 +1084,31 @@ function renderDynamicFilters() {
     }
     
     const mainCats = dynamicCategories.filter(c => !c.parentId);
-    let html = '';
+    let html = `
+        <style>
+            .cats-scroll-container {
+                display: flex;
+                overflow-x: auto;
+                gap: 15px;
+                padding-bottom: 15px;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                scroll-snap-type: x mandatory;
+            }
+            .cats-scroll-container::-webkit-scrollbar {
+                display: none;
+            }
+            .cats-scroll-container > .subcategory-card {
+                flex: 0 0 calc(50% - 7.5px);
+                scroll-snap-align: start;
+            }
+            @media (min-width: 768px) {
+                .cats-scroll-container > .subcategory-card {
+                    flex: 0 0 280px;
+                }
+            }
+        </style>
+    `;
     
     // Setup initial routing if URL has category
     let initialCatSlug = null;
@@ -1109,7 +1133,7 @@ function renderDynamicFilters() {
         html += `
             <div style="margin-bottom: 60px;">
                 <h2 style="font-size: 2rem; font-weight: 900; margin-bottom: 25px; text-transform: uppercase; color: var(--text-main); letter-spacing: 2px; border-bottom: 2px solid rgba(212,175,55,0.2); padding-bottom: 10px;">${mainCatTitle}</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                <div class="cats-scroll-container">
         `;
         
         if (subs.length > 0) {
