@@ -3156,6 +3156,69 @@ footer {
     }
 }
 
+/* ====================================================
+   MOBILE HEADER & SIDEBAR QUICK ACTIONS
+   ==================================================== */
+@media (max-width: 768px) {
+    .mobile-nav-hide {
+        display: none !important;
+    }
+    
+    .mobile-only-actions {
+        display: block !important;
+    }
+}
+
+.mobile-only-actions {
+    display: none;
+}
+
+.menu-list-horizontal {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 10px 0;
+}
+
+.menu-quick-btn {
+    background: rgba(var(--primary-rgb, 212, 175, 55), 0.08);
+    border: 1px solid rgba(var(--primary-rgb, 212, 175, 55), 0.15);
+    border-radius: 16px;
+    color: var(--text-main);
+    padding: 18px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-family: 'Cairo', sans-serif;
+}
+
+.menu-quick-btn:hover {
+    background: var(--primary);
+    color: #000;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(var(--primary-rgb, 212, 175, 55), 0.3);
+}
+
+.menu-quick-btn:active {
+    transform: scale(0.95);
+}
+
+.menu-quick-btn i {
+    font-size: 1.5rem;
+}
+
+.menu-quick-btn span {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+
 /* --- MANUAL NAVIGATION & UI FIXES --- */
 .product-actions {
     display: none !important;

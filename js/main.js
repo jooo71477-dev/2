@@ -606,8 +606,12 @@ function updateLanguageUI() {
 
     // 2. Update Toggle Button
     const langBtn = document.getElementById('lang-toggle');
+    const menuLangLabel = document.getElementById('menu-lang-label');
     if (langBtn) {
         langBtn.innerText = lang === 'en' ? 'AR' : 'EN';
+    }
+    if (menuLangLabel) {
+        menuLangLabel.innerText = lang === 'en' ? 'AR' : 'EN';
     }
 
     // 3. Trigger Google Translate Widget for the whole page
@@ -663,13 +667,14 @@ function toggleTheme() {
 }
 
 function updateThemeIcon(theme) {
-    if (!themeToggle) return;
-    const icon = themeToggle.querySelector('i');
-    if (theme === 'dark') {
-        icon.className = 'fas fa-sun';
-    } else {
-        icon.className = 'fas fa-moon';
-    }
+    const icons = document.querySelectorAll('#theme-toggle i, #menu-theme-icon-sidebar');
+    icons.forEach(icon => {
+        if (theme === 'dark') {
+            icon.className = 'fas fa-sun';
+        } else {
+            icon.className = 'fas fa-moon';
+        }
+    });
 }
 
 // DOM Elements
