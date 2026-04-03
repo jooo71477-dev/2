@@ -1620,6 +1620,7 @@ window.openOrderDetails = async (id) => {
                         🎫 SKU: ${i.code || '---'}
                     </span>
                     <span style="color: ${stockColor}; font-size: 0.85rem; font-weight: 700; margin-left: auto;">${stockDisplay}</span>
+                    ${o.stockUpdated ? '<span style="color: #f44336; font-size: 0.7rem; margin-left: 8px;">📦 تم خصم المخزون</span>' : '<span style="color: #4caf50; font-size: 0.7rem; margin-left: 8px;">⏳ في انتظار الشحن</span>'}
                 </div>
             </div>
             <img src="${i.image}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
@@ -1859,6 +1860,22 @@ async function shipToBosta(orderId) {
         try {
             await decreaseInventoryStock(order.items);
             console.log("✅ [SUCCESS] Stock decremented for order:", orderId);
+
+            // تحقق من نجاح الخصم
+            for (const item of order.items) {
+                const pRef = db.collection('products').doc(item.id);
+                const pDoc = await pRef.get();
+                if (pDoc.exists) {
+                    const pData = pDoc.data();
+                    const v = (pData.colorVariants || []).find(vc =>
+                        normalizeKey(vc.name) === normalizeKey(item.color) ||
+                        normalizeKey(vc.name_ar) === normalizeKey(item.color)
+                    );
+                    const remainingStock = resolveItemStock(pData, v, item.size);
+                    console.log(`📊 [STOCK VERIFICATION] ${item.name} (${item.color}/${item.size}): ${remainingStock} remaining`);
+                }
+            }
+
         } catch (stockErr) {
             console.error("⚠️ Stock update partial failure:", stockErr);
             alert(`⚠️ تم إرسال الطلب لبوسطة، ولكن حدثت مشكلة في خصم المخزون:\n${stockErr.message}`);
@@ -1867,6 +1884,15 @@ async function shipToBosta(orderId) {
         alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
         if (typeof renderInventory === 'function') renderInventory();
         if (typeof loadOrders === 'function') loadOrders();
+
+        // تحديث المخزون في الواجهة فوراً
+        if (typeof loadProducts === 'function') loadProducts();
+
+        // تحديث تفاصيل الطلب إذا كان مفتوحاً
+        const detailsModal = document.getElementById('details-modal');
+        if (detailsModal && detailsModal.getAttribute('data-order-id') === orderId) {
+            openOrderDetails(orderId);
+        }
 
     } catch (err) {
         console.error("Bosta Error:", err);
