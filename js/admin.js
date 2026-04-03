@@ -595,7 +595,7 @@ function openProductModal(id = null) {
                 v.sizes ? v.sizes.join(', ') : '',
                 v.stock !== undefined ? v.stock : (p.stock || 0),
                 v.thumbnail || '',
-                v.inventory || {}
+                v.sizeStock || v.inventory || {}
             );
             vContainer.appendChild(div);
             updateVariantPreviews(div);
@@ -844,7 +844,7 @@ window.filterAdminColors = (input) => {
 };
 
 
-function buildVariantHTML(name, images, sizes, stock, thumbnail) {
+function buildVariantHTML(name, images, sizes, stock, thumbnail, sizeStock = {}) {
     const sortedReg = [...ColorSystem.registry].sort((a,b) => a.hue - b.hue);
     
     const colorOptionsUI = sortedReg.map(c => `
