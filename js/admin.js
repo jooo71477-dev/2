@@ -1217,13 +1217,16 @@ window.updateOrderStatus = async (id, status) => {
         if (!orderDoc.exists) return;
         const orderData = orderDoc.data();
 
-        // 🛑 Decrease stock only if status changes to "shipped" AND not already updated
-        if ((status === 'shipping' || status === 'تم الشحن') && !orderData.stockUpdated) {
-            await decreaseInventoryStock(orderData.items);
-            await orderRef.update({ status, stockUpdated: true });
+        // 🛑 إعادة المخزون عند إلغاء الطلب إذا كان قد تم خصمه
+        if (status === 'cancelled' && orderData.stockUpdated) {
+            await increaseInventoryStock(orderData.items);
+            await orderRef.update({ status, stockUpdated: false });
         } else {
             await orderRef.update({ status });
         }
+
+        // تحديث المخزون في الواجهة
+        if (typeof renderInventory === 'function') renderInventory();
 
         if (typeof loadOrders === 'function') loadOrders();
         alert("تم تحديث حالة الطلب");
@@ -1281,6 +1284,93 @@ async function decreaseInventoryStock(items) {
     }
 }
 window.decreaseInventoryStock = decreaseInventoryStock;
+
+// إعادة المخزون عند إلغاء الطلب
+async function increaseInventoryStock(items) {
+    if (!items || !items.length) return;
+    console.log("🔄 Starting stock increment for items:", items);
+    for (const item of items) {
+        try {
+            const productRef = db.collection('products').doc(item.id);
+            const pDoc = await productRef.get();
+            if (pDoc.exists) {
+                const pData = pDoc.data();
+                let colorVariants = pData.colorVariants || [];
+                
+                // Robust matching for Color
+                const vIdx = colorVariants.findIndex(v => {
+                    const vName = String(v.name || "").toLowerCase().trim();
+                    const vNameAr = String(v.name_ar || "").toLowerCase().trim();
+                    const targetColor = String(item.color || "").toLowerCase().trim();
+                    return vName === targetColor || vNameAr === targetColor;
+                });
+
+                if (vIdx !== -1) {
+                    let variant = colorVariants[vIdx];
+                    if (!variant.sizeStock) variant.sizeStock = {};
+                    
+                    const targetSize = String(item.size || "").trim();
+                    const currentStock = Number(variant.sizeStock[targetSize]) || 0;
+                    const incrementQty = Number(item.quantity || 1);
+                    
+                    variant.sizeStock[targetSize] = currentStock + incrementQty;
+                    
+                    // Recalculate variant total stock
+                    variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
+                    colorVariants[vIdx] = variant;
+                    
+                    const newTotalStock = colorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+                    await productRef.update({ colorVariants, stock: newTotalStock });
+                    console.log(`✅ [STOCK SUCCESS] Increased ${item.name} (${item.color}/${item.size}): ${currentStock} -> ${variant.sizeStock[targetSize]}`);
+                } else {
+                    console.warn(`⚠️ [STOCK WARN] Color variant NOT FOUND for "${item.color}" in product ${item.id}`);
+                }
+            } else {
+                console.error(`❌ [STOCK ERROR] Product NOT FOUND: ${item.id}`);
+            }
+        } catch (e) {
+            console.error("❌ [STOCK EXCEPTION]:", e);
+        }
+    }
+}
+// التحقق من توفر المخزون قبل الإرسال
+async function checkStockAvailability(items) {
+    for (const item of items) {
+        try {
+            const productRef = db.collection('products').doc(item.id);
+            const pDoc = await productRef.get();
+            if (pDoc.exists) {
+                const pData = pDoc.data();
+                let colorVariants = pData.colorVariants || [];
+                
+                const vIdx = colorVariants.findIndex(v => {
+                    const vName = String(v.name || "").toLowerCase().trim();
+                    const vNameAr = String(v.name_ar || "").toLowerCase().trim();
+                    const targetColor = String(item.color || "").toLowerCase().trim();
+                    return vName === targetColor || vNameAr === targetColor;
+                });
+
+                if (vIdx !== -1) {
+                    const variant = colorVariants[vIdx];
+                    const targetSize = String(item.size || "").trim();
+                    const availableStock = Number(variant.sizeStock?.[targetSize]) || 0;
+                    const requiredQty = Number(item.quantity || 1);
+                    
+                    if (availableStock < requiredQty) {
+                        throw new Error(`المنتج "${item.name}" (${item.color}/${item.size}) غير متوفر بالكمية المطلوبة. متوفر: ${availableStock}, مطلوب: ${requiredQty}`);
+                    }
+                } else {
+                    throw new Error(`اللون "${item.color}" غير متوفر للمنتج "${item.name}"`);
+                }
+            } else {
+                throw new Error(`المنتج "${item.name}" غير موجود`);
+            }
+        } catch (e) {
+            throw new Error(`خطأ في فحص المخزون: ${e.message}`);
+        }
+    }
+    return true;
+}
 
 // Search Functionality
 document.getElementById('order-search')?.addEventListener('input', (e) => {
@@ -1396,6 +1486,7 @@ window.openOrderDetails = (id) => {
     if (!modal || !body) return;
 
     // Build Items List with Professional Cards
+    const totalPieces = (o.items || []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
     const itemsHtml = (o.items || []).map(i => `
         <div style="background: #000; border-radius: 12px; padding: 12px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 15px;">
             <div style="flex: 1;">
@@ -1438,7 +1529,7 @@ window.openOrderDetails = (id) => {
 
         <!-- 3. Items Info -->
         <div class="details-card">
-            <div class="details-label">📦 المنتجات المطلوبة (${o.items?.length || 0}):</div>
+            <div class="details-label">📦 المنتجات المطلوبة (${o.items?.length || 0} منتج، ${totalPieces} قطعة):</div>
             <div style="margin-top: 15px;">${itemsHtml}</div>
         </div>
 
@@ -1568,6 +1659,7 @@ window.deleteOrder = async (id) => {
 };
 
 // 🚚 BOSTA SHIPPING LOGIC (VIA CLOUDFLARE PROXY)
+// هذه الدالة ترسل الطلب لشركة بوسطة وتخصم المخزون تلقائياً
 async function shipToBosta(orderId) {
     const btnTab = document.getElementById(`bosta-btn-tab-${orderId}`);
     const btnDet = document.getElementById(`bosta-btn-det-${orderId}`);
@@ -1586,6 +1678,9 @@ async function shipToBosta(orderId) {
         const doc = await db.collection('orders').doc(orderId).get();
         if (!doc.exists) throw new Error("الطلب غير موجود");
         const order = doc.data();
+
+        // التحقق من توفر المخزون قبل الإرسال
+        await checkStockAvailability(order.items);
 
         const nameParts = (order.customerName || "عميل").split(" ");
         const payload = {
@@ -1636,10 +1731,18 @@ async function shipToBosta(orderId) {
             stockUpdated: true 
         });
 
-        // 🛑 Trigger stock decrement
-        await decreaseInventoryStock(order.items);
+        // 🛑 Trigger stock decrement - فقط إذا لم يتم الخصم من قبل
+        if (!order.stockUpdated) {
+            await decreaseInventoryStock(order.items);
+            console.log("✅ تم خصم المخزون للطلب:", orderId);
+        } else {
+            console.log("⚠️ تم خصم المخزون مسبقاً للطلب:", orderId);
+        }
 
         alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
+        
+        // تحديث المخزون في الواجهة
+        if (typeof renderInventory === 'function') renderInventory();
         
         if (typeof loadOrders === 'function') loadOrders();
 
