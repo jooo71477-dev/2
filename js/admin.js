@@ -902,7 +902,7 @@ function buildVariantHTML(name, images, sizes, stock, thumbnail, sizeStock = {})
                 <div class="v-inventory-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap:10px; margin-top:8px;">
                     <!-- Auto-populated via JS -->
                 </div>
-                <input type="hidden" class="v-inventory-data" value='${typeof inventory === "object" ? JSON.stringify(inventory) : (inventory || "{}")}'>
+                <input type="hidden" class="v-inventory-data" value='${typeof sizeStock === "object" ? JSON.stringify(sizeStock) : (sizeStock || "{}")}'>
                 <div style="margin-top:10px;">
                     <label style="font-size:0.8rem; opacity:0.8;">الكمية الإجمالية (يتم تحديثها تلقائياً)</label>
                     <input type="number" class="v-stock" value="${stock}" readonly style="background:rgba(255,255,255,0.05); color:var(--primary); font-weight:bold;">
