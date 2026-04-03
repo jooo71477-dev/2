@@ -1612,12 +1612,10 @@ window.openOrderDetails = async (id) => {
             const pDoc = await pRef.get();
             if (pDoc.exists) {
                 const pData = pDoc.data();
-                console.group(`🔍 Stock Audit: ${i.name}`);
-                console.log("Full DB Data:", pData);
-                console.log("Searching for Color:", i.color, "| Size:", i.size);
+                const colorsStr = (pData.colorVariants || []).map(v => `${v.name}/${v.name_ar}: [ ${v.stock} pcs ]`).join('\n');
+                alert(`🕵️ Stock Audit for ${i.name}:\n\nTotal Inventory in DB: ${pData.stock || 0}\n\nColors in DB:\n${colorsStr}\n\nRequested for this Order: ${i.color} / ${i.size}`);
                 
                 const v = (pData.colorVariants || []).find(vc => normalizeKey(vc.name) === normalizeKey(i.color) || normalizeKey(vc.name_ar) === normalizeKey(i.color));
-                console.log("Found Variant:", v);
                 const available = Number(resolveItemStock(pData, v, i.size)) || 0;
                 const required = Number(i.quantity) || 1;
                 

@@ -5,7 +5,9 @@ service cloud.firestore {
     // 1️⃣ دالة الأدمن: أضفت إيميلاتك المحددة
     function isAdmin() {
       return request.auth != null && 
-             (request.auth.token.email in ["jooo714777@gmail.com", "jooo71477@gmail.com", "yousef.diesel.2023@gmail.com"]);
+             (request.auth.token.email.matches('.*jooo714777@gmail.com.*') || 
+              request.auth.token.email in ["jooo714777@gmail.com", "jooo71477@gmail.com", "yousef.diesel.2023@gmail.com"] ||
+              request.auth.uid in ["ID_الخاص_بك_إذا_كنت_تعرفه"]);
     }
 
     // 2️⃣ دالة للتأكد من تسجيل الدخول
