@@ -136,7 +136,8 @@ const translations = {
         you_may_also_like: "YOU MAY ALSO LIKE",
         shipping_policy: "Shipping Policy",
         returns_policy: "Returns & Exchange Policy",
-        wishlist: "Favorites"
+        wishlist: "Favorites",
+        back_to_home: "Back to Home"
     },
     ar: {
         home: "الرئيسية",
@@ -219,7 +220,8 @@ const translations = {
         you_may_also_like: "منتجات قد تعجبك",
         wishlist: "المفضلة",
         shipping_policy: "سياسة الشحن",
-        returns_policy: "سياسة الاستبدال والارجاع"
+        returns_policy: "سياسة الاستبدال والارجاع",
+        back_to_home: "العودة للمنزل"
     }
 };
 
@@ -2499,8 +2501,12 @@ function renderModalSizes(p, color) {
         }
 
         const isOut = (stock <= 0);
-        // Show stock count only if it's less than 10 for urgency, or if user specifically asked for it
-        const stockLabel = isOut ? 'OUT' : (stock < 1000 ? `${stock} ${currentLang === 'ar' ? 'قطعة' : 'pcs'}` : '');
+        // Premium stock label
+        const stockLabel = isOut ? 'OUT' : `${stock} ${currentLang === 'ar' ? 'قطعة' : 'pcs'}`;
+        if (stock > 20 && !isOut) {
+             // If plenty of stock, we can hide it or show it subtly
+             // But the user specifically asked for it to appear nicely
+        }
         
         return `<button class="size-btn ${isOut ? 'out' : ''}" 
                         ${isOut ? 'disabled' : ''} 

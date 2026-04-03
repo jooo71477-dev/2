@@ -229,10 +229,11 @@ img {
     }
 
     to {
-        opacity: 1;
-        transform: scale(1) rotate(0);
-        filter: blur(0);
-    }
+        alert("تم الحفظ بنجاح! ✅"); 
+        toggleForm(); 
+        loadProducts();
+        if (typeof loadInventory === 'function') setTimeout(loadInventory, 500); 
+    } catch (err) { console.error(err); alert("حدث خطأ! ❌\n" + (err.message || err)); }
 }
 
 .loader-content h1 {
@@ -2008,12 +2009,59 @@ footer {
     background: transparent;
     border: 2px solid var(--card-border);
     color: var(--text-main);
-    padding: 14px 28px;
+    padding: 12px 22px;
     border-radius: 100px;
     cursor: pointer;
     font-weight: 800;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.size-stock {
+    background: rgba(var(--primary-rgb), 0.15);
+    color: var(--primary);
+    padding: 2px 10px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+}
+
+.size-btn.active .size-stock {
+    background: rgba(0, 0, 0, 0.2);
+    color: #fff;
+}
+
+/* 📱 Mobile Scroll Dots */
+.scroll-dots-container {
+    display: none;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.scroll-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.scroll-dot.active {
+    width: 20px;
+    border-radius: 10px;
+    background: var(--primary);
+    box-shadow: 0 0 10px var(--primary);
+}
+
+@media (max-width: 768px) {
+    .scroll-dots-container {
+        display: flex;
+    }
 }
 
 .size-btn:hover {
