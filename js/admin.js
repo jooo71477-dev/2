@@ -303,17 +303,25 @@ async function initDashboard(role = 'all') {
     }
 }
 
-// Data Loaders
+let productsListener = null;
+let ordersListener = null;
+
 async function loadProducts() {
-    const snapshot = await db.collection('products').get();
-    products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderProducts();
+    if (productsListener) return;
+    productsListener = db.collection('products').onSnapshot(snapshot => {
+        products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderProducts();
+        updateStats();
+    });
 }
 
 async function loadOrders() {
-    const snapshot = await db.collection('orders').orderBy('createdAt', 'desc').get();
-    orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderOrders();
+    if (ordersListener) return;
+    ordersListener = db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+        orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderOrders();
+        updateStats();
+    });
 }
 
 async function loadUsers() {
@@ -1227,6 +1235,7 @@ window.updateOrderStatus = async (id, status) => {
 
 async function decreaseInventoryStock(items) {
     if (!items || !items.length) return;
+    console.log("🚚 Starting stock decrement for items:", items);
     for (const item of items) {
         try {
             const productRef = db.collection('products').doc(item.id);
@@ -1234,21 +1243,40 @@ async function decreaseInventoryStock(items) {
             if (pDoc.exists) {
                 const pData = pDoc.data();
                 let colorVariants = pData.colorVariants || [];
-                const vIdx = colorVariants.findIndex(v => v.name === item.color);
+                
+                // Robust matching for Color
+                const vIdx = colorVariants.findIndex(v => {
+                    const vName = String(v.name || "").toLowerCase().trim();
+                    const vNameAr = String(v.name_ar || "").toLowerCase().trim();
+                    const targetColor = String(item.color || "").toLowerCase().trim();
+                    return vName === targetColor || vNameAr === targetColor;
+                });
+
                 if (vIdx !== -1) {
                     let variant = colorVariants[vIdx];
                     if (!variant.sizeStock) variant.sizeStock = {};
-                    const currentStock = Number(variant.sizeStock[item.size]) || 0;
-                    variant.sizeStock[item.size] = Math.max(0, currentStock - (item.quantity || 1));
+                    
+                    const targetSize = String(item.size || "").trim();
+                    const currentStock = Number(variant.sizeStock[targetSize]) || 0;
+                    const decrementQty = Number(item.quantity || 1);
+                    
+                    variant.sizeStock[targetSize] = Math.max(0, currentStock - decrementQty);
+                    
+                    // Recalculate variant total stock
                     variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
                     colorVariants[vIdx] = variant;
+                    
                     const newTotalStock = colorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
                     await productRef.update({ colorVariants, stock: newTotalStock });
-                    console.log(`📉 Stock decreased for ${item.name} (${item.color}/${item.size})`);
+                    console.log(`✅ [STOCK SUCCESS] Decreased ${item.name} (${item.color}/${item.size}): ${currentStock} -> ${variant.sizeStock[targetSize]}`);
+                } else {
+                    console.warn(`⚠️ [STOCK WARN] Color variant NOT FOUND for "${item.color}" in product ${item.id}`);
                 }
+            } else {
+                console.error(`❌ [STOCK ERROR] Product NOT FOUND: ${item.id}`);
             }
         } catch (e) {
-            console.error("Stock decrement error:", e);
+            console.error("❌ [STOCK EXCEPTION]:", e);
         }
     }
 }
