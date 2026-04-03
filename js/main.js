@@ -110,7 +110,8 @@ const translations = {
         you_may_also_like: "YOU MAY ALSO LIKE",
         shipping_policy: "Shipping Policy",
         returns_policy: "Returns & Exchange Policy",
-        wishlist: "Favorites"
+        wishlist: "Favorites",
+        back_to_home: "Back to Home"
     },
     ar: {
         home: "الرئيسية",
@@ -193,8 +194,13 @@ const translations = {
         you_may_also_like: "منتجات قد تعجبك",
         wishlist: "المفضلة",
         shipping_policy: "سياسة الشحن",
-        returns_policy: "سياسة الاستبدال والارجاع"
+        back_to_home: "العودة للرئيسية"
     }
+};
+
+window.scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.showCategoriesView) showCategoriesView();
 };
 
 const fashionTranslations = {
@@ -1094,17 +1100,38 @@ function renderDynamicFilters() {
                 display: flex;
                 overflow-x: auto;
                 gap: 15px;
-                padding-bottom: 15px;
+                padding-bottom: 25px;
                 scrollbar-width: none;
                 -ms-overflow-style: none;
                 scroll-snap-type: x mandatory;
+                padding-left: 5px;
+                padding-right: 5px;
             }
             .cats-scroll-container::-webkit-scrollbar {
                 display: none;
             }
             .cats-scroll-container > .subcategory-card {
-                flex: 0 0 calc(50% - 7.5px);
+                flex: 0 0 calc(50% - 10px);
                 scroll-snap-align: start;
+            }
+            .dots-container {
+                display: flex;
+                justify-content: center;
+                gap: 8px;
+                margin-top: -10px;
+                margin-bottom: 40px;
+            }
+            .scroll-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.2);
+                transition: all 0.3s ease;
+            }
+            .scroll-dot.active {
+                background: var(--primary);
+                transform: scale(1.3);
+                box-shadow: 0 0 10px var(--primary);
             }
             @media (min-width: 768px) {
                 .cats-scroll-container > .subcategory-card {
@@ -1173,11 +1200,43 @@ function renderDynamicFilters() {
         
         html += `
                 </div>
+                <div class="dots-container"></div>
             </div>
         `;
     });
     
     categoriesView.innerHTML = html;
+    
+    // Initialize Scroll Dots for each container
+    setTimeout(() => {
+        document.querySelectorAll('.cats-scroll-container').forEach(container => {
+            const parent = container.parentElement;
+            const dotsContainer = parent.querySelector('.dots-container');
+            if (!dotsContainer) return;
+
+            const cards = container.querySelectorAll('.subcategory-card');
+            const cardCount = cards.length;
+            
+            // Generate dots
+            let dotsHtml = '';
+            for (let i = 0; i < cardCount; i++) {
+                dotsHtml += `<div class="scroll-dot ${i === 0 ? 'active' : ''}"></div>`;
+            }
+            dotsContainer.innerHTML = dotsHtml;
+
+            // Scroll listener
+            container.addEventListener('scroll', () => {
+                const scrollLeft = Math.abs(container.scrollLeft);
+                const width = container.offsetWidth;
+                const cardWidth = cards[0]?.offsetWidth + 15 || 300; // card + gap
+                const activeIndex = Math.round(scrollLeft / cardWidth);
+                
+                dotsContainer.querySelectorAll('.scroll-dot').forEach((dot, idx) => {
+                    dot.classList.toggle('active', idx === activeIndex);
+                });
+            });
+        });
+    }, 100);
     
     if (!initialCatSlug && !hasMatch) {
         showCategoriesView(); // Default to categories view on load if no specific hash

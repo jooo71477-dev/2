@@ -142,6 +142,42 @@
         .goog-te-menu-frame {
             box-shadow: none !important;
         }
+
+        .back-to-home-btn {
+            background: rgba(255,255,255,0.05) !important;
+            color: #fff !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            padding: 10px 20px !important;
+            border-radius: 12px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            font-family: 'Cairo', sans-serif !important;
+            font-weight: 700 !important;
+            flex-shrink: 0 !important;
+            white-space: nowrap !important;
+            margin-right: 15px;
+        }
+
+        .back-to-home-btn:hover {
+            background: var(--primary) !important;
+            color: #000 !important;
+            border-color: var(--primary) !important;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .back-to-home-btn {
+                padding: 8px 12px !important;
+                font-size: 0.85rem !important;
+                margin-right: 10px;
+            }
+            .back-to-home-btn i {
+                font-size: 0.9rem;
+            }
+        }
     </style>
 
     <!-- Local Translation System Enabled -->
@@ -257,15 +293,15 @@
             <div class="section-title">
                 <span data-i18n="available_categories">Available Categories</span>
                 <h2 data-i18n="featured_collection">Our Featured Collection</h2>
-                <div id="home-categories-view" style="width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 15px;">
+                <div id="home-categories-view" style="width: 100%; max-width: 1400px; margin: 50px auto 0; padding: 0 15px;">
                     <!-- Categories will be injected here -->
                 </div>
 
                 <div id="home-products-view" style="display: none; width: 100%;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; padding: 0 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">
-                        <button class="btn-primary" onclick="showCategoriesView()" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 8px 15px; display: flex; align-items: center; gap: 8px;">
+                        <button class="btn-primary back-to-home-btn" onclick="scrollToTop()" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 8px 15px; display: flex; align-items: center; gap: 8px;">
                             <i class="fas fa-arrow-right"></i>
-                            <span data-i18n="back_to_categories">الرجوع للأقسام</span>
+                            <span data-i18n="back_to_home">العودة للرئيسية</span>
                         </button>
                         <h3 id="current-category-title" style="margin: 0; color: var(--primary); font-size: 1.5rem; text-transform: uppercase;"></h3>
                         <div style="width: 100px;"></div><!-- placeholder for symmetry -->
