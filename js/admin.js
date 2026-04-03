@@ -314,12 +314,21 @@ async function loadProducts() {
         if (typeof renderInventory === 'function') renderInventory();
         updateStats();
         
-        // 🔄 Also refresh open order details if one is open to show updated stock
+        // 🔄 Refresh open order details if open
         const detailsModal = document.getElementById('details-modal');
         if (detailsModal && detailsModal.style.display === 'flex' && typeof openOrderDetails === 'function') {
             const currentOrderId = detailsModal.getAttribute('data-order-id');
             if (currentOrderId) openOrderDetails(currentOrderId);
         }
+    }, err => {
+        console.warn("⚠️ Products Snapshot error (Permission?):", err);
+        // Fallback to one-time get
+        db.collection('products').get().then(snapshot => {
+            products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderProducts();
+            if (typeof renderInventory === 'function') renderInventory();
+            updateStats();
+        });
     });
 }
 
@@ -329,6 +338,14 @@ async function loadOrders() {
         orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderOrders();
         updateStats();
+    }, err => {
+        console.warn("⚠️ Orders Snapshot error (Permission?):", err);
+        // Fallback to one-time get
+        db.collection('orders').orderBy('createdAt', 'desc').get().then(snapshot => {
+            orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderOrders();
+            updateStats();
+        });
     });
 }
 
