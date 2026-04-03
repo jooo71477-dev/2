@@ -1247,12 +1247,12 @@ async function decreaseInventoryStock(items) {
                 const pData = pDoc.data();
                 let colorVariants = pData.colorVariants || [];
                 
-                // Robust matching for Color
+                // Robust matching for Color using your normalizeKey helper
                 const vIdx = colorVariants.findIndex(v => {
-                    const vName = String(v.name || "").toLowerCase().trim();
-                    const vNameAr = String(v.name_ar || "").toLowerCase().trim();
-                    const targetColor = String(item.color || "").toLowerCase().trim();
-                    return vName === targetColor || vNameAr === targetColor;
+                    const normVName = normalizeKey(v.name);
+                    const normVNameAr = normalizeKey(v.name_ar);
+                    const targetColor = normalizeKey(item.color);
+                    return normVName === targetColor || normVNameAr === targetColor;
                 });
 
                 if (vIdx !== -1) {
@@ -1260,10 +1260,15 @@ async function decreaseInventoryStock(items) {
                     if (!variant.sizeStock) variant.sizeStock = {};
                     
                     const targetSize = String(item.size || "").trim();
+                    // Use normalized match for finding the correct key in sizeStock
+                    const normTargetSize = normalizeKey(targetSize);
+                    let actualSizeKey = Object.keys(variant.sizeStock).find(k => normalizeKey(k) === normTargetSize) || targetSize;
+                    
                     const currentSizeStock = resolveItemStock(pData, variant, targetSize);
                     const decrementQty = Number(item.quantity || 1);
                     const nextSizeStock = Math.max(0, currentSizeStock - decrementQty);
-                    variant.sizeStock[targetSize] = nextSizeStock;
+                    
+                    variant.sizeStock[actualSizeKey] = nextSizeStock;
 
                     // Recalculate variant total stock
                     variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
@@ -1271,7 +1276,7 @@ async function decreaseInventoryStock(items) {
                     
                     const newTotalStock = colorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
                     await productRef.update({ colorVariants, stock: newTotalStock });
-                    console.log(`✅ [STOCK SUCCESS] Decreased ${item.name} (${item.color}/${item.size}): ${currentSizeStock} -> ${variant.sizeStock[targetSize]}`);
+                    console.log(`✅ [STOCK SUCCESS] Decreased ${item.name} (${item.color}/${item.size}): ${currentSizeStock} -> ${variant.sizeStock[actualSizeKey]}`);
                 } else {
                     console.warn(`⚠️ [STOCK WARN] Color variant NOT FOUND for "${item.color}" in product ${item.id}`);
                 }
@@ -1291,33 +1296,45 @@ function normalizeKey(value) {
 
 function resolveItemStock(productData, variantData, targetSize) {
     const normalizedTargetSize = normalizeKey(targetSize || "");
+    const oneSizeSynonyms = ["onesize", "مقاسواحد", "مقاسموجد", "فريسايز", "مقاسمواحد", "مقاسموحد"];
+
+    console.log(`📦 [RESOLVE DEBUG] Checking stock for "${targetSize}" (Normalized: ${normalizedTargetSize})`);
 
     if (variantData && variantData.sizeStock && Object.keys(variantData.sizeStock).length > 0) {
-        // Attempt exact key match then normalized key match
+        console.log("   --> Available keys in sizeStock:", Object.keys(variantData.sizeStock));
+        
+        // 1. Exact match
         if (variantData.sizeStock[targetSize] !== undefined) {
             return Number(variantData.sizeStock[targetSize]) || 0;
         }
 
+        // 2. Normalized match
         const matchKey = Object.keys(variantData.sizeStock).find(k => normalizeKey(k) === normalizedTargetSize);
         if (matchKey) {
             return Number(variantData.sizeStock[matchKey]) || 0;
         }
 
-        // Fallback to any defined size for ONE SIZE type logic
-        if (normalizedTargetSize === "onesize" || normalizedTargetSize === "one size") {
+        // 3. One Size Synonyms / Fallback
+        if (oneSizeSynonyms.includes(normalizedTargetSize)) {
+            // Find any key that sounds like One Size
+            const fallbackKey = Object.keys(variantData.sizeStock).find(k => oneSizeSynonyms.includes(normalizeKey(k)));
+            if (fallbackKey) return Number(variantData.sizeStock[fallbackKey]) || 0;
+
+            // Absolute fallback: if asking for One Size and any stock exists, take the first non-zero size
             const nonEmptyKey = Object.keys(variantData.sizeStock).find(k => Number(variantData.sizeStock[k]) > 0);
-            if (nonEmptyKey) {
-                return Number(variantData.sizeStock[nonEmptyKey]) || 0;
-            }
+            if (nonEmptyKey) return Number(variantData.sizeStock[nonEmptyKey]) || 0;
         }
     }
 
-    // Then fallback variant stock and product stock
+    // 4. Fallback to variant total stock
     if (variantData && variantData.stock !== undefined && variantData.stock !== null) {
+        console.log(`   --> Falling back to variant total stock: ${variantData.stock}`);
         return Number(variantData.stock) || 0;
     }
 
+    // 5. Fallback to product total stock
     if (productData && productData.stock !== undefined && productData.stock !== null) {
+        console.log(`   --> Falling back to product general stock: ${productData.stock}`);
         return Number(productData.stock) || 0;
     }
 
@@ -1336,12 +1353,12 @@ async function increaseInventoryStock(items) {
                 const pData = pDoc.data();
                 let colorVariants = pData.colorVariants || [];
                 
-                // Robust matching for Color
+                // Robust matching for Color using normalizeKey
                 const vIdx = colorVariants.findIndex(v => {
-                    const vName = String(v.name || "").toLowerCase().trim();
-                    const vNameAr = String(v.name_ar || "").toLowerCase().trim();
-                    const targetColor = String(item.color || "").toLowerCase().trim();
-                    return vName === targetColor || vNameAr === targetColor;
+                    const normVName = normalizeKey(v.name);
+                    const normVNameAr = normalizeKey(v.name_ar);
+                    const targetColor = normalizeKey(item.color);
+                    return normVName === targetColor || normVNameAr === targetColor;
                 });
 
                 if (vIdx !== -1) {
@@ -1349,10 +1366,13 @@ async function increaseInventoryStock(items) {
                     if (!variant.sizeStock) variant.sizeStock = {};
                     
                     const targetSize = String(item.size || "").trim();
+                    const normTargetSize = normalizeKey(targetSize);
+                    let actualSizeKey = Object.keys(variant.sizeStock).find(k => normalizeKey(k) === normTargetSize) || targetSize;
+
                     const currentSizeStock = resolveItemStock(pData, variant, targetSize);
                     const incrementQty = Number(item.quantity || 1);
                     
-                    variant.sizeStock[targetSize] = currentSizeStock + incrementQty;
+                    variant.sizeStock[actualSizeKey] = currentSizeStock + incrementQty;
                     
                     // Recalculate variant total stock
                     variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
@@ -1360,7 +1380,7 @@ async function increaseInventoryStock(items) {
                     
                     const newTotalStock = colorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
                     await productRef.update({ colorVariants, stock: newTotalStock });
-                    console.log(`✅ [STOCK SUCCESS] Increased ${item.name} (${item.color}/${item.size}): ${currentSizeStock} -> ${variant.sizeStock[targetSize]}`);
+                    console.log(`✅ [STOCK SUCCESS] Increased ${item.name} (${item.color}/${item.size}): ${currentSizeStock} -> ${variant.sizeStock[actualSizeKey]}`);
                 } else {
                     console.warn(`⚠️ [STOCK WARN] Color variant NOT FOUND for "${item.color}" in product ${item.id}`);
                 }
