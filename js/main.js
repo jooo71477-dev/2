@@ -1008,12 +1008,12 @@ function renderHomeCategories() {
                     ${subCats.map(sub => `
                         <div class="home-cat-card" onclick="window.openCategoryView('${sub.id}')">
                             <img src="${sub.image || 'https://via.placeholder.com/600x800'}" alt="${sub.name}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);">
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, transparent 70%);"></div>
-                            <div style="position: absolute; bottom: 35px; left: 35px; right: 35px;">
-                                <h3 style="color: #fff; font-size: 2rem; font-weight: 950; margin: 0; text-transform: uppercase; letter-spacing: 1px;">${(currentLang === 'ar' && sub.name_ar) ? sub.name_ar : sub.name}</h3>
-                                <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px; font-size: 0.9rem; font-weight: 800; color: var(--primary); background: rgba(255,255,255,0.05); width: fit-content; padding: 8px 20px; border-radius: 50px; border: 1px solid rgba(212,175,55,0.2);">
-                                    <span data-i18n="shop_now">EXPLORE NOW</span>
-                                    <i class="fas fa-arrow-right"></i>
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.3) 50%, transparent 80%);"></div>
+                            <div style="position: absolute; bottom: 20px; left: 20px; right: 20px;">
+                                <h3 style="color: #fff; font-size: 1.2rem; font-weight: 950; margin: 0; text-transform: uppercase;">${(currentLang === 'ar' && sub.name_ar) ? sub.name_ar : sub.name}</h3>
+                                <div style="display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 0.7rem; font-weight: 800; color: var(--primary); background: rgba(255,255,255,0.05); width: fit-content; padding: 6px 15px; border-radius: 50px; border: 1px solid rgba(212,175,55,0.2);">
+                                    <span data-i18n="shop_now">${currentLang === 'ar' ? 'اكتشف الآن' : 'EXPLORE NOW'}</span>
+                                    <i class="fas fa-arrow-right" style="font-size: 0.6rem;"></i>
                                 </div>
                             </div>
                         </div>

@@ -135,6 +135,13 @@
             display: none !important;
         }
 
+        .home-cat-card {
+            min-width: 180px !important;
+            scroll-snap-align: start;
+            height: 320px !important;
+            border-radius: 12px;
+        }
+
         body {
             top: 0 !important;
         }
@@ -371,6 +378,24 @@
             color: var(--primary) !important;
             transform: translateY(-3px);
             opacity: 1 !important;
+        }
+
+        .categories-grid-home {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .home-cat-card {
+            cursor: pointer;
+            position: relative;
+            height: 320px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #111;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
         }
 
         .footer-link-premium:hover::after {
