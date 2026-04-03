@@ -11,6 +11,7 @@ try {
 
 let selectedProductForSize = null;
 let selectedColor = null;
+
 // 🚀 AI Translation Cache & State
 let aiTranslationCache = JSON.parse(localStorage.getItem('icloth_ai_cache') || '{}');
 let activeAITranslations = new Set();
@@ -22,6 +23,31 @@ let wishlist = [];
 try {
     wishlist = JSON.parse(localStorage.getItem('icloth_wishlist') || '[]');
 } catch (e) { wishlist = []; }
+
+// 🚩 Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyByPZP1qo0sQN26xTwzpT0vnw_BTguXvSI",
+    authDomain: "ic12-e6ad7.firebaseapp.com",
+    projectId: "ic12-e6ad7",
+    storageBucket: "ic12-e6ad7.firebasestorage.app",
+    messagingSenderId: "849964207533",
+    appId: "1:849964207533:web:8a6669e5c453ca08ba2524",
+    measurementId: "G-H7S7W0CB7Q"
+};
+
+let db = null;
+let auth = null;
+let currentUser = null;
+let currentLang = localStorage.getItem('icloth_lang') || 'en';
+
+// Initialize Firebase Immediately
+if (typeof firebase !== 'undefined') {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    db = firebase.firestore();
+    auth = firebase.auth();
+}
 
 const governorates_data = {
     en: ["Cairo", "Giza", "Alexandria", "Dakahlia", "Red Sea", "Beheira", "Faiyum", "Gharbia", "Ismailia", "Monufia", "Minya", "Qalyubia", "New Valley", "Suez", "Sharqia", "Damietta", "Port Said", "South Sinai", "Kafr El Sheikh", "Matrouh", "Luxor", "Qena", "North Sinai", "Sohag", "Beni Suef", "Asyut", "Aswan"],
@@ -206,8 +232,6 @@ const fashionTranslations = {
     'coat': 'بالطو', 'shorts': 'شورت', 'acc': 'إكسسوارات', 'accessories': 'إكسسوارات'
 };
 
-// Color System is now handled by ColorSystem class in colors_system.js
-
 const toSlug = (text) => {
     if (!text) return "";
     return text.toString().toLowerCase().trim()
@@ -218,68 +242,47 @@ const toSlug = (text) => {
         .replace(/-+$/, '');
 };
 
-// 🏁 Modern Hybrid Translation System (AI + Dictionary Helper)
 function translateText(text) {
     if (!text) return "";
     const cleanText = text.trim();
     const cleanKey = cleanText.toLowerCase().replace(/\s+/g, '_');
     
-    // 1. Check Dictionary Helper (Static UI terms)
     if (translations[currentLang]) {
         if (translations[currentLang][cleanKey]) return translations[currentLang][cleanKey];
         if (translations[currentLang][cleanText.toLowerCase()]) return translations[currentLang][cleanText.toLowerCase()];
     }
 
-    // 2. Handle Color Translations (via ColorSystem)
     const colorTranslation = typeof ColorSystem !== 'undefined' ? ColorSystem.translate(cleanText, currentLang) : null;
     if (colorTranslation && colorTranslation !== cleanText) return colorTranslation;
     
-    // 3. Fashion Dictionary (Product types)
     if (currentLang === 'ar' && fashionTranslations[cleanText.toLowerCase()]) {
         return fashionTranslations[cleanText.toLowerCase()];
     }
-
-    // 4. Return original if English requested
     if (currentLang === 'en') return cleanText;
-
-    // 5. AI Translation (For dynamic content like product names/descriptions)
     if (aiTranslationCache[cleanText]) return aiTranslationCache[cleanText];
-
-    // Trigger background AI translation if not in cache
     getSmartTranslation(cleanText);
-
-    return cleanText; // Return original while waiting for AI
+    return cleanText;
 }
 
-// 🤖 Background AI Translation with Caching
 async function getSmartTranslation(text) {
     if (!text || currentLang === 'en') return text;
     const cleanText = text.trim();
-
-    // Prevent multiple calls for same text
     if (activeAITranslations.has(cleanText)) return cleanText;
     activeAITranslations.add(cleanText);
-
     try {
         const response = await fetch('/api/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: cleanText, targetLang: 'ar' })
         });
-        
-        // Safety check: Ensure the response is actually JSON
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
-            throw new Error("Invalid response from translation API (Server might not be configured for Node.js)");
+            throw new Error("Invalid response from translation API");
         }
-
         const data = await response.json();
-        
         if (data.translated && data.translated !== cleanText) {
             aiTranslationCache[cleanText] = data.translated;
             localStorage.setItem('icloth_ai_cache', JSON.stringify(aiTranslationCache));
-            
-            // ⚡ Instant DOM Update (Self-healing UI)
             document.querySelectorAll(`[data-translate-cache="${cleanText}"]`).forEach(el => {
                 el.innerText = data.translated;
                 el.style.opacity = '0';
@@ -288,46 +291,23 @@ async function getSmartTranslation(text) {
         }
         return data.translated || cleanText;
     } catch (e) {
-        // Silenced: Server API not configured for local development
-        if (!window._apiWarned) {
-            console.debug("AI Translation API not available (Serverless fallback active).");
-            window._apiWarned = true;
-        }
         return cleanText;
     } finally {
         activeAITranslations.delete(cleanText);
     }
 }
 
-let currentLang = localStorage.getItem('icloth_lang') || 'en';
-
-// Firebase Config
-const firebaseConfig = {
-    apiKey: "AIzaSyByPZP1qo0sQN26xTwzpT0vnw_BTguXvSI",
-    authDomain: "ic12-e6ad7.firebaseapp.com",
-    projectId: "ic12-e6ad7",
-    storageBucket: "ic12-e6ad7.firebasestorage.app",
-    messagingSenderId: "849964207533",
-    appId: "1:849964207533:web:8a6669e5c453ca08ba2524",
-    measurementId: "G-H7S7W0CB7Q"
-};
-
-// Delay Firebase Initialization to improve TBT and LCP
 function initFirebase() {
     if (typeof firebase === 'undefined') return;
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-        console.log("🔥 Firebase initialized (Lazy Load)!");
-    }
-    db = firebase.firestore();
     
-    // Auth Listener
-    firebase.auth().onAuthStateChanged(user => {
+    // 🚀 Start Real-time Data Sync (Products, Categories, Settings)
+    attachRealTimeListeners();
+    
+    auth.onAuthStateChanged(user => {
         currentUser = user;
         updateAuthUI();
         if (user) {
             console.log("👤 User Logged In:", user.email);
-            
             // --- Auto-refresh My Orders Modal if open ---
             const ordersModal = document.getElementById('my-orders-modal');
             if (ordersModal && ordersModal.classList.contains('active')) {
@@ -339,34 +319,22 @@ function initFirebase() {
                 setTimeout(() => {
                     if (cart.length > 0) {
                         closeCartSidebar();
-                        document.getElementById('checkout-modal').classList.add('active');
+                        const checkoutModal = document.getElementById('checkout-modal');
+                        if (checkoutModal) checkoutModal.classList.add('active');
                         updateCheckoutTotal();
                     }
                 }, 500);
             }
         }
     });
-
-    // Start fetching data only after Firebase is ready
-    loadDynamicCategories();
-    attachRealTimeListeners();
 }
 
-// 🚀 Trigger Firebase after everything else is rendered
-window.addEventListener('load', () => {
-    if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => {
-            initFirebase();
-            // NOTE: handleUrlParams is now called automatically after products load
-            // from attachRealTimeListeners (window._urlParamsHandled flag)
-        }, { timeout: 2000 });
-    } else {
-        setTimeout(initFirebase, 1000);
-    }
+// 🚀 Trigger Firebase as soon as DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    initFirebase();
 });
 
-let currentUser = null;
-let db = null;
+// Removed duplicate db/currentUser declarations
 // 🖼️ Cloudinary Intelligent Image Optimizer
 function getOptimizedImg(url, width = 600) {
     if (!url || !url.includes('cloudinary.com')) return url;
@@ -750,7 +718,7 @@ window.runFullWebsiteAudit = () => {
     console.log("%c✨ Audit Complete! Site is fully synchronized with Dashboard.", "color: #e20613; font-weight: bold;");
 };
 
-let settingsCache = {}; // Added to store site settings for audit
+let storefrontCategories = [];
 
 function attachRealTimeListeners() {
     if (!db) {
@@ -764,44 +732,19 @@ function attachRealTimeListeners() {
         remoteProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         console.log(`🔥 [Real-time] loaded ${remoteProducts.length} products`);
         
-        // --- ADVANCED AUDIT LOG ---
-        console.log("🕵️ [Product Audit Log]");
-        const audit = remoteProducts.map(p => ({
-            name: p.name,
-            status: p.status,
-            active: p.active,
-            category: p.category,
-            parent: p.parentCategory || 'NONE',
-            visibility: (p.status === 'hidden' || p.active === false || p.active === "false") ? '❌ HIDDEN' : '✅ VISIBLE'
-        }));
-        console.table(audit);
-        
         filterAndRender('men', activeCategory, 'all');
-        
-        // 🚀 Refresh sidebar and hide loader
         renderSidebarCategories();
-        if (remoteProducts.length > 0 || snapshot.empty) {
-            hideLoader();
-        }
-        
-        // 🔗 Handle URL params once after first product load
-        if (!window._urlParamsHandled && remoteProducts.length > 0) {
-            window._urlParamsHandled = true;
-            if (window.handleUrlParams) window.handleUrlParams();
-            
-            // 🚀 Run Audit now that we have data
-            if (typeof window.runFullWebsiteAudit === 'function') {
-                setTimeout(window.runFullWebsiteAudit, 1000);
-            }
-        }
+        hideLoader();
     }, err => {
-        console.error("❌ Firebase Products Error:", err);
+        console.error("❌ Products listener failed:", err);
     });
 
-    // Real-time Categories
+    // 📂 Real-time Categories (Crucial for Dashboard linking)
     db.collection('categories').onSnapshot(snapshot => {
-        dynamicCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderDynamicFilters();
+        storefrontCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log(`📂 [Real-time] loaded ${storefrontCategories.length} categories`);
+        if (typeof renderSidebarCategories === 'function') renderSidebarCategories();
+        if (typeof renderDynamicFilters === 'function') renderDynamicFilters();
     });
 
     // Real-time CMS
@@ -3139,7 +3082,12 @@ setTimeout(updateWishlistUI, 3000);
 
 
 // Execute Initialization
-document.addEventListener('DOMContentLoaded', initAll);
+document.addEventListener('DOMContentLoaded', () => {
+    initAll();
+    initFirebase();
+});
+
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     initAll();
+    initFirebase();
 }

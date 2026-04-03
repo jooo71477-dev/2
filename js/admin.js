@@ -2115,6 +2115,11 @@ showSection = (id) => {
     originalShowSection(id);
     
     // Trigger specific loaders
+    if (id === 'overview') {
+        updateStats();
+        renderRecentOrders();
+        renderTopSelling();
+    }
     if (id === 'users') {
         if (users.length === 0) loadUsers().then(() => renderUsers());
         else renderUsers();
