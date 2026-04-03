@@ -874,9 +874,6 @@ function initElements() {
     
     // 🔗 PopState listener: Handle browser back/forward navigation
     window.addEventListener('popstate', (e) => {
-        const path = decodeURIComponent(window.location.pathname);
-        const params = new URLSearchParams(window.location.search);
-        
         // If navigating back and modal is open, close it
         if (sizeModal && sizeModal.classList.contains('active')) {
             sizeModal.classList.remove('active');
@@ -884,24 +881,8 @@ function initElements() {
             if (window._modalCarouselInterval) clearInterval(window._modalCarouselInterval);
         }
         
-        // Handle product URL
-        const productSlug = path.includes('/product/') ? path.split('/product/')[1] : params.get('product');
-        const catSlug = path.includes('/category/') ? path.split('/category/')[1] : params.get('cat');
-        
-        if (productSlug && remoteProducts.length > 0) {
-            let targetId = productSlug;
-            if (productSlug.includes('--')) {
-                const parts = productSlug.split('--');
-                targetId = parts[parts.length - 1];
-            }
-            const found = remoteProducts.find(x => x.id === targetId || toSlug(x.name) === toSlug(productSlug));
-            if (found) window.openSizeModal(found.id);
-        } else if (catSlug) {
-            const filterBtns = document.querySelectorAll('.main-filter-btn');
-            filterBtns.forEach(btn => {
-                if (toSlug(btn.innerText.trim()) === toSlug(catSlug)) btn.click();
-            });
-        }
+        // Use centralized routing logic
+        window.handleUrlParams();
     });
 }
 
@@ -2269,14 +2250,10 @@ window.openSizeModal = (id) => {
     // Update URL to allow sharing this specific product (Clean URL with relative fallback)
     const isLocal = window.location.protocol === 'file:';
     if (!isLocal) {
-        const url = new URL(window.location.origin + window.location.pathname);
-        if (url.pathname.endsWith('index.html')) {
-            url.pathname = url.pathname.replace('index.html', `product/${toSlug(p.name)}--${p.id}`);
-        } else {
-            url.pathname = `/product/${toSlug(p.name)}--${p.id}`;
-        }
-        window.history.pushState({ productId: id }, '', url);
-        updateCanonical(url.href);
+        const base = window.location.pathname.replace(/\/(product|category)\/.*$/, "").replace(/\/index\.html$/, "").replace(/\/$/, "");
+        const finalUrlStr = `${base}/product/${toSlug(p.name)}--${p.id}`;
+        window.history.pushState({ productId: id }, '', finalUrlStr);
+        updateCanonical(window.location.origin + finalUrlStr);
     } else {
         const url = new URL(window.location);
         url.searchParams.set('product', id);
@@ -2987,18 +2964,32 @@ window.handleUrlParams = () => {
         const tryOpenProduct = () => {
             if (!remoteProducts || remoteProducts.length === 0) return false;
             
-            const found = remoteProducts.find(x => 
-                x.id === targetId || 
-                x.id === finalProduct ||
-                toSlug(x.name) === toSlug(finalProduct) ||
-                toSlug(x.name) === toSlug(targetId) ||
-                (x.name_ar && toSlug(x.name_ar) === toSlug(finalProduct))
-            );
+            // Normalize inputs
+            const normalizedTargetId = targetId.trim();
+            const normalizedFinalProduct = finalProduct.trim().toLowerCase();
+
+            const found = remoteProducts.find(x => {
+                const xId = String(x.id).trim();
+                const xSlug = toSlug(x.name);
+                const xArSlug = x.name_ar ? toSlug(x.name_ar) : null;
+
+                return xId === normalizedTargetId || 
+                       xId === finalProduct ||
+                       xSlug === normalizedFinalProduct ||
+                       xSlug === toSlug(normalizedTargetId) ||
+                       (xArSlug && xArSlug === normalizedFinalProduct);
+            });
             
             if (found) {
                 console.log("✅ [Routing] Product found! Opening modal:", found.name);
                 // Small delay to ensure page is fully rendered
-                setTimeout(() => window.openSizeModal(found.id), 300);
+                setTimeout(() => {
+                    if (typeof window.openSizeModal === 'function') {
+                        window.openSizeModal(found.id);
+                    } else {
+                        console.error("❌ openSizeModal function not found!");
+                    }
+                }, 400);
                 return true;
             }
             return false;
@@ -3006,13 +2997,16 @@ window.handleUrlParams = () => {
         
         // Try immediately first
         if (!tryOpenProduct()) {
-            // If products not loaded yet, poll until they are
+            // Check if it's already open by another process
+            if (document.getElementById('size-modal')?.classList.contains('active')) return;
+
+            console.log("⏳ [Routing] Product not found immediately, polling...");
             let attempts = 0;
             const checkProducts = setInterval(() => {
                 attempts++;
                 if (tryOpenProduct()) {
                     clearInterval(checkProducts);
-                } else if (attempts > 80) { // 8 seconds max
+                } else if (attempts > 100) { // 10 seconds max
                     console.warn("⚠️ [Routing] Product not found after timeout:", finalProduct);
                     clearInterval(checkProducts);
                 }

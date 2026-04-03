@@ -2240,53 +2240,53 @@ function renderInventory(data = products) {
     list.innerHTML = data.map(p => {
         let stockHtml = '';
         if (p.colorVariants && p.colorVariants.length > 0) {
-            stockHtml = \`<div style="display:flex; flex-direction:column; gap:10px;">\`;
+            stockHtml = `<div style="display:flex; flex-direction:column; gap:10px;">`;
             p.colorVariants.forEach((v, vIndex) => {
                 if (v.sizes) {
                     // Split the sizes if it's a string from legacy schema, or Array
                     const sizeArray = Array.isArray(v.sizes) ? v.sizes : v.sizes.split(',').map(s => s.trim()).filter(Boolean);
                     if (sizeArray.length > 0) {
-                        stockHtml += \`<div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:8px;">
-                            <strong style="color:var(--primary); font-size:0.85rem;">\${v.name || 'بدون لون'}</strong>
-                            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:5px;">\`;
+                        stockHtml += `<div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:8px;">
+                            <strong style="color:var(--primary); font-size:0.85rem;">${v.name || 'بدون لون'}</strong>
+                            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:5px;">`;
                         sizeArray.forEach(size => {
                             const qty = v.inventory && v.inventory[size] !== undefined ? v.inventory[size] : 0;
-                            stockHtml += \`
+                            stockHtml += `
                                 <div style="display:flex; flex-direction:column; align-items:center; background:#000; border-radius:5px; padding:3px 5px; border:1px solid rgba(255,255,255,0.1);">
-                                    <span style="font-size:0.7rem; color:#888;">\${size}</span>
-                                    <input type="number" id="quick-stock-\${p.id}-\${vIndex}-\${size}" value="\${qty}" style="width:40px; padding:2px; font-size:0.8rem; text-align:center; background:transparent; border:none; color:#fff; border-bottom:1px solid var(--primary);">
+                                    <span style="font-size:0.7rem; color:#888;">${size}</span>
+                                    <input type="number" id="quick-stock-${p.id}-${vIndex}-${size}" value="${qty}" style="width:40px; padding:2px; font-size:0.8rem; text-align:center; background:transparent; border:none; color:#fff; border-bottom:1px solid var(--primary);">
                                 </div>
-                            \`;
+                            `;
                         });
-                        stockHtml += \`</div></div>\`;
+                        stockHtml += `</div></div>`;
                     }
                 }
             });
-            stockHtml += \`</div>\`;
-            if (stockHtml === \`<div style="display:flex; flex-direction:column; gap:10px;"></div>\`) {
-                 stockHtml = \`<span style="opacity:0.5;">لا توجد مقاسات</span>\`;
+            stockHtml += `</div>`;
+            if (stockHtml === `<div style="display:flex; flex-direction:column; gap:10px;"></div>`) {
+                 stockHtml = `<span style="opacity:0.5;">لا توجد مقاسات</span>`;
             }
         } else {
-            stockHtml = \`<span style="opacity:0.5;">لا توجد الوان / مقاسات محددة</span>\`;
+            stockHtml = `<span style="opacity:0.5;">لا توجد الوان / مقاسات محددة</span>`;
         }
 
         const stockStatus = p.stock <= 5 ? '<span style="color:var(--danger)">منخفض جداً</span>' : (p.stock <= 15 ? '<span style="color:var(--warning)">متوسط</span>' : '<span style="color:var(--success)">متوفر</span>');
-        return \`
+        return `
             <tr>
                 <td>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="\${p.image || p.thumbnail}" class="product-img" onerror="this.style.display='none'">
-                        <span>\${p.name}</span>
+                        <img src="${p.image || p.thumbnail}" class="product-img" onerror="this.style.display='none'">
+                        <span>${p.name}</span>
                     </div>
                 </td>
-                <td>\${stockHtml}</td>
+                <td>${stockHtml}</td>
                 <td>
-                    <button onclick="saveQuickStockBreakdown('\${p.id}')" class="btn-primary" style="padding:8px 15px; font-size:0.85rem;"><i class="fas fa-save"></i> حفظ المقاسات</button>
-                    <div style="font-size:0.8rem; margin-top:5px; opacity:0.7;">إجمالي الكمية: \${p.stock || 0}</div>
+                    <button onclick="saveQuickStockBreakdown('${p.id}')" class="btn-primary" style="padding:8px 15px; font-size:0.85rem;"><i class="fas fa-save"></i> حفظ المقاسات</button>
+                    <div style="font-size:0.8rem; margin-top:5px; opacity:0.7;">إجمالي الكمية: ${p.stock || 0}</div>
                 </td>
-                <td>\${stockStatus}</td>
+                <td>${stockStatus}</td>
             </tr>
-        \`;
+        `;
     }).join('');
 }
 
@@ -2303,7 +2303,7 @@ window.saveQuickStockBreakdown = async (id) => {
         const newInv = { ...(v.inventory || {}) };
         const sizeArray = Array.isArray(v.sizes) ? v.sizes : v.sizes.split(',').map(s => s.trim()).filter(Boolean);
         sizeArray.forEach(size => {
-            const input = document.getElementById(\`quick-stock-\${id}-\${vIndex}-\${size}\`);
+            const input = document.getElementById(`quick-stock-${id}-${vIndex}-${size}`);
             if (input) {
                 const val = parseInt(input.value) || 0;
                 newInv[size] = val;

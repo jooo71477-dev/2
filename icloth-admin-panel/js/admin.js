@@ -214,6 +214,7 @@ function applyRoleRestrictions() {
     } else if (adminRole === 'all') {
         if (tabProducts) tabProducts.style.display = 'flex';
         if (tabOrders) tabOrders.style.display = 'flex';
+        if (tabInventory) tabInventory.style.display = 'flex';
         if (tabShipping) tabShipping.style.display = 'none';
     } else {
         if (tabProducts) tabProducts.style.display = 'none';
@@ -248,8 +249,15 @@ function showTab(tab) {
     } else if (tab === 'orders') {
         document.getElementById('products-section').style.display = 'none';
         document.getElementById('orders-section').style.display = 'block';
+        document.getElementById('inventory-section').style.display = 'none';
         document.getElementById('shipping-section').style.display = 'none';
         loadOrders();
+    } else if (tab === 'inventory') {
+        document.getElementById('products-section').style.display = 'none';
+        document.getElementById('orders-section').style.display = 'none';
+        document.getElementById('inventory-section').style.display = 'block';
+        document.getElementById('shipping-section').style.display = 'none';
+        loadInventory();
     }
 }
 
@@ -655,6 +663,9 @@ async function loadProducts() {
         productsListener = db.collection('products').orderBy('sortOrder', 'asc').onSnapshot(snapshot => {
             remoteProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderProductsUI(remoteProducts);
+            if (document.getElementById('inventory-section')?.style.display === 'block') {
+                loadInventory();
+            }
         }, err => {
             console.error("Firebase Snap Error:", err);
             // Fallback if snap fails
@@ -801,6 +812,89 @@ async function deleteProduct(id) {
     } catch (err) { alert("فشل الحذف!"); }
     showLoader(false);
 }
+
+// --- 📊 INVENTORY LOGIC ---
+async function loadInventory() {
+    const grid = document.getElementById('inventory-grid');
+    if (!grid) return;
+
+    if (remoteProducts.length === 0) {
+        // If not loaded, wait a bit
+        setTimeout(loadInventory, 1000);
+        return;
+    }
+
+    const catFilter = document.getElementById('inventory-cat-filter')?.value || 'all';
+    
+    let html = '';
+    let filtered = remoteProducts;
+    if (catFilter !== 'all') {
+        filtered = remoteProducts.filter(p => p.parentCategory === catFilter);
+    }
+
+    filtered.forEach(p => {
+        if (!p.colorVariants || p.colorVariants.length === 0) {
+            // Product with no variants (shouldn't happen with new system)
+            html += `
+                <div class="order-card" style="border-left: 5px solid #888;">
+                    <div style="display:flex; gap:15px; align-items:center;">
+                        <img src="${p.image}" style="width:60px; height:60px; object-fit:cover; border-radius:10px;">
+                        <div>
+                            <h4 style="margin:0;">${p.name}</h4>
+                            <p style="margin:5px 0; color:var(--accent);">مخزون إجمالي: ${p.stock || 0}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        p.colorVariants.forEach(v => {
+            const variantTotal = Object.values(v.sizeStock || {}).reduce((a, b) => a + Number(b), 0);
+            const isOut = variantTotal === 0;
+            
+            html += `
+                <div class="order-card" style="border-left: 5px solid ${isOut ? '#f44336' : 'var(--accent)'}; background: rgba(255,255,255,0.03);">
+                    <div style="display:flex; gap:15px; align-items:flex-start; margin-bottom:15px;">
+                        <img src="${v.image || p.image}" style="width:80px; height:100px; object-fit:cover; border-radius:12px;">
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h4 style="margin:0; font-size:1rem;">${p.name}</h4>
+                                <span style="background:rgba(255,255,255,0.1); padding:3px 8px; border-radius:8px; font-size:0.75rem;">${p.subCategory || '-'}</span>
+                            </div>
+                            <p style="margin:5px 0; color:#d4af37; font-weight:bold;">اللون: ${v.name || '---'}</p>
+                            <p style="margin:0; font-size:0.8rem; opacity:0.7;">إجمالي المخزون للون: <strong>${variantTotal}</strong></p>
+                        </div>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap:8px;">
+                        ${Object.keys(v.sizeStock || {}).map(size => {
+                            const stock = v.sizeStock[size];
+                            const lowStock = stock < 3 && stock > 0;
+                            return `
+                                <div style="background: ${stock > 0 ? 'rgba(255,255,255,0.05)' : 'rgba(244,67,54,0.1)'}; 
+                                            border: 1px solid ${lowStock ? '#FF9800' : 'rgba(255,255,255,0.1)'}; 
+                                            padding: 8px 4px; border-radius: 10px; text-align:center;">
+                                    <div style="font-size:0.7rem; opacity:0.6; margin-bottom:2px;">${size}</div>
+                                    <div style="font-weight:900; color: ${stock > 0 ? (lowStock ? '#FF9800' : '#fff') : '#f44336'};">${stock}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div style="margin-top: 15px; display: flex; gap: 10px;">
+                        <button class="btn-status" onclick="editProduct('${p.id}')" style="width:100%; border-radius:10px; padding:10px;">
+                            <i class="fas fa-edit"></i> تعديل المخزون
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+    });
+
+    grid.innerHTML = html || '<div style="grid-column: 1/-1; text-align:center; padding:50px;">لا توجد منتجات مطابقة للبحث</div>';
+}
+
+window.loadInventory = loadInventory;
 
 async function editProduct(id) {
     let p = null;

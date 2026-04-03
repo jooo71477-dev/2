@@ -1083,6 +1083,8 @@
                                 <span class="status-badge badge-success" style="margin-right:auto; font-size:0.7rem;">مسجل دخوله</span>
                             </div>
                             <form id="admin-password-form">
+                                <!-- Hidden username field for accessibility / browser password managers -->
+                                <input type="text" name="username" autocomplete="username" value="jooo714777@gmail.com" style="display:none;" aria-hidden="true">
                                 <div class="form-group" style="margin-bottom: 10px;">
                                     <label style="font-size:0.8rem;">الباسورد الحالي</label>
                                     <div style="position:relative;">
@@ -1116,6 +1118,8 @@
                                 <span class="status-badge badge-info" style="margin-right:auto; font-size:0.7rem;">منتجات فقط</span>
                             </div>
                             <form id="products-password-form">
+                                <!-- Hidden username field for accessibility / browser password managers -->
+                                <input type="text" name="username" autocomplete="username" value="products@icloth-fashion-store.com" style="display:none;" aria-hidden="true">
                                 <div class="form-group" style="margin-bottom: 10px;">
                                     <label style="font-size:0.8rem;"><i class="fas fa-crown" style="color:var(--primary);"></i> باسورد الأدمن الحالي (للتأكيد)</label>
                                     <div style="position:relative;">
@@ -1766,7 +1770,7 @@
 
     <!-- Admin Logic -->
     <script src="js/colors_system.js?v=3.1"></script>
-    <script src="./js/admin.js?v=20.3"></script>
+    <script src="./js/admin.js?v=20.4"></script>
 
     <!-- ===== HASH-BASED NAVIGATION ===== -->
     <script>
