@@ -135,11 +135,47 @@
             display: none !important;
         }
 
+        .categories-grid-home {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
         .home-cat-card {
-            min-width: 180px !important;
-            scroll-snap-align: start;
-            height: 320px !important;
+            cursor: pointer;
+            position: relative;
+            height: 320px;
             border-radius: 12px;
+            overflow: hidden;
+            background: #111;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 📱 Mobile Specific Styles (Higher Specificity) */
+        @media (max-width: 768px) {
+            .categories-grid-home {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                scroll-snap-type: x mandatory;
+                gap: 15px !important;
+                margin: 0 -15px !important;
+                padding: 10px 15px 35px !important;
+                scrollbar-width: none;
+                -webkit-overflow-scrolling: touch;
+            }
+            .categories-grid-home::-webkit-scrollbar { display: none; }
+            
+            .home-cat-card {
+                min-width: 78vw !important;
+                scroll-snap-align: center;
+                height: 480px !important;
+                flex: 0 0 auto !important;
+                border-radius: 24px;
+            }
         }
 
         body {
@@ -380,23 +416,6 @@
             opacity: 1 !important;
         }
 
-        .categories-grid-home {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 20px;
-        }
-
-        .home-cat-card {
-            cursor: pointer;
-            position: relative;
-            height: 320px;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #111;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-        }
 
         .footer-link-premium:hover::after {
             width: 100%;
