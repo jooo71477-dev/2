@@ -974,11 +974,11 @@ function renderHomeCategories() {
 
     const rootCats = dynamicCategories.filter(c => !c.parentId);
     
-    container.innerHTML = rootCats.map(root => {
+    container.innerHTML = rootCats.map((root, rootIdx) => {
         const rootName = (currentLang === 'ar' && root.name_ar) ? root.name_ar : root.name;
         const subCats = dynamicCategories.filter(s => s.parentId === root.id);
         
-        if (subCats.length === 0) return ''; // Skip root if no babies
+        if (subCats.length === 0) return '';
 
         return `
             <div class="home-cat-group" style="margin-bottom: 80px;">
@@ -987,7 +987,7 @@ function renderHomeCategories() {
                     <h2 style="font-size: 2.5rem; font-weight: 1000; color: #fff; margin: 0; text-transform: uppercase; letter-spacing: 2px;">${rootName}</h2>
                 </div>
                 
-                <div class="categories-grid-home">
+                <div class="categories-grid-home" id="cat-grid-${rootIdx}">
                     ${subCats.map(sub => `
                         <div class="home-cat-card" onclick="window.openCategoryView('${sub.id}')">
                             <img src="${sub.image || 'https://via.placeholder.com/600x800'}" alt="${sub.name}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);">
@@ -1002,9 +1002,28 @@ function renderHomeCategories() {
                         </div>
                     `).join('')}
                 </div>
+                <div class="scroll-dots-container" id="dots-${rootIdx}">
+                    <span class="scroll-dot active"></span>
+                    <span class="scroll-dot"></span>
+                    <span class="scroll-dot"></span>
+                </div>
             </div>
         `;
     }).join('');
+
+    // Attach scroll logic
+    rootCats.forEach((root, rootIdx) => {
+        const grid = document.getElementById(`cat-grid-${rootIdx}`);
+        const dotsRoot = document.getElementById(`dots-${rootIdx}`);
+        if (grid && dotsRoot) {
+            const dots = dotsRoot.querySelectorAll('.scroll-dot');
+            grid.onscroll = () => {
+                const scrollPercent = grid.scrollLeft / (grid.scrollWidth - grid.clientWidth);
+                const idx = Math.min(dots.length - 1, Math.ceil(scrollPercent * (dots.length - 1) * 1.1));
+                dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+            };
+        }
+    });
 }
 
 window.openCategoryView = (catId) => {

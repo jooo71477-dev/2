@@ -642,7 +642,10 @@ if (saveProductForm) {
                 else { finalData.id = 'L' + Date.now(); finalData.createdAt = new Date().toISOString(); localProds.push(finalData); }
                 localStorage.setItem('icloth_products', JSON.stringify(localProds));
             }
-            alert("تم الحفظ بنجاح! ✅"); toggleForm(); loadProducts();
+            alert("تم الحفظ بنجاح! ✅"); 
+            toggleForm(); 
+            loadProducts();
+            if (typeof loadInventory === 'function') setTimeout(loadInventory, 500); 
         } catch (err) { console.error(err); alert("حدث خطأ! ❌\n" + (err.message || err)); }
         showLoader(false);
     };

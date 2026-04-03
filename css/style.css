@@ -229,11 +229,10 @@ img {
     }
 
     to {
-        alert("تم الحفظ بنجاح! ✅"); 
-        toggleForm(); 
-        loadProducts();
-        if (typeof loadInventory === 'function') setTimeout(loadInventory, 500); 
-    } catch (err) { console.error(err); alert("حدث خطأ! ❌\n" + (err.message || err)); }
+        opacity: 1;
+        transform: scale(1) rotate(0);
+        filter: blur(0);
+    }
 }
 
 .loader-content h1 {
@@ -2030,7 +2029,8 @@ footer {
     letter-spacing: 0.5px;
 }
 
-.size-btn.active .size-stock {
+.size-btn.active .size-stock,
+.size-btn.selected .size-stock {
     background: rgba(0, 0, 0, 0.2);
     color: #fff;
 }
