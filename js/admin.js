@@ -1260,15 +1260,24 @@ async function decreaseInventoryStock(items) {
                     if (!variant.sizeStock) variant.sizeStock = {};
                     
                     const targetSize = String(item.size || "").trim();
-                    // Use normalized match for finding the correct key in sizeStock
                     const normTargetSize = normalizeKey(targetSize);
+                    
+                    // 🔍 Find existing key or use target
                     let actualSizeKey = Object.keys(variant.sizeStock).find(k => normalizeKey(k) === normTargetSize) || targetSize;
                     
                     const currentSizeStock = resolveItemStock(pData, variant, targetSize);
                     const decrementQty = Number(item.quantity || 1);
                     const nextSizeStock = Math.max(0, currentSizeStock - decrementQty);
                     
+                    // 🛑 Force update the existing key and ensure no duplicates
                     variant.sizeStock[actualSizeKey] = nextSizeStock;
+                    
+                    // Cleanup: If we have multiple keys that normalize to the same thing, merge them into actualSizeKey
+                    Object.keys(variant.sizeStock).forEach(k => {
+                        if (k !== actualSizeKey && normalizeKey(k) === normTargetSize) {
+                            delete variant.sizeStock[k];
+                        }
+                    });
 
                     // Recalculate variant total stock
                     variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
@@ -1276,15 +1285,17 @@ async function decreaseInventoryStock(items) {
                     
                     const newTotalStock = colorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
                     await productRef.update({ colorVariants, stock: newTotalStock });
-                    console.log(`✅ [STOCK SUCCESS] Decreased ${item.name} (${item.color}/${item.size}): ${currentSizeStock} -> ${variant.sizeStock[actualSizeKey]}`);
+                    console.log(`✅ [SYNC SUCCESS] ${item.name} | ${item.color} | ${actualSizeKey}: ${currentSizeStock} -> ${nextSizeStock} (New Total: ${newTotalStock})`);
                 } else {
-                    console.warn(`⚠️ [STOCK WARN] Color variant NOT FOUND for "${item.color}" in product ${item.id}`);
+                    const availableColors = colorVariants.map(v => `${v.name}/${v.name_ar}`).join(', ');
+                    throw new Error(`لم يتم العثور على اللون "${item.color}" للمنتج "${item.name}". الألوان المتاحة: [ ${availableColors} ]`);
                 }
             } else {
                 console.error(`❌ [STOCK ERROR] Product NOT FOUND: ${item.id}`);
             }
         } catch (e) {
-            console.error("❌ [STOCK EXCEPTION]:", e);
+            console.error("❌ [STOCK ERROR]:", e);
+            throw e;
         }
     }
 }
@@ -1562,7 +1573,30 @@ window.openOrderDetails = (id) => {
 
     // Build Items List with Professional Cards
     const totalPieces = (o.items || []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
-    const itemsHtml = (o.items || []).map(i => `
+    
+    // 🔍 Pre-fetch stock levels for UI visibility
+    const itemsHtmlTasks = (o.items || []).map(async i => {
+        let stockDisplay = '<i class="fas fa-spinner fa-spin"></i> جاري الفحص...';
+        let stockColor = '#fff';
+        try {
+            const pRef = db.collection('products').doc(i.id);
+            const pDoc = await pRef.get();
+            if (pDoc.exists) {
+                const pData = pDoc.data();
+                const v = (pData.colorVariants || []).find(vc => normalizeKey(vc.name) === normalizeKey(i.color) || normalizeKey(vc.name_ar) === normalizeKey(i.color));
+                const available = resolveItemStock(pData, v, i.size);
+                stockDisplay = available >= (Number(i.quantity) || 1) ? `✅ متوفر: ${available}` : `⚠️ عجز: ${available}`;
+                stockColor = available >= (Number(i.quantity) || 1) ? '#4caf50' : '#f44336';
+            } else {
+                stockDisplay = '❌ منتج محذوف';
+                stockColor = '#f44336';
+            }
+        } catch (e) {
+            stockDisplay = '⚠️ خطأ فحص';
+            stockColor = '#ffa726';
+        }
+
+        return `
         <div style="background: #000; border-radius: 12px; padding: 12px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 15px;">
             <div style="flex: 1;">
                 <h4 style="margin: 0 0 10px; font-size: 1.1rem; color: #fff;">${i.name}</h4>
@@ -1572,13 +1606,16 @@ window.openOrderDetails = (id) => {
                     </span>
                     <span style="background: rgba(255,255,255,0.05); color: #888; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 5px;">
                         🎫 SKU: ${i.code || '---'}
-                        <button onclick="copyToClipboard('${i.code || ''}')" style="background:none; border:none; color:#d4af37; cursor:pointer; padding:0;"><i class="far fa-copy"></i></button>
                     </span>
+                    <span style="color: ${stockColor}; font-size: 0.85rem; font-weight: 700; margin-left: auto;">${stockDisplay}</span>
                 </div>
             </div>
             <img src="${i.image}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
-        </div>
-    `).join('');
+        </div>`;
+    });
+    
+    const itemsHtmlResults = await Promise.all(itemsHtmlTasks);
+    const itemsHtml = itemsHtmlResults.join('');
 
     body.innerHTML = `
         <style>
@@ -1806,19 +1843,17 @@ async function shipToBosta(orderId) {
             stockUpdated: true 
         });
 
-        // 🛑 Trigger stock decrement - فقط إذا لم يتم الخصم من قبل
-        if (!order.stockUpdated) {
+        // 🛑 Trigger stock decrement
+        try {
             await decreaseInventoryStock(order.items);
-            console.log("✅ تم خصم المخزون للطلب:", orderId);
-        } else {
-            console.log("⚠️ تم خصم المخزون مسبقاً للطلب:", orderId);
+            console.log("✅ [SUCCESS] Stock decremented for order:", orderId);
+        } catch (stockErr) {
+            console.error("⚠️ Stock update partial failure:", stockErr);
+            alert(`⚠️ تم إرسال الطلب لبوسطة، ولكن حدثت مشكلة في خصم المخزون:\n${stockErr.message}`);
         }
 
         alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
-        
-        // تحديث المخزون في الواجهة
         if (typeof renderInventory === 'function') renderInventory();
-        
         if (typeof loadOrders === 'function') loadOrders();
 
     } catch (err) {
