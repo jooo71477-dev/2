@@ -1285,13 +1285,34 @@ async function decreaseInventoryStock(items) {
 }
 window.decreaseInventoryStock = decreaseInventoryStock;
 
-function resolveItemStock(productData, variantData, targetSize) {
-    const size = String(targetSize || "").trim();
+function normalizeKey(value) {
+    return String(value || "").toLowerCase().trim().replace(/[^a-z0-9\u0600-\u06FF]+/g, "");
+}
 
-    if (variantData && variantData.sizeStock && variantData.sizeStock[size] !== undefined) {
-        return Number(variantData.sizeStock[size]) || 0;
+function resolveItemStock(productData, variantData, targetSize) {
+    const normalizedTargetSize = normalizeKey(targetSize || "");
+
+    if (variantData && variantData.sizeStock && Object.keys(variantData.sizeStock).length > 0) {
+        // Attempt exact key match then normalized key match
+        if (variantData.sizeStock[targetSize] !== undefined) {
+            return Number(variantData.sizeStock[targetSize]) || 0;
+        }
+
+        const matchKey = Object.keys(variantData.sizeStock).find(k => normalizeKey(k) === normalizedTargetSize);
+        if (matchKey) {
+            return Number(variantData.sizeStock[matchKey]) || 0;
+        }
+
+        // Fallback to any defined size for ONE SIZE type logic
+        if (normalizedTargetSize === "onesize" || normalizedTargetSize === "one size") {
+            const nonEmptyKey = Object.keys(variantData.sizeStock).find(k => Number(variantData.sizeStock[k]) > 0);
+            if (nonEmptyKey) {
+                return Number(variantData.sizeStock[nonEmptyKey]) || 0;
+            }
+        }
     }
 
+    // Then fallback variant stock and product stock
     if (variantData && variantData.stock !== undefined && variantData.stock !== null) {
         return Number(variantData.stock) || 0;
     }
@@ -1373,6 +1394,7 @@ async function checkStockAvailability(items) {
                     const targetSize = String(item.size || "").trim();
                     const availableStock = resolveItemStock(pData, variant, targetSize);
                     const requiredQty = Number(item.quantity || 1);
+                    console.log("🧪 STOCK CHECK", item.name, item.color, item.size, "availableStock", availableStock, "requiredQty", requiredQty, "variantStock", variant.stock, "productStock", pData.stock);
 
                     if (availableStock < requiredQty) {
                         throw new Error(`المنتج "${item.name}" (${item.color}/${item.size}) غير متوفر بالكمية المطلوبة. متوفر: ${availableStock}, مطلوب: ${requiredQty}`);
