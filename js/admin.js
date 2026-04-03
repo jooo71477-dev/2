@@ -294,6 +294,10 @@ async function initDashboard(role = 'all') {
             if (statProductsEl) statProductsEl.innerText = products.length;
         }
         console.log("✅ Dashboard ready!");
+        
+        // Initial Land: Load data for the section we are in
+        const currentHash = window.location.hash.replace('#', '') || 'overview';
+        showSection(currentHash);
     } catch (err) {
         console.error("❌ Dashboard Init Error:", err);
     }
@@ -2107,8 +2111,14 @@ document.getElementById('cms-form').onsubmit = async (e) => {
 // Update Nav to call these loaders
 const originalShowSection = showSection;
 showSection = (id) => {
+    console.log("📂 Admin Section Change:", id);
     originalShowSection(id);
-    if (id === 'users') renderUsers();
+    
+    // Trigger specific loaders
+    if (id === 'users') {
+        if (users.length === 0) loadUsers().then(() => renderUsers());
+        else renderUsers();
+    }
     if (id === 'coupons') loadCoupons();
     if (id === 'settings') loadSettings();
     if (id === 'shipping') loadShippingRates();
@@ -2119,10 +2129,34 @@ showSection = (id) => {
     if (id === 'announcements') loadAnnouncements();
 
     // Fix: Close sidebar on mobile after clicking
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
     if (window.innerWidth <= 992) {
-        document.querySelector('.sidebar').classList.remove('active');
+        if (sidebar) sidebar.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
     }
+    
+    // Sync Navigation Links (Sidebar & Mobile Tabs)
+    document.querySelectorAll('.nav-links a, .mob-nav-item').forEach(l => {
+        if (l.getAttribute('href') === `#${id}`) {
+            l.classList.add('active');
+        } else {
+            l.classList.remove('active');
+        }
+    });
 };
+
+// Global Link for HTML Navigation
+window.onSectionChange = (id) => showSection(id);
+
+// Initial Load Handler: If we land on a specific hash, trigger its loader
+window.addEventListener('DOMContentLoaded', () => {
+    const startHash = window.location.hash.replace('#', '') || 'overview';
+    // Small delay to ensure firebase/init is ready
+    setTimeout(() => {
+        if (currentAdmin) showSection(startHash);
+    }, 1000);
+});
 
 
 // --- Inventory Management ---

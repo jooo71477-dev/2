@@ -1,4 +1,3 @@
-```javascript
 /**
  * 🎨 ICLOTH ULTIMATE FASHION REGISTRY v3.0 (400+ COLORS)
  * The most comprehensive color system for e-commerce.
