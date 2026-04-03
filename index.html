@@ -137,20 +137,20 @@
 
         .categories-grid-home {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
         }
 
         .home-cat-card {
             cursor: pointer;
             position: relative;
-            height: 320px;
-            border-radius: 12px;
+            height: 420px;
+            border-radius: 18px;
             overflow: hidden;
             background: #111;
             border: 1px solid rgba(255, 255, 255, 0.05);
             transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
         }
 
         /* 📱 Mobile Specific Styles (Higher Specificity) */
@@ -170,11 +170,11 @@
             .categories-grid-home::-webkit-scrollbar { display: none; }
             
             .home-cat-card {
-                min-width: 78vw !important;
+                min-width: 65vw !important;
                 scroll-snap-align: center;
-                height: 480px !important;
+                height: 380px !important;
                 flex: 0 0 auto !important;
-                border-radius: 24px;
+                border-radius: 20px;
             }
         }
 

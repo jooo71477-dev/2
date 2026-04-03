@@ -561,10 +561,14 @@ function openProductModal(id = null) {
                 v.images ? v.images.join('\n') : (v.image || ''),
                 v.sizes ? v.sizes.join(', ') : '',
                 v.stock !== undefined ? v.stock : (p.stock || 0),
-                v.thumbnail || ''
+                v.thumbnail || '',
+                v.inventory || {}
             );
             vContainer.appendChild(div);
             updateVariantPreviews(div);
+            // Trigger inventory grid generation
+            const sizesInput = div.querySelector('.v-sizes');
+            if (sizesInput) updateInventoryInputs(sizesInput);
         });
         updateVariantHint();
 
@@ -605,12 +609,21 @@ document.getElementById('product-form').onsubmit = async (e) => {
     document.querySelectorAll('.variant-item').forEach(item => {
         const images = item.querySelector('.v-image').value.split('\n').map(s => s.trim()).filter(Boolean);
         const thumbnail = item.querySelector('.v-thumbnail')?.value || (images.length > 0 ? images[0] : '');
+        
+        // Collect per-size inventory
+        const inventory = {};
+        item.querySelectorAll('.size-stock-input').forEach(input => {
+            const size = input.getAttribute('data-size');
+            inventory[size] = Number(input.value) || 0;
+        });
+
         variants.push({
             name: item.querySelector('.v-name').value,
             images: images,
             thumbnail: thumbnail,
             sizes: item.querySelector('.v-sizes').value.split(',').map(s => s.trim()).filter(s => s !== ""),
-            stock: Number(item.querySelector('.v-stock').value) || 0
+            stock: Number(item.querySelector('.v-stock').value) || 0,
+            inventory: inventory
         });
     });
 
@@ -704,7 +717,10 @@ function updateVariantHint() {
 window.setQuickSizes = (btn, value) => {
     const parent = btn.closest('.variant-item');
     const input = parent.querySelector('.v-sizes');
-    if (input) input.value = value;
+    if (input) {
+        input.value = value;
+        updateInventoryInputs(input);
+    }
 };
 window.setQuickColor = (el, name) => {
     const parent = el.closest('.variant-item');
@@ -848,9 +864,16 @@ function buildVariantHTML(name, images, sizes, stock, thumbnail) {
                     <button type="button" class="btn-mini" onclick="setQuickSizes(this, '')" style="color:var(--danger); border-color:rgba(244,67,54,0.3); background:rgba(244,67,54,0.1);"><i class="fas fa-eraser"></i> مسح</button>
                 </div>
             </div>
-            <div class="form-group">
-                <label>الكمية (خاصة بهذا اللون)</label>
-                <input type="number" class="v-stock" value="${stock}">
+            <div class="form-group" style="grid-column: span 2;">
+                <label>إدارة المخزون لكل مقاس (اختياري: اكتب الكمية بجانب كل مقاس)</label>
+                <div class="v-inventory-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap:10px; margin-top:8px;">
+                    <!-- Auto-populated via JS -->
+                </div>
+                <input type="hidden" class="v-inventory-data" value='${typeof inventory === "object" ? JSON.stringify(inventory) : (inventory || "{}")}'>
+                <div style="margin-top:10px;">
+                    <label style="font-size:0.8rem; opacity:0.8;">الكمية الإجمالية (يتم تحديثها تلقائياً)</label>
+                    <input type="number" class="v-stock" value="${stock}" readonly style="background:rgba(255,255,255,0.05); color:var(--primary); font-weight:bold;">
+                </div>
             </div>
         </div>
         <input type="hidden" class="v-thumbnail" value="${thumbnail || ''}">
@@ -1974,36 +1997,23 @@ window.addBannerRow = (data = { desktopUrl: '', mobileUrl: '', title: '', subtit
         <button type="button" onclick="this.closest('.banner-row-item').remove()" style="position: absolute; top: 10px; left: 10px; background: rgba(244, 67, 54, 0.1); border: 1px solid rgba(244, 67, 54, 0.2); color: var(--danger); cursor: pointer; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; z-index: 10;"><i class="fas fa-trash"></i></button>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <!-- Desktop Image -->
             <div class="form-group">
-                <label style="font-size: 0.8rem; margin-bottom: 5px;"><i class="fas fa-desktop"></i> صورة الكمبيوتر / التابلت</label>
-                <div class="banner-upload-box" onclick="this.querySelector('input').click()" style="border: 2px dashed var(--border); border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; min-height: 100px; display: flex; flex-direction: column; justify-content: center; background: rgba(0,0,0,0.2);">
-                    <img class="desktop-preview" src="${data.desktopUrl || ''}" style="width: 100%; max-height: 80px; object-fit: cover; display: ${data.desktopUrl ? 'block' : 'none'}; border-radius: 5px; margin-bottom: 5px;">
-                    <span style="font-size: 0.75rem; opacity: 0.6;" class="upload-hint">${data.desktopUrl ? 'تغيير صورة اللاب توب' : 'رفع صورة (PC)'}</span>
-                    <input type="file" hidden accept="image/*" onchange="uploadBannerPart(this, 'desktop')">
-                    <input type="hidden" class="desktop-url" value="${data.desktopUrl || ''}">
-                </div>
+                <label>رابط صورة الكمبيوتر</label>
+                <input type="text" class="banner-desktop-url" value="${data.desktopUrl}" placeholder="https://...">
             </div>
-            <!-- Mobile Image -->
             <div class="form-group">
-                <label style="font-size: 0.8rem; margin-bottom: 5px;"><i class="fas fa-mobile-alt"></i> صورة الموبايل</label>
-                <div class="banner-upload-box" onclick="this.querySelector('input').click()" style="border: 2px dashed var(--border); border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; min-height: 100px; display: flex; flex-direction: column; justify-content: center; background: rgba(0,0,0,0.2);">
-                    <img class="mobile-preview" src="${data.mobileUrl || ''}" style="width: 40px; height: 60px; object-fit: cover; display: ${data.mobileUrl ? 'block' : 'none'}; border-radius: 3px; margin: 0 auto 5px;">
-                    <span style="font-size: 0.75rem; opacity: 0.6;" class="upload-hint">${data.mobileUrl ? 'تغيير صورة الموبايل' : 'رفع صورة (Phone)'}</span>
-                    <input type="file" hidden accept="image/*" onchange="uploadBannerPart(this, 'mobile')">
-                    <input type="hidden" class="mobile-url" value="${data.mobileUrl || ''}">
-                </div>
+                <label>رابط صورة الموبايل</label>
+                <input type="text" class="banner-mobile-url" value="${data.mobileUrl}" placeholder="https://...">
             </div>
         </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
             <div class="form-group">
-                <label style="font-size: 0.8rem;">العنوان (Title)</label>
-                <input type="text" class="banner-title" value="${data.title || ''}" placeholder="iCloth FASHION" style="font-size: 0.85rem; padding: 8px;">
+                <label>العنوان الرئيسي</label>
+                <input type="text" class="banner-title" value="${data.title}" placeholder="...">
             </div>
             <div class="form-group">
-                <label style="font-size: 0.8rem;">النص الفرعي (Subtitle)</label>
-                <input type="text" class="banner-subtitle" value="${data.subtitle || ''}" placeholder="أحدث صيحات الموضة" style="font-size: 0.85rem; padding: 8px;">
+                <label>العنوان الفرعي</label>
+                <input type="text" class="banner-subtitle" value="${data.subtitle}" placeholder="...">
             </div>
         </div>
     `;
@@ -2886,6 +2896,49 @@ async function loadShippingRates() {
     }
     renderShippingRates();
 }
+
+
+// --- Detailed Inventory Helpers ---
+window.updateInventoryInputs = (input) => {
+    const variantItem = input.closest('.variant-item');
+    const grid = variantItem.querySelector('.v-inventory-grid');
+    const hiddenData = variantItem.querySelector('.v-inventory-data');
+    if (!grid) return;
+
+    const sizes = input.value.split(',').map(s => s.trim()).filter(s => s !== "");
+    let existingData = {};
+    try { existingData = JSON.parse(hiddenData.value || "{}"); } catch(e) {}
+
+    grid.innerHTML = sizes.map(s => `
+        <div style="background:rgba(255,255,255,0.02); padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); text-align:center;">
+            <div style="font-size:0.7rem; margin-bottom:5px; color:var(--primary); font-weight:bold;">${s}</div>
+            <input type="number" class="size-stock-input" data-size="${s}" 
+                   value="${existingData[s] !== undefined ? existingData[s] : 0}" 
+                   oninput="updateVariantStock(this)"
+                   style="width:100%; padding:5px; font-size:0.8rem; text-align:center; background:#000; border:1px solid #333; color:#fff; border-radius:4px;">
+        </div>
+    `).join('');
+
+    updateVariantStock(variantItem);
+};
+
+window.updateVariantStock = (elOrItem) => {
+    const variantItem = elOrItem.classList?.contains('variant-item') ? elOrItem : elOrItem.closest('.variant-item');
+    const stockInput = variantItem.querySelector('.v-stock');
+    const hiddenData = variantItem.querySelector('.v-inventory-data');
+    
+    let total = 0;
+    const inventory = {};
+    variantItem.querySelectorAll('.size-stock-input').forEach(input => {
+        const val = Number(input.value) || 0;
+        const size = input.getAttribute('data-size');
+        inventory[size] = val;
+        total += val;
+    });
+
+    if (stockInput) stockInput.value = total;
+    if (hiddenData) hiddenData.value = JSON.stringify(inventory);
+};
 
 function renderShippingRates() {
     const grid = document.getElementById('shipping-rates-grid');

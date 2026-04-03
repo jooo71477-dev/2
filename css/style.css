@@ -2028,6 +2028,38 @@ footer {
     box-shadow: 0 10px 20px rgba(var(--primary-rgb), 0.3);
 }
 
+.size-btn.out {
+    opacity: 0.5;
+    background: rgba(0, 0, 0, 0.4) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #666 !important;
+    cursor: not-allowed;
+    position: relative;
+    pointer-events: none;
+    overflow: visible;
+}
+
+[data-theme="light"] .size-btn.out {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.size-btn.out .out-label {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ff4d4d;
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 3px 6px;
+    border-radius: 6px;
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgba(255, 77, 77, 0.3);
+    z-index: 2;
+    letter-spacing: 0;
+    line-height: 1;
+}
+
 .close-modal {
     position: absolute;
     top: 30px;

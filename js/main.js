@@ -2495,20 +2495,35 @@ function renderModalSizes(p, color) {
     const container = document.querySelector('.size-options');
     const standardSizes = ['M', 'L', 'XL', 'XXL', '36', '38', '40', '42'];
     let sizes = p.sizes && p.sizes.length > 0 ? p.sizes : [];
+    let inventory = {};
 
     if (p.colorVariants) {
         const v = p.colorVariants.find(x => x.name === color);
-        if (v && v.sizes && v.sizes.length > 0) {
-            sizes = v.sizes;
+        if (v) {
+            if (v.sizes && v.sizes.length > 0) sizes = v.sizes;
+            if (v.inventory) inventory = v.inventory;
         }
     }
 
     // Use standard sizes if no specific sizes are defined
-    const finalSizes = sizes.length > 0 ? sizes : standardSizes;
+    const finalSizes = (sizes.length > 0 ? sizes : standardSizes).map(s => s.trim()).filter(Boolean);
 
-    container.innerHTML = finalSizes.map(s => 
-        `<button class="size-btn" onclick="selectSizeForCart('${s}', this)">${s}</button>`
-    ).join('');
+    container.innerHTML = finalSizes.map(s => {
+        // If color variant has inventory map, use it. Otherwise, if product has total stock 0, all sizes are out.
+        let stock = 999; // Default if no stock management
+        if (inventory && Object.keys(inventory).length > 0) {
+            stock = inventory[s] !== undefined ? inventory[s] : 0;
+        } else if (p.stock !== undefined) {
+             stock = p.stock;
+        }
+
+        const isOut = (stock <= 0);
+        return `<button class="size-btn ${isOut ? 'out' : ''}" 
+                        ${isOut ? 'disabled' : ''} 
+                        onclick="selectSizeForCart('${s}', this)">
+                    ${s} ${isOut ? '<span class="out-label">OUT</span>' : ''}
+                </button>`;
+    }).join('');
 }
 
 window.selectSizeForCart = (size, btn) => {
