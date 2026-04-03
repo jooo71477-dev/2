@@ -1563,7 +1563,7 @@ function renderOrders(data = orders) {
     }).join('');
 }
 
-window.openOrderDetails = (id) => {
+window.openOrderDetails = async (id) => {
     const o = orders.find(x => x.id === id);
     if (!o) return;
 
