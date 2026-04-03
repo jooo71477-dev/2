@@ -311,7 +311,15 @@ async function loadProducts() {
     productsListener = db.collection('products').onSnapshot(snapshot => {
         products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderProducts();
+        if (typeof renderInventory === 'function') renderInventory();
         updateStats();
+        
+        // 🔄 Also refresh open order details if one is open to show updated stock
+        const detailsModal = document.getElementById('details-modal');
+        if (detailsModal && detailsModal.style.display === 'flex' && typeof openOrderDetails === 'function') {
+            const currentOrderId = detailsModal.getAttribute('data-order-id');
+            if (currentOrderId) openOrderDetails(currentOrderId);
+        }
     });
 }
 
@@ -1566,6 +1574,10 @@ function renderOrders(data = orders) {
 window.openOrderDetails = async (id) => {
     const o = orders.find(x => x.id === id);
     if (!o) return;
+    
+    // 🏷️ Tag modal for background refreshes
+    const detailsModal = document.getElementById('details-modal');
+    if (detailsModal) detailsModal.setAttribute('data-order-id', id);
 
     const modal = document.getElementById('order-details-modal');
     const body = document.getElementById('order-details-body');
