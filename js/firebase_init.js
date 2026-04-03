@@ -44,7 +44,32 @@ function initFirebase() {
     });
 
     if (window.loadDynamicCategories) loadDynamicCategories();
-    if (window.attachRealTimeListeners) attachRealTimeListeners();
+    attachRealTimeListeners();
+}
+
+function attachRealTimeListeners() {
+    if (!db) return;
+    
+    db.collection('products').onSnapshot(snapshot => {
+        remoteProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log(`🔥 [Real-time] ${remoteProducts.length} products loaded`);
+        if (window.renderDynamicFilters) renderDynamicFilters();
+        
+        const loader = document.getElementById('loader');
+        if (loader) {
+            loader.classList.add('fade-out');
+            setTimeout(() => loader.style.display = 'none', 1000);
+        }
+    });
+
+    db.collection('categories').onSnapshot(snapshot => {
+        dynamicCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (window.renderDynamicFilters) renderDynamicFilters();
+    });
+
+    db.collection('settings').doc('cms').onSnapshot(doc => {
+        if (doc.exists && window.applyCMS) applyCMS(doc.data());
+    });
 }
 
 window.addEventListener('load', () => {

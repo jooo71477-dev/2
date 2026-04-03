@@ -14,6 +14,7 @@ let activeAITranslations = new Set();
 let activeCategory = "all";
 const BOSTA_PROXY_URL = "https://bosta-proxy.jooo71477.workers.dev";
 let remoteProducts = []; 
+let dynamicCategories = [];
 let appliedCoupon = null;
 let wishlist = [];
 try {

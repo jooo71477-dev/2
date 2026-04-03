@@ -1,79 +1,88 @@
 // 🛒 iCloth - Cart & Wishlist System
 function updateCartUI() {
     const list = document.getElementById('cart-items-list');
-    const totalEl = document.getElementById('cart-total-amount');
-    const badge = document.getElementById('cart-badge');
+    const totalEl = document.getElementById('cart-total-price');
+    const badge = document.querySelector('.cart-count');
     
-    if (!list || !totalEl || !badge) return;
+    if (!list || !totalEl) return;
+    if (badge) badge.innerText = cart.reduce((s, i) => s + i.quantity, 0);
     
-    list.innerHTML = '';
-    let total = 0;
-    
-    cart.forEach((item, idx) => {
-        total += item.price * (item.quantity || 1);
-        const name = (currentLang === 'ar' && item.name_ar) ? item.name_ar : translateText(item.name);
-        const img = item.image || 'images/placeholder.jpg';
-        
-        list.innerHTML += `
-            <div class="cart-item">
-                <img src="${img}" alt="${name}">
-                <div class="cart-item-info">
-                    <h4>${name}</h4>
-                    <p>${item.size} | ${item.color}</p>
-                    <div class="cart-item-price">${item.price} ${translations[currentLang].currency} x ${item.quantity}</div>
-                </div>
-                <button class="remove-item" onclick="removeFromCart(${idx})"><i class="fas fa-trash"></i></button>
-            </div>
-        `;
-    });
-    
-    totalEl.innerText = `${total.toLocaleString()} ${translations[currentLang].currency}`;
-    badge.innerText = cart.length;
-    badge.style.display = cart.length > 0 ? 'flex' : 'none';
-}
-
-function addToBasket(pId, size, color) {
-    const p = remoteProducts.find(x => x.id === pId);
-    if (!p) return;
-    
-    const item = {
-        id: p.id,
-        name: p.name,
-        name_ar: p.name_ar,
-        price: p.price,
-        size: size,
-        color: color,
-        image: (p.images && p.images.length > 0) ? p.images[0] : 'images/placeholder.jpg',
-        quantity: 1
-    };
-    
-    cart.push(item);
-    localStorage.setItem('icloth_cart', JSON.stringify(cart));
-    updateCartUI();
-    showToast(currentLang === 'ar' ? '✅ تمت الإضافة!' : '✅ Added to cart!');
-}
-
-function removeFromCart(idx) {
-    cart.splice(idx, 1);
-    localStorage.setItem('icloth_cart', JSON.stringify(cart));
-    updateCartUI();
-}
-
-function toggleWishlist(pId) {
-    const idx = wishlist.indexOf(pId);
-    if (idx === -1) {
-        wishlist.push(pId);
-        showToast(currentLang === 'ar' ? '❤ تمت الإضافة للمفضلة' : '❤ Added to favorites');
+    if (cart.length === 0) {
+        list.innerHTML = `<p class="empty-msg">${translations[currentLang].cart_empty}</p>`;
+        totalEl.innerText = `0 ${translations[currentLang].currency}`;
     } else {
-        wishlist.splice(idx, 1);
+        const subtotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
+        let finalTotal = subtotal;
+        
+        if (typeof appliedCoupon !== 'undefined' && appliedCoupon) {
+            const discountAmount = Math.round(subtotal * (appliedCoupon.discount / 100));
+            finalTotal = subtotal - discountAmount;
+        }
+
+        list.innerHTML = cart.map(i => {
+                const name = (currentLang === 'ar' && i.name_ar) ? i.name_ar : translateText(i.name);
+                return `
+                <div class="cart-item">
+                    <img src="${i.image}" alt="${name}">
+                    <div class="cart-item-info">
+                        <h4>${name}</h4>
+                        <div class="cart-item-details">${i.size} | <span data-translate-cache="${i.color}">${translateText(i.color)}</span></div>
+                        <div class="qty-control">
+                            <button class="qty-btn" onclick="updateCartQuantity('${i.cartId}', 1)">+</button>
+                            <span>${i.quantity}</span>
+                            <button class="qty-btn" onclick="updateCartQuantity('${i.cartId}', -1)">−</button>
+                        </div>
+                    </div>
+                    <div class="delete-btn" onclick="removeFromCart('${i.cartId}')"><i class="fas fa-trash-alt"></i></div>
+                </div>
+            `;
+        }).join('');
+        totalEl.innerText = `${finalTotal} ${translations[currentLang].currency}`;
     }
-    localStorage.setItem('icloth_wishlist', JSON.stringify(wishlist));
-    renderWishlist();
 }
 
-function renderWishlist() {
-    const list = document.getElementById('wishlist-items');
-    if (!list) return;
-    list.innerHTML = '';
-    // rendering logic...
+function updateCartQuantity(id, d) {
+    const i = cart.find(x => x.cartId === id);
+    if (i) { 
+        i.quantity += d; 
+        if (i.quantity <= 0) removeFromCart(id); 
+        else { 
+            updateCartUI(); 
+            localStorage.setItem('icloth_cart', JSON.stringify(cart)); 
+        } 
+    }
 }
+
+function removeFromCart(id) { 
+    cart = cart.filter(x => x.cartId !== id); 
+    updateCartUI(); 
+    localStorage.setItem('icloth_cart', JSON.stringify(cart)); 
+}
+
+function addToCartFromModal(size) {
+    const p = selectedProductForSize;
+    if (!p) return;
+    const color = selectedColor;
+    const cartId = `${p.id}-${size}-${color}`;
+
+    let img = p.image || '';
+    if (p.colorVariants) {
+        const v = p.colorVariants.find(x => x.name === color);
+        if (v) {
+            img = (v.images && v.images.length > 0) ? v.images[0] : (v.image || p.image || '');
+        }
+    }
+
+    const existing = cart.find(i => i.cartId === cartId);
+    if (existing) existing.quantity++;
+    else cart.push({ ...p, cartId, size, color, quantity: 1, image: img });
+
+    updateCartUI();
+    localStorage.setItem('icloth_cart', JSON.stringify(cart));
+    
+    showToast(currentLang === 'ar' ? '✅ تمت الإضافة للسلة' : '✅ Added to cart');
+}
+
+window.updateCartQuantity = updateCartQuantity;
+window.removeFromCart = removeFromCart;
+window.addToCartFromModal = addToCartFromModal;

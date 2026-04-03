@@ -1,5 +1,5 @@
 // 👕 iCloth - Products & Categories Logic
-async function loadDynamicCategories() {
+window.loadDynamicCategories = async function() {
     if (db) {
         const snapshot = await db.collection('categories').get();
         dynamicCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
@@ -9,7 +9,7 @@ async function loadDynamicCategories() {
     }
 }
 
-function renderDynamicFilters() {
+window.renderDynamicFilters = function() {
     const categoriesView = document.getElementById('home-categories-view');
     if (!categoriesView) {
         renderSidebarCategories();
@@ -187,6 +187,93 @@ function openCategoryProducts(catId, title) {
     renderSubFilters(catId, 0); 
     filterAndRender('men', catId, 'all'); 
     document.getElementById('home-products-view')?.scrollIntoView({ behavior: 'smooth' });
+}
+
+window.applyMainFilter = (parentId, btn) => {
+    document.querySelectorAll('.main-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeCategory = parentId;
+    
+    if (window.subFiltersContainer) {
+        window.subFiltersContainer.innerHTML = '';
+        window.subFiltersContainer.classList.remove('active');
+    }
+    
+    if (parentId !== 'all') {
+        renderSubFilters(parentId, 0);
+    }
+    
+    filterAndRender('men', parentId, 'all');
+};
+
+window.applySubFilter = (parent, sub, btn, level) => {
+    btn.parentElement.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    const filterId = (sub === 'all') ? parent : sub;
+    filterAndRender('men', filterId, 'all');
+
+    const subFiltersContainer = document.getElementById('sub-filters-container');
+    if (subFiltersContainer) {
+        const rows = subFiltersContainer.querySelectorAll('.sub-filter-row');
+        rows.forEach(row => {
+            if (parseInt(row.dataset.level) > level) row.remove();
+        });
+
+        if (sub !== 'all') {
+            renderSubFilters(sub, level + 1);
+        }
+    }
+};
+
+function renderSubFilters(parentId, level = 0) {
+    const subFiltersContainer = document.getElementById('sub-filters-container');
+    if (!subFiltersContainer) return;
+    
+    const subs = dynamicCategories.filter(c => c.parentId === parentId);
+    if (subs.length === 0) return;
+
+    const row = document.createElement('div');
+    row.className = 'sub-filter-row';
+    row.dataset.level = level;
+    row.style.display = 'flex';
+    row.style.gap = '10px';
+    row.style.flexWrap = 'wrap';
+    row.style.justifyContent = 'center';
+    row.style.marginTop = '15px';
+    row.style.width = '100%';
+
+    row.innerHTML = `<button class="sub-btn active" onclick="applySubFilter('${parentId}', 'all', this, ${level})" data-i18n="all">${translations[currentLang].all}</button>` +
+        subs.map(s => {
+            const translatedCat = (currentLang === 'ar' && s.name_ar) ? s.name_ar : translateText(s.name);
+            return `<button class="sub-btn" onclick="applySubFilter('${parentId}', '${s.id}', this, ${level})" data-translate-cache="${s.name}">${translatedCat}</button>`;
+        }).join('');
+
+    subFiltersContainer.appendChild(row);
+    subFiltersContainer.classList.add('active');
+    subFiltersContainer.style.display = 'block';
+}
+
+function filterAndRender(gender, catId, color, isBestSellerOnly = false) {
+    const container = document.getElementById('men-products') || document.getElementById('products-list');
+    if (!container) return;
+    
+    let filtered = remoteProducts;
+    
+    if (isBestSellerOnly) {
+        filtered = filtered.filter(p => p.isBestSeller === true);
+    }
+    
+    if (catId !== 'all') {
+        filtered = filtered.filter(p => p.category === catId || p.parentCategory === catId);
+    }
+    
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="no-results">${translations[currentLang].no_results}</div>`;
+        return;
+    }
+    
+    container.innerHTML = filtered.map(p => renderProductCard(p)).join('');
 }
 
 function renderProductCard(p) {
