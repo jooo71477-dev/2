@@ -40,7 +40,7 @@ let auth = null;
 let currentUser = null;
 let currentLang = localStorage.getItem('icloth_lang') || 'en';
 
-// Initialize Firebase Immediately
+// Initialize Firebase globally if available, or locally in initFirebase
 if (typeof firebase !== 'undefined') {
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
@@ -298,7 +298,17 @@ async function getSmartTranslation(text) {
 }
 
 function initFirebase() {
-    if (typeof firebase === 'undefined') return;
+    if (typeof firebase === 'undefined') {
+        console.warn("⏳ Waiting for Firebase SDK...");
+        setTimeout(initFirebase, 500);
+        return;
+    }
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    if (!db) db = firebase.firestore();
+    if (!auth) auth = firebase.auth();
     
     // 🚀 Start Real-time Data Sync (Products, Categories, Settings)
     attachRealTimeListeners();
@@ -974,26 +984,44 @@ function renderHomeCategories() {
     const container = document.getElementById('home-categories-view');
     if (!container) return;
 
-    const mainCats = dynamicCategories.filter(c => !c.parentId);
-    if (mainCats.length === 0) {
-        container.innerHTML = `<p style="text-align:center; opacity:0.5; padding:50px;">${currentLang === 'ar' ? 'لا توجد أقسام متاحة حالياً' : 'No categories available yet'}</p>`;
+    if (dynamicCategories.length === 0) {
+        container.innerHTML = `<p style="text-align:center; opacity:0.5; padding:50px;">${currentLang === 'ar' ? 'لا توجد أقسام متوفرة حالياً' : 'No categories available yet'}</p>`;
         return;
     }
 
-    container.innerHTML = `
-        <div class="categories-grid-home" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
-            ${mainCats.map(c => `
-                <div class="home-cat-card" onclick="window.openCategoryView('${c.id}')" style="cursor: pointer; position: relative; height: 350px; border-radius: 24px; overflow: hidden; background: #111; border: 1px solid rgba(255,255,255,0.05); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
-                    <img src="${c.image || 'https://via.placeholder.com/400x600'}" alt="${c.name}" style="width: 100%; height: 100%; object-fit: cover; transition: 0.5s;">
-                    <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%);"></div>
-                    <div style="position: absolute; bottom: 30px; left: 30px; right: 30px;">
-                        <h3 style="color: #fff; font-size: 1.8rem; font-weight: 900; margin: 0; text-transform: uppercase;">${(currentLang === 'ar' && c.name_ar) ? c.name_ar : c.name}</h3>
-                        <div style="width: 40px; height: 4px; background: var(--primary); margin-top: 10px; border-radius: 2px;"></div>
-                    </div>
+    const rootCats = dynamicCategories.filter(c => !c.parentId);
+    
+    container.innerHTML = rootCats.map(root => {
+        const rootName = (currentLang === 'ar' && root.name_ar) ? root.name_ar : root.name;
+        const subCats = dynamicCategories.filter(s => s.parentId === root.id);
+        
+        if (subCats.length === 0) return ''; // Skip root if no babies
+
+        return `
+            <div class="home-cat-group" style="margin-bottom: 60px;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
+                    <div style="width: 5px; height: 35px; background: var(--primary); border-radius: 10px;"></div>
+                    <h2 style="font-size: 2.2rem; font-weight: 900; color: #fff; margin: 0; text-transform: uppercase; letter-spacing: 1px;">${rootName}</h2>
                 </div>
-            `).join('')}
-        </div>
-    `;
+                
+                <div class="categories-grid-home" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                    ${subCats.map(sub => `
+                        <div class="home-cat-card" onclick="window.openCategoryView('${sub.id}')" style="cursor: pointer; position: relative; height: 320px; border-radius: 20px; overflow: hidden; background: #111; border: 1px solid rgba(255,255,255,0.05); transition: all 0.4s ease; box-shadow: 0 15px 30px rgba(0,0,0,0.5);">
+                            <img src="${sub.image || 'https://via.placeholder.com/400x600'}" alt="${sub.name}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease;">
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 50%);"></div>
+                            <div style="position: absolute; bottom: 25px; left: 25px; right: 25px;">
+                                <h3 style="color: #fff; font-size: 1.5rem; font-weight: 800; margin: 0; text-transform: uppercase;">${(currentLang === 'ar' && sub.name_ar) ? sub.name_ar : sub.name}</h3>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.8rem; font-weight: 700; color: var(--primary);">
+                                    <span data-i18n="shop_now">SHOP NOW</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 window.openCategoryView = (catId) => {
