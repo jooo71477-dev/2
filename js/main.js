@@ -1075,13 +1075,6 @@ function filterAndRender(target, catId = 'all', subCatId = 'all') {
     }).join('');
 }
 
-function toSlug(text) {
-    if (!text) return "";
-    return text.toString().toLowerCase().trim()
-        .replace(/\s+/g, '-')           // Replace spaces with -
-        .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-        .replace(/\-\-+/g, '-');         // Replace multiple - with single -
-}
 
 const toggleSidebarMenu = () => {
     const menu = document.getElementById('side-menu');
