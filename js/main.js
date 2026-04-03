@@ -998,21 +998,21 @@ function renderHomeCategories() {
         if (subCats.length === 0) return ''; // Skip root if no babies
 
         return `
-            <div class="home-cat-group" style="margin-bottom: 60px;">
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
-                    <div style="width: 5px; height: 35px; background: var(--primary); border-radius: 10px;"></div>
-                    <h2 style="font-size: 2.2rem; font-weight: 900; color: #fff; margin: 0; text-transform: uppercase; letter-spacing: 1px;">${rootName}</h2>
+            <div class="home-cat-group" style="margin-bottom: 80px;">
+                <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 30px; padding: 0 5px;">
+                    <div style="width: 6px; height: 40px; background: var(--primary); border-radius: 12px; box-shadow: 0 0 15px var(--gold-glow);"></div>
+                    <h2 style="font-size: 2.5rem; font-weight: 1000; color: #fff; margin: 0; text-transform: uppercase; letter-spacing: 2px;">${rootName}</h2>
                 </div>
                 
-                <div class="categories-grid-home" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                <div class="categories-grid-home">
                     ${subCats.map(sub => `
-                        <div class="home-cat-card" onclick="window.openCategoryView('${sub.id}')" style="cursor: pointer; position: relative; height: 320px; border-radius: 20px; overflow: hidden; background: #111; border: 1px solid rgba(255,255,255,0.05); transition: all 0.4s ease; box-shadow: 0 15px 30px rgba(0,0,0,0.5);">
-                            <img src="${sub.image || 'https://via.placeholder.com/400x600'}" alt="${sub.name}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease;">
-                            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 50%);"></div>
-                            <div style="position: absolute; bottom: 25px; left: 25px; right: 25px;">
-                                <h3 style="color: #fff; font-size: 1.5rem; font-weight: 800; margin: 0; text-transform: uppercase;">${(currentLang === 'ar' && sub.name_ar) ? sub.name_ar : sub.name}</h3>
-                                <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 0.8rem; font-weight: 700; color: var(--primary);">
-                                    <span data-i18n="shop_now">SHOP NOW</span>
+                        <div class="home-cat-card" onclick="window.openCategoryView('${sub.id}')">
+                            <img src="${sub.image || 'https://via.placeholder.com/600x800'}" alt="${sub.name}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);">
+                            <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, transparent 70%);"></div>
+                            <div style="position: absolute; bottom: 35px; left: 35px; right: 35px;">
+                                <h3 style="color: #fff; font-size: 2rem; font-weight: 950; margin: 0; text-transform: uppercase; letter-spacing: 1px;">${(currentLang === 'ar' && sub.name_ar) ? sub.name_ar : sub.name}</h3>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px; font-size: 0.9rem; font-weight: 800; color: var(--primary); background: rgba(255,255,255,0.05); width: fit-content; padding: 8px 20px; border-radius: 50px; border: 1px solid rgba(212,175,55,0.2);">
+                                    <span data-i18n="shop_now">EXPLORE NOW</span>
                                     <i class="fas fa-arrow-right"></i>
                                 </div>
                             </div>
