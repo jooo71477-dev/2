@@ -643,11 +643,11 @@ document.getElementById('product-form').onsubmit = async (e) => {
         const images = item.querySelector('.v-image').value.split('\n').map(s => s.trim()).filter(Boolean);
         const thumbnail = item.querySelector('.v-thumbnail')?.value || (images.length > 0 ? images[0] : '');
         
-        // Collect per-size inventory
-        const inventory = {};
+        // Collect per-size stock (stored as 'sizeStock' - the unified field name)
+        const sizeStock = {};
         item.querySelectorAll('.size-stock-input').forEach(input => {
             const size = input.getAttribute('data-size');
-            inventory[size] = Number(input.value) || 0;
+            sizeStock[size] = Number(input.value) || 0;
         });
 
         variants.push({
@@ -656,7 +656,8 @@ document.getElementById('product-form').onsubmit = async (e) => {
             thumbnail: thumbnail,
             sizes: item.querySelector('.v-sizes').value.split(',').map(s => s.trim()).filter(s => s !== ""),
             stock: Number(item.querySelector('.v-stock').value) || 0,
-            inventory: inventory
+            sizeStock: sizeStock,
+            inventory: sizeStock // ← backward compat for old code
         });
     });
 
@@ -1268,25 +1269,35 @@ const StockManager = {
     // 🛠️ Simple key cleaner
     clean: (s) => String(s || "").toLowerCase().trim().replace(/[^a-z0-9\u0600-\u06FF]+/g, ""),
 
-    // 🔍 The Master Lookup (No more "1" while "14" exists!)
+    // 🔍 The Master Lookup — supports both new (sizeStock) and old (inventory) data
     getLive: (pData, targetColor, targetSize) => {
         if (!pData) return 0;
         const cKey = StockManager.clean(targetColor);
         const sKey = StockManager.clean(targetSize);
 
-        // 1. Find variant by name
-        const v = (pData.colorVariants || []).find(v => StockManager.clean(v.name) === cKey || StockManager.clean(v.name_ar) === cKey);
-        if (!v) return Number(pData.stock) || 0; // Fallback to overall product stock
+        // 1. Find variant by name (EN or AR)
+        const v = (pData.colorVariants || []).find(v =>
+            StockManager.clean(v.name) === cKey || StockManager.clean(v.name_ar) === cKey
+        );
+        if (!v) return Number(pData.stock) || 0;
 
-        // 2. Try to find the exact size
-        if (v.sizeStock) {
+        // 2. Check sizeStock (new field)
+        if (v.sizeStock && Object.keys(v.sizeStock).length > 0) {
             const actualKey = Object.keys(v.sizeStock).find(k => StockManager.clean(k) === sKey);
-            if (actualKey && v.sizeStock[actualKey] !== undefined) {
+            if (actualKey !== undefined && v.sizeStock[actualKey] !== undefined) {
                 return Number(v.sizeStock[actualKey]) || 0;
             }
         }
 
-        // 3. 🚨 THE CORE FIX: If specific size not found, ALWAYS return the variant's total stock
+        // 3. Check inventory (old field - backward compat)
+        if (v.inventory && Object.keys(v.inventory).length > 0) {
+            const actualKey = Object.keys(v.inventory).find(k => StockManager.clean(k) === sKey);
+            if (actualKey !== undefined && v.inventory[actualKey] !== undefined) {
+                return Number(v.inventory[actualKey]) || 0;
+            }
+        }
+
+        // 4. Final fallback: variant total stock
         return Number(v.stock) || 0;
     },
 
@@ -1306,12 +1317,16 @@ const StockManager = {
                 if (vIdx !== -1) {
                     const qty = Number(item.quantity) || 1;
                     let v = vars[vIdx];
-                    if (!v.sizeStock) v.sizeStock = {};
+                    // ✅ Support both old (inventory) and new (sizeStock) field names
+                    if (!v.sizeStock || Object.keys(v.sizeStock).length === 0) {
+                        v.sizeStock = v.inventory || {};
+                    }
 
                     // Find and update the size key
                     let sKey = Object.keys(v.sizeStock).find(k => StockManager.clean(k) === StockManager.clean(item.size)) || item.size;
                     const currentVal = StockManager.getLive(pData, item.color, item.size);
                     v.sizeStock[sKey] = Math.max(0, currentVal - qty);
+                    v.inventory = v.sizeStock; // keep both in sync
 
                     // Recalculate stats
                     v.stock = Object.values(v.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
@@ -1319,6 +1334,7 @@ const StockManager = {
                     const newProductTotal = vars.reduce((s, vr) => s + (Number(vr.stock) || 0), 0);
 
                     await pRef.update({ colorVariants: vars, stock: newProductTotal });
+                    console.log(`📉 Stock: ${item.name} | ${item.color}/${sKey}: ${currentVal} → ${v.sizeStock[sKey]} | Total: ${newProductTotal}`);
                 }
             } catch (e) { console.error("Stock Decr Error:", e); }
         }
@@ -1330,55 +1346,38 @@ window.resolveItemStock = (p, v, s) => StockManager.getLive(p, v?.name || v?.nam
 window.normalizeKey = StockManager.clean;
 window.decreaseInventoryStock = StockManager.decrease;
 
-// إعادة المخزون عند إلغاء الطلب
+// ♻️ إعادة المخزون عند إلغاء الطلب - via StockManager
 async function increaseInventoryStock(items) {
     if (!items || !items.length) return;
-    console.log("🔄 Starting stock increment for items:", items);
     for (const item of items) {
         try {
-            const productRef = db.collection('products').doc(item.id);
-            const pDoc = await productRef.get();
-            if (pDoc.exists) {
-                const pData = pDoc.data();
-                let colorVariants = pData.colorVariants || [];
-                
-                // Robust matching for Color using normalizeKey
-                const vIdx = colorVariants.findIndex(v => {
-                    const normVName = normalizeKey(v.name);
-                    const normVNameAr = normalizeKey(v.name_ar);
-                    const targetColor = normalizeKey(item.color);
-                    return normVName === targetColor || normVNameAr === targetColor;
-                });
+            const pRef = db.collection('products').doc(item.id);
+            const pDoc = await pRef.get();
+            if (!pDoc.exists) continue;
 
-                if (vIdx !== -1) {
-                    let variant = colorVariants[vIdx];
-                    if (!variant.sizeStock) variant.sizeStock = {};
-                    
-                    const targetSize = String(item.size || "").trim();
-                    const normTargetSize = normalizeKey(targetSize);
-                    let actualSizeKey = Object.keys(variant.sizeStock).find(k => normalizeKey(k) === normTargetSize) || targetSize;
+            const pData = pDoc.data();
+            let vars = [...(pData.colorVariants || [])];
+            const vIdx = vars.findIndex(v =>
+                StockManager.clean(v.name) === StockManager.clean(item.color) ||
+                StockManager.clean(v.name_ar) === StockManager.clean(item.color)
+            );
 
-                    const currentSizeStock = resolveItemStock(pData, variant, targetSize);
-                    const incrementQty = Number(item.quantity || 1);
-                    
-                    variant.sizeStock[actualSizeKey] = currentSizeStock + incrementQty;
-                    
-                    // Recalculate variant total stock
-                    variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
-                    colorVariants[vIdx] = variant;
-                    
-                    const newTotalStock = colorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
-                    await productRef.update({ colorVariants, stock: newTotalStock });
-                    console.log(`✅ [STOCK SUCCESS] Increased ${item.name} (${item.color}/${item.size}): ${currentSizeStock} -> ${variant.sizeStock[actualSizeKey]}`);
-                } else {
-                    console.warn(`⚠️ [STOCK WARN] Color variant NOT FOUND for "${item.color}" in product ${item.id}`);
-                }
-            } else {
-                console.error(`❌ [STOCK ERROR] Product NOT FOUND: ${item.id}`);
+            if (vIdx !== -1) {
+                const qty = Number(item.quantity) || 1;
+                let v = vars[vIdx];
+                // Support both old (inventory) and new (sizeStock) field names
+                if (!v.sizeStock) v.sizeStock = v.inventory || {};
+                const sKey = Object.keys(v.sizeStock).find(k => StockManager.clean(k) === StockManager.clean(item.size)) || item.size;
+                const currentVal = StockManager.getLive(pData, item.color, item.size);
+                v.sizeStock[sKey] = currentVal + qty;
+                v.inventory = v.sizeStock; // keep in sync
+                v.stock = Object.values(v.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
+                vars[vIdx] = v;
+                const newTotal = vars.reduce((s, vr) => s + (Number(vr.stock) || 0), 0);
+                await pRef.update({ colorVariants: vars, stock: newTotal });
+                console.log(`♻️ Stock Restored: ${item.name} | ${item.color}/${item.size} | +${qty}`);
             }
-        } catch (e) {
-            console.error("❌ [STOCK EXCEPTION]:", e);
-        }
+        } catch (e) { console.error('increaseInventoryStock Error:', e); }
     }
 }
 // التحقق من توفر المخزون قبل الإرسال
@@ -1831,43 +1830,39 @@ async function shipToBosta(orderId) {
         await db.collection('orders').doc(orderId).update({
             trackingNumber: trackingNumber,
             status: "shipping",
-            shippedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            stockUpdated: true 
+            shippedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 🛑 Trigger stock decrement
-        try {
-            await decreaseInventoryStock(order.items);
-            console.log("✅ [SUCCESS] Stock decremented for order:", orderId);
+        // 🛑 Trigger stock decrement (only if not already done)
+        if (!order.stockUpdated) {
+            try {
+                await StockManager.decrease(order.items);
+                // ✅ Mark as deducted ONLY after success
+                await db.collection('orders').doc(orderId).update({ stockUpdated: true });
+                console.log("✅ Stock decremented & marked for order:", orderId);
 
-            // تحقق من نجاح الخصم
-            for (const item of order.items) {
-                const pRef = db.collection('products').doc(item.id);
-                const pDoc = await pRef.get();
-                if (pDoc.exists) {
-                    const pData = pDoc.data();
-                    const v = (pData.colorVariants || []).find(vc =>
-                        normalizeKey(vc.name) === normalizeKey(item.color) ||
-                        normalizeKey(vc.name_ar) === normalizeKey(item.color)
-                    );
-                    const remainingStock = resolveItemStock(pData, v, item.size);
-                    console.log(`📊 [STOCK VERIFICATION] ${item.name} (${item.color}/${item.size}): ${remainingStock} remaining`);
+                // Verification log
+                for (const item of order.items) {
+                    const pDoc = await db.collection('products').doc(item.id).get();
+                    if (pDoc.exists) {
+                        const pData = pDoc.data();
+                        const remaining = StockManager.getLive(pData, item.color, item.size);
+                        console.log(`📊 [VERIFIED] ${item.name} (${item.color}/${item.size}): ${remaining} remaining`);
+                    }
                 }
+            } catch (stockErr) {
+                console.error("⚠️ Stock deduction failed:", stockErr);
+                alert(`⚠️ تم إرسال الطلب لبوسطة بنجاح، لكن حدث خطأ في خصم المخزون:\n${stockErr.message}\n\nيمكنك خصمه يدوياً من المخزون.`);
             }
-
-        } catch (stockErr) {
-            console.error("⚠️ Stock update partial failure:", stockErr);
-            alert(`⚠️ تم إرسال الطلب لبوسطة، ولكن حدثت مشكلة في خصم المخزون:\n${stockErr.message}`);
+        } else {
+            console.log("ℹ️ Stock already deducted for this order, skipping.");
         }
 
         alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
         if (typeof renderInventory === 'function') renderInventory();
         if (typeof loadOrders === 'function') loadOrders();
-
-        // تحديث المخزون في الواجهة فوراً
         if (typeof loadProducts === 'function') loadProducts();
 
-        // تحديث تفاصيل الطلب إذا كان مفتوحاً
         const detailsModal = document.getElementById('details-modal');
         if (detailsModal && detailsModal.getAttribute('data-order-id') === orderId) {
             openOrderDetails(orderId);
@@ -2554,7 +2549,9 @@ function renderInventory(data = products) {
                             <strong style="color:var(--primary); font-size:0.85rem;">${v.name || 'بدون لون'}</strong>
                             <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:5px;">`;
                         sizeArray.forEach(size => {
-                            const qty = v.inventory && v.inventory[size] !== undefined ? v.inventory[size] : 0;
+                            // ✅ Read from sizeStock (new) OR inventory (old) for full compatibility
+                            const stockMap = v.sizeStock || v.inventory || {};
+                            const qty = stockMap[size] !== undefined ? stockMap[size] : 0;
                             stockHtml += `
                                 <div style="display:flex; flex-direction:column; align-items:center; background:#000; border-radius:5px; padding:3px 5px; border:1px solid rgba(255,255,255,0.1);">
                                     <span style="font-size:0.7rem; color:#888;">${size}</span>
@@ -2604,7 +2601,8 @@ window.saveQuickStockBreakdown = async (id) => {
     let totalStock = 0;
     const newVariants = p.colorVariants.map((v, vIndex) => {
         if (!v.sizes) return v;
-        const newInv = { ...(v.inventory || {}) };
+        const stockMap = v.sizeStock || v.inventory || {};
+        const newInv = { ...stockMap };
         const sizeArray = Array.isArray(v.sizes) ? v.sizes : v.sizes.split(',').map(s => s.trim()).filter(Boolean);
         sizeArray.forEach(size => {
             const input = document.getElementById(`quick-stock-${id}-${vIndex}-${size}`);
@@ -2616,7 +2614,8 @@ window.saveQuickStockBreakdown = async (id) => {
                  if (newInv[size]) totalStock += parseInt(newInv[size]);
             }
         });
-        return { ...v, inventory: newInv, stock: Object.values(newInv).reduce((a,b)=>a+parseInt(b),0) };
+        // ✅ Save to both sizeStock (new) and inventory (old) for compatibility
+        return { ...v, sizeStock: newInv, inventory: newInv, stock: Object.values(newInv).reduce((a,b)=>a+(Number(b)||0),0) };
     });
 
     try {
