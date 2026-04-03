@@ -1079,9 +1079,43 @@ async function uploadSizeChart(input) {
         label.innerHTML = originalHTML;
     }
 }
+window.uploadProductImage = uploadProductImage;
 window.uploadSizeChart = uploadSizeChart;
 
-window.uploadProductImage = uploadProductImage;
+async function uploadCategoryImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const parentBtn = input.parentElement;
+    const originalHTML = parentBtn.innerHTML;
+    const preview = document.getElementById('cat-image-preview');
+    const hiddenInput = document.getElementById('cat-image');
+
+    parentBtn.style.pointerEvents = 'none';
+    parentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    try {
+        const imageUrl = await uploadToCloudinary(file);
+        if (hiddenInput) hiddenInput.value = imageUrl;
+        if (preview) {
+            preview.src = imageUrl;
+            preview.style.display = 'block';
+        }
+        console.log("✅ Category image uploaded!");
+    } catch (e) {
+        console.warn("⚠️ Cloudinary failed, falling back to local compression...", e);
+        const compressedBase64 = await compressImage(file, 600, 0.6);
+        if (hiddenInput) hiddenInput.value = compressedBase64;
+        if (preview) {
+            preview.src = compressedBase64;
+            preview.style.display = 'block';
+        }
+    } finally {
+        parentBtn.style.pointerEvents = 'auto';
+        parentBtn.innerHTML = originalHTML;
+    }
+}
+window.uploadCategoryImage = uploadCategoryImage;
 
 async function compressImage(file, maxWidth, quality) {
     return new Promise((resolve, reject) => {
@@ -2732,11 +2766,26 @@ window.openCategoryModal = (id = null) => {
         idInput.value = cat.id;
         document.getElementById('cat-name').value = cat.name || "";
         document.getElementById('cat-name-ar').value = cat.name_ar || "";
-        parentSelect.value = cat.parentId || "";
+        document.getElementById('cat-parent').value = cat.parentId || "";
+        
+        const imgInput = document.getElementById('cat-image');
+        const imgPreview = document.getElementById('cat-image-preview');
+        if (imgInput && imgPreview) {
+            const imgUrl = cat.image || "";
+            imgInput.value = imgUrl;
+            imgPreview.src = imgUrl;
+            imgPreview.style.display = imgUrl ? 'block' : 'none';
+        }
+        
         title.innerText = "تعديل القسم";
     } else {
         form.reset();
         idInput.value = "";
+        const imgPreview = document.getElementById('cat-image-preview');
+        if (imgPreview) {
+            imgPreview.src = "";
+            imgPreview.style.display = 'none';
+        }
         title.innerText = "إضافة قسم جديد";
     }
     modal.style.display = 'flex';
@@ -2752,7 +2801,8 @@ document.getElementById('category-form').onsubmit = async (e) => {
     const data = {
         name: document.getElementById('cat-name').value,
         name_ar: document.getElementById('cat-name-ar').value,
-        parentId: document.getElementById('cat-parent').value || null
+        parentId: document.getElementById('cat-parent').value || null,
+        image: document.getElementById('cat-image').value || ""
     };
     try {
         if (id) {
