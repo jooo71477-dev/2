@@ -1202,70 +1202,13 @@ window.deleteProduct = async (id) => {
 };
 
 // Order Management
-// Helper: Decrement per-size inventory for an order (runs only once per order)
-async function decrementOrderStock(orderId) {
-    try {
-        const orderDoc = await db.collection('orders').doc(orderId).get();
-        const o = orderDoc.data();
-        if (!o || o.stockDecremented) return; // already decremented
-
-        const batch = db.batch();
-        const items = o.items || [];
-
-        for (const item of items) {
-            if (!item.productId && !item.id) continue;
-            const pid = item.productId || item.id;
-            const productRef = db.collection('products').doc(pid);
-            const productDoc = await productRef.get();
-            if (!productDoc.exists) continue;
-
-            const pData = productDoc.data();
-            const qty = item.quantity || 1;
-            const size = item.size;
-            const color = item.color;
-
-            // Try to decrement from colorVariants inventory
-            let updated = false;
-            if (pData.colorVariants && color && size) {
-                const variants = [...(pData.colorVariants || [])];
-                const vi = variants.findIndex(v => v.name === color);
-                if (vi !== -1 && variants[vi].inventory && variants[vi].inventory[size] !== undefined) {
-                    variants[vi].inventory[size] = Math.max(0, (variants[vi].inventory[size] || 0) - qty);
-                    // Recalculate variant stock
-                    variants[vi].stock = Object.values(variants[vi].inventory).reduce((a, b) => a + b, 0);
-                    // Recalculate total product stock
-                    const totalStock = variants.reduce((s, v) => s + (v.stock || 0), 0);
-                    batch.update(productRef, { colorVariants: variants, stock: totalStock });
-                    updated = true;
-                }
-            }
-            // Fallback: decrement simple stock
-            if (!updated) {
-                const newStock = Math.max(0, (pData.stock || 0) - qty);
-                batch.update(productRef, { stock: newStock });
-            }
-        }
-
-        // Mark order as stock-decremented
-        batch.update(db.collection('orders').doc(orderId), { stockDecremented: true });
-        await batch.commit();
-        console.log('✅ Stock decremented for order', orderId);
-    } catch (err) {
-        console.error('Stock decrement error:', err);
-    }
-}
-
 window.updateOrderStatus = async (id, status) => {
     try {
         await db.collection('orders').doc(id).update({ status });
-        // Decrement stock when confirmed or processing
-        if (status === 'confirmed' || status === 'processing' || status === 'shipping') {
-            await decrementOrderStock(id);
-        }
         loadOrders();
         alert("تم تحديث حالة الطلب");
     } catch (err) {
-        alert("خطأ في التحديث: " + err.message);
+        alert("خطأ في التحديث");
     }
 };
 
@@ -1621,9 +1564,6 @@ async function shipToBosta(orderId) {
             status: "shipping",
             shippedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-
-        // Decrement stock on ship
-        await decrementOrderStock(orderId);
 
         alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
         
@@ -2051,40 +1991,38 @@ window.addBannerRow = (data = { desktopUrl: '', mobileUrl: '', title: '', subtit
     if (!container) return;
     const row = document.createElement('div');
     row.className = 'banner-row-item';
-    row.style = 'background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; border: 1px solid var(--border); position: relative; margin-bottom: 20px;';
+    row.style = 'background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; border: 1px solid var(--border); position: relative; margin-bottom: 10px;';
     
     row.innerHTML = `
         <button type="button" onclick="this.closest('.banner-row-item').remove()" style="position: absolute; top: 10px; left: 10px; background: rgba(244, 67, 54, 0.1); border: 1px solid rgba(244, 67, 54, 0.2); color: var(--danger); cursor: pointer; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; z-index: 10;"><i class="fas fa-trash"></i></button>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <div class="form-group">
-                <label>صورة الكمبيوتر (Desktop)</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="text" class="banner-desktop-url" value="${data.desktopUrl}" placeholder="رابط الصورة أو ارفع واحدة..." style="flex: 1;">
-                    <label class="btn-primary" style="padding: 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; font-size: 0.8rem; margin: 0;">
-                        <i class="fas fa-upload"></i> ارفع
-                        <input type="file" accept="image/*" style="display: none;" onchange="uploadBannerPart(this, 'desktop')">
+                <label>صورة الكمبيوتر</label>
+                <input type="hidden" class="banner-desktop-url desktop-url" value="${data.desktopUrl}">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <label class="btn-primary" style="cursor:pointer; padding:8px; font-size:0.8rem; flex:1; text-align:center;">
+                        <i class="fas fa-upload"></i> رفع صورة للموبايل و الكمبيوتر
+                        <input type="file" hidden accept="image/*" onchange="uploadBannerPart(this, 'desktop')">
                     </label>
+                    <img class="desktop-preview" src="${data.desktopUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:5px; display:${data.desktopUrl ? 'block' : 'none'};">
                 </div>
-                <div class="upload-hint" style="font-size: 0.75rem; opacity: 0.5; margin-top: 5px;">مقاس مقترح: 1920x600</div>
-                <img class="desktop-preview" src="${data.desktopUrl}" style="width: 100%; max-height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px; display: ${data.desktopUrl ? 'block' : 'none'}; border: 1px solid rgba(255,255,255,0.1);">
+                <div class="upload-hint" style="font-size:0.75rem; opacity:0.6; margin-top:5px;"></div>
             </div>
-            
             <div class="form-group">
-                <label>صورة الموبايل (Mobile)</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="text" class="banner-mobile-url" value="${data.mobileUrl}" placeholder="رابط الصورة أو ارفع واحدة..." style="flex: 1;">
-                    <label class="btn-primary" style="padding: 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; font-size: 0.8rem; margin: 0;">
-                        <i class="fas fa-upload"></i> ارفع
-                        <input type="file" accept="image/*" style="display: none;" onchange="uploadBannerPart(this, 'mobile')">
+                <label>صورة الموبايل (أختياري لو عاوز صورة مختلفة)</label>
+                <input type="hidden" class="banner-mobile-url mobile-url" value="${data.mobileUrl}">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <label class="btn-primary" style="cursor:pointer; padding:8px; font-size:0.8rem; flex:1; text-align:center;">
+                        <i class="fas fa-upload"></i> رفع صورة للموبايل فقط
+                        <input type="file" hidden accept="image/*" onchange="uploadBannerPart(this, 'mobile')">
                     </label>
+                    <img class="mobile-preview" src="${data.mobileUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:5px; display:${data.mobileUrl ? 'block' : 'none'};">
                 </div>
-                <div class="upload-hint" style="font-size: 0.75rem; opacity: 0.5; margin-top: 5px;">مقاس مقترح: 800x1200</div>
-                <img class="mobile-preview" src="${data.mobileUrl}" style="width: 100%; max-height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px; display: ${data.mobileUrl ? 'block' : 'none'}; border: 1px solid rgba(255,255,255,0.1);">
+                <div class="upload-hint" style="font-size:0.75rem; opacity:0.6; margin-top:5px;"></div>
             </div>
         </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
             <div class="form-group">
                 <label>العنوان الرئيسي</label>
                 <input type="text" class="banner-title" value="${data.title}" placeholder="...">
@@ -2098,54 +2036,35 @@ window.addBannerRow = (data = { desktopUrl: '', mobileUrl: '', title: '', subtit
     container.appendChild(row);
 };
 
-window.compressImageToBase64 = (file, maxWidth, quality) => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = event => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
-                }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', quality));
-            };
-            img.onerror = error => reject(error);
-        };
-        reader.onerror = error => reject(error);
-    });
-};
-
 window.uploadBannerPart = async (input, type) => {
     const file = input.files[0];
     if (!file) return;
     
     const row = input.closest('.banner-row-item');
     const preview = row.querySelector(`.${type}-preview`);
-    const urlInput = row.querySelector(`.banner-${type}-url`);
-    const statusHint = input.parentElement.querySelector('.upload-hint');
+    const urlInput = row.querySelector(`.${type}-url`);
+    const statusHint = input.parentElement.parentElement.parentElement.querySelector('.upload-hint');
     const originalHint = statusHint.innerText;
 
-    statusHint.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحويل...';
+    statusHint.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الرفع...';
     try {
-        // Use higher resolution for desktop, smaller for mobile
-        const base64 = await compressImageToBase64(file, type === 'desktop' ? 1440 : 800, 0.7);
-        urlInput.value = base64;
-        preview.src = base64;
+        const url = await uploadToCloudinary(file);
+        urlInput.value = url;
+        preview.src = url;
         preview.style.display = 'block';
         statusHint.innerHTML = '✅ تم التجهيز';
     } catch (e) {
-        alert("خطأ في معالجة الجزء المختار");
-        statusHint.innerHTML = '❌ فشل المعالجة';
+        statusHint.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحويل للحفظ محلياً... المرجو الانتظار';
+        try {
+            const base64 = await compressImageToBase64(file, type === 'desktop' ? 1440 : 800, 0.7);
+            urlInput.value = base64;
+            preview.src = base64;
+            preview.style.display = 'block';
+            statusHint.innerHTML = '✅ تم التجهيز (بتقنية الضغط الداخلي)';
+        } catch (err) {
+            alert("خطأ في معالجة الجزء المختار");
+            statusHint.innerHTML = '❌ فشل المعالجة';
+        }
     }
 };
 
@@ -2215,14 +2134,10 @@ document.getElementById('cms-form').onsubmit = async (e) => {
         const bannerRows = document.querySelectorAll('.banner-row-item');
         const banners = [];
         bannerRows.forEach(row => {
-            const dInput = row.querySelector('.banner-desktop-url');
-            const mInput = row.querySelector('.banner-mobile-url');
+            const dUrl = row.querySelector('.desktop-url').value;
+            const mUrl = row.querySelector('.mobile-url').value;
             const title = row.querySelector('.banner-title').value;
             const subtitle = row.querySelector('.banner-subtitle').value;
-            
-            const dUrl = dInput ? dInput.value : '';
-            const mUrl = mInput ? mInput.value : '';
-
             if (dUrl || mUrl) {
                 banners.push({
                     desktopUrl: dUrl,
@@ -2321,34 +2236,105 @@ window.addEventListener('DOMContentLoaded', () => {
 function renderInventory(data = products) {
     const list = document.getElementById('inventory-list');
     if (!list) return;
+
     list.innerHTML = data.map(p => {
+        let stockHtml = '';
+        if (p.colorVariants && p.colorVariants.length > 0) {
+            stockHtml = \`<div style="display:flex; flex-direction:column; gap:10px;">\`;
+            p.colorVariants.forEach((v, vIndex) => {
+                if (v.sizes) {
+                    // Split the sizes if it's a string from legacy schema, or Array
+                    const sizeArray = Array.isArray(v.sizes) ? v.sizes : v.sizes.split(',').map(s => s.trim()).filter(Boolean);
+                    if (sizeArray.length > 0) {
+                        stockHtml += \`<div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:8px;">
+                            <strong style="color:var(--primary); font-size:0.85rem;">\${v.name || 'بدون لون'}</strong>
+                            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:5px;">\`;
+                        sizeArray.forEach(size => {
+                            const qty = v.inventory && v.inventory[size] !== undefined ? v.inventory[size] : 0;
+                            stockHtml += \`
+                                <div style="display:flex; flex-direction:column; align-items:center; background:#000; border-radius:5px; padding:3px 5px; border:1px solid rgba(255,255,255,0.1);">
+                                    <span style="font-size:0.7rem; color:#888;">\${size}</span>
+                                    <input type="number" id="quick-stock-\${p.id}-\${vIndex}-\${size}" value="\${qty}" style="width:40px; padding:2px; font-size:0.8rem; text-align:center; background:transparent; border:none; color:#fff; border-bottom:1px solid var(--primary);">
+                                </div>
+                            \`;
+                        });
+                        stockHtml += \`</div></div>\`;
+                    }
+                }
+            });
+            stockHtml += \`</div>\`;
+            if (stockHtml === \`<div style="display:flex; flex-direction:column; gap:10px;"></div>\`) {
+                 stockHtml = \`<span style="opacity:0.5;">لا توجد مقاسات</span>\`;
+            }
+        } else {
+            stockHtml = \`<span style="opacity:0.5;">لا توجد الوان / مقاسات محددة</span>\`;
+        }
+
         const stockStatus = p.stock <= 5 ? '<span style="color:var(--danger)">منخفض جداً</span>' : (p.stock <= 15 ? '<span style="color:var(--warning)">متوسط</span>' : '<span style="color:var(--success)">متوفر</span>');
-        return `
+        return \`
             <tr>
                 <td>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="${p.image}" class="product-img">
-                        <span>${p.name}</span>
+                        <img src="\${p.image || p.thumbnail}" class="product-img" onerror="this.style.display='none'">
+                        <span>\${p.name}</span>
                     </div>
                 </td>
-                <td style="font-weight:bold; font-size:1.1rem;">${p.stock || 0}</td>
+                <td>\${stockHtml}</td>
                 <td>
-                    <div style="display:flex; gap:5px;">
-                        <input type="number" id="quick-stock-${p.id}" value="${p.stock || 0}" style="width:70px; padding:5px;">
-                        <button onclick="updateQuickStock('${p.id}')" class="btn-primary" style="padding:5px 10px;"><i class="fas fa-save"></i></button>
-                    </div>
+                    <button onclick="saveQuickStockBreakdown('\${p.id}')" class="btn-primary" style="padding:8px 15px; font-size:0.85rem;"><i class="fas fa-save"></i> حفظ المقاسات</button>
+                    <div style="font-size:0.8rem; margin-top:5px; opacity:0.7;">إجمالي الكمية: \${p.stock || 0}</div>
                 </td>
-                <td>${stockStatus}</td>
+                <td>\${stockStatus}</td>
             </tr>
-        `;
+        \`;
     }).join('');
 }
 
+window.saveQuickStockBreakdown = async (id) => {
+    const p = products.find(x => x.id === id);
+    if (!p || !p.colorVariants) {
+        alert("لا يوجد تفاصيل مخزون لهذا المنتج");
+        return;
+    }
+    
+    let totalStock = 0;
+    const newVariants = p.colorVariants.map((v, vIndex) => {
+        if (!v.sizes) return v;
+        const newInv = { ...(v.inventory || {}) };
+        const sizeArray = Array.isArray(v.sizes) ? v.sizes : v.sizes.split(',').map(s => s.trim()).filter(Boolean);
+        sizeArray.forEach(size => {
+            const input = document.getElementById(\`quick-stock-\${id}-\${vIndex}-\${size}\`);
+            if (input) {
+                const val = parseInt(input.value) || 0;
+                newInv[size] = val;
+                totalStock += val;
+            } else {
+                 if (newInv[size]) totalStock += parseInt(newInv[size]);
+            }
+        });
+        return { ...v, inventory: newInv, stock: Object.values(newInv).reduce((a,b)=>a+parseInt(b),0) };
+    });
+
+    try {
+        await db.collection('products').doc(id).update({
+            colorVariants: newVariants,
+            stock: totalStock
+        });
+        loadProducts(); // automatically reloads the UI via snapshot usually, but fallback
+        alert("تم تحديث وحفظ المخزون لكل المقاسات بنجاح");
+    } catch (e) {
+        alert("خطأ في الحفظ");
+    }
+};
+
 window.updateQuickStock = async (id) => {
-    const newVal = Number(document.getElementById(`quick-stock-${id}`).value);
+    // Kept for backward compatibility if any button uses it
+    const el = document.getElementById(`quick-stock-${id}`);
+    if(!el) return;
+    const newVal = Number(el.value);
     try {
         await db.collection('products').doc(id).update({ stock: newVal });
-        loadProducts(); // Reload to update state
+        loadProducts(); 
         alert("تم تحديث المخزون");
     } catch (e) { alert("خطأ في التحديث"); }
 };
