@@ -1298,17 +1298,11 @@ function resolveItemStock(productData, variantData, targetSize) {
     const normalizedTargetSize = normalizeKey(targetSize || "");
     const oneSizeSynonyms = ["onesize", "مقاسواحد", "مقاسموجد", "فريسايز", "مقاسمواحد", "مقاسموحد"];
 
-    console.log(`📦 [RESOLVE DEBUG] Checking stock for "${targetSize}" (Normalized: ${normalizedTargetSize})`);
-
     if (variantData && variantData.sizeStock && Object.keys(variantData.sizeStock).length > 0) {
-        console.log("   --> Available keys in sizeStock:", Object.keys(variantData.sizeStock));
-        
         // 1. Exact match
         if (variantData.sizeStock[targetSize] !== undefined) {
             const exactVal = Number(variantData.sizeStock[targetSize]) || 0;
-            // 🛑 CRITICAL FIX: If exact size is 0 but variant total is > 0 AND it's a One Size, use variant total
             if (exactVal === 0 && Number(variantData.stock) > 0 && oneSizeSynonyms.includes(normalizedTargetSize)) {
-                console.log(`   --> Size is 0 but total is ${variantData.stock}. Using total stock for One Size.`);
                 return Number(variantData.stock);
             }
             return exactVal;
@@ -1319,7 +1313,6 @@ function resolveItemStock(productData, variantData, targetSize) {
         if (matchKey) {
             const normVal = Number(variantData.sizeStock[matchKey]) || 0;
              if (normVal === 0 && Number(variantData.stock) > 0 && oneSizeSynonyms.includes(normalizedTargetSize)) {
-                console.log(`   --> Normalized Size is 0 but total is ${variantData.stock}. Using total stock.`);
                 return Number(variantData.stock);
             }
             return normVal;
@@ -1327,25 +1320,19 @@ function resolveItemStock(productData, variantData, targetSize) {
 
         // 3. One Size Synonyms / Fallback
         if (oneSizeSynonyms.includes(normalizedTargetSize)) {
-            // Find any key that sounds like One Size
             const fallbackKey = Object.keys(variantData.sizeStock).find(k => oneSizeSynonyms.includes(normalizeKey(k)));
             if (fallbackKey) return Number(variantData.sizeStock[fallbackKey]) || 0;
 
-            // Absolute fallback: if asking for One Size and any stock exists, take the first non-zero size
             const nonEmptyKey = Object.keys(variantData.sizeStock).find(k => Number(variantData.sizeStock[k]) > 0);
             if (nonEmptyKey) return Number(variantData.sizeStock[nonEmptyKey]) || 0;
         }
     }
 
-    // 4. Fallback to variant total stock
     if (variantData && variantData.stock !== undefined && variantData.stock !== null) {
-        console.log(`   --> Falling back to variant total stock: ${variantData.stock}`);
         return Number(variantData.stock) || 0;
     }
 
-    // 5. Fallback to product total stock
     if (productData && productData.stock !== undefined && productData.stock !== null) {
-        console.log(`   --> Falling back to product general stock: ${productData.stock}`);
         return Number(productData.stock) || 0;
     }
 
@@ -1429,7 +1416,8 @@ async function checkStockAvailability(items) {
 
                     if (availableStock < requiredQty) {
                         const existingSizes = Object.keys(variant.sizeStock || {}).map(k => `${k}: ${variant.sizeStock[k]}`).join(', ') || 'لا يوجد مقاسات مخزنة';
-                        throw new Error(`المنتج "${item.name}" (${item.color}/${item.size}) غير متوفر. 
+                        throw new Error(`[الملف: js/admin.js] 
+خطأ في فحص المخزون: المنتج "${item.name}" (${item.color}/${item.size}) غير متوفر. 
 مطلوب: ${requiredQty}, متاح لهذا المقاس: ${availableStock}. 
 المخزون المسجل لهذا اللون حالياً: [ ${existingSizes} ] 
 (إجمالي هذا اللون: ${variant.stock || 0})`);
