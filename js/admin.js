@@ -1417,7 +1417,11 @@ async function checkStockAvailability(items) {
                     console.log("🧪 STOCK CHECK", item.name, item.color, item.size, "availableStock", availableStock, "requiredQty", requiredQty, "variantStock", variant.stock, "productStock", pData.stock);
 
                     if (availableStock < requiredQty) {
-                        throw new Error(`المنتج "${item.name}" (${item.color}/${item.size}) غير متوفر بالكمية المطلوبة. متوفر: ${availableStock}, مطلوب: ${requiredQty}`);
+                        const existingSizes = Object.keys(variant.sizeStock || {}).map(k => `${k}: ${variant.sizeStock[k]}`).join(', ') || 'لا يوجد مقاسات مخزنة';
+                        throw new Error(`المنتج "${item.name}" (${item.color}/${item.size}) غير متوفر. 
+مطلوب: ${requiredQty}, متاح لهذا المقاس: ${availableStock}. 
+المخزون المسجل لهذا اللون حالياً: [ ${existingSizes} ] 
+(إجمالي هذا اللون: ${variant.stock || 0})`);
                     }
                 } else {
                     // إذا اللون غير مطابق، نفحص أول variant كfallback
