@@ -1261,105 +1261,74 @@ window.updateOrderStatus = async (id, status) => {
     }
 };
 
-async function decreaseInventoryStock(items) {
-    if (!items || !items.length) return;
-    console.log("🚚 Starting stock decrement for items:", items);
-    for (const item of items) {
-        try {
-            const productRef = db.collection('products').doc(item.id);
-            const pDoc = await productRef.get();
-            if (pDoc.exists) {
-                const pData = pDoc.data();
-                let colorVariants = pData.colorVariants || [];
-                
-                // Robust matching for Color using your normalizeKey helper
-                const vIdx = colorVariants.findIndex(v => {
-                    const normVName = normalizeKey(v.name);
-                    const normVNameAr = normalizeKey(v.name_ar);
-                    const targetColor = normalizeKey(item.color);
-                    return normVName === targetColor || normVNameAr === targetColor;
-                });
+// ==========================================
+// 🛡️ UNIFIED INVENTORY MANAGER v5.0
+// ==========================================
+const StockManager = {
+    // 🛠️ Simple key cleaner
+    clean: (s) => String(s || "").toLowerCase().trim().replace(/[^a-z0-9\u0600-\u06FF]+/g, ""),
 
-                if (vIdx !== -1) {
-                    let variant = colorVariants[vIdx];
-                    if (!variant.sizeStock) variant.sizeStock = {};
-                    
-                    const targetSize = String(item.size || "").trim();
-                    const normTargetSize = normalizeKey(targetSize);
-                    
-                    // 🔍 Find existing key or use target
-                    let actualSizeKey = Object.keys(variant.sizeStock).find(k => normalizeKey(k) === normTargetSize) || targetSize;
-                    
-                    const currentSizeStock = resolveItemStock(pData, variant, targetSize);
-                    const decrementQty = Number(item.quantity || 1);
-                    const nextSizeStock = Math.max(0, currentSizeStock - decrementQty);
-                    
-                    // 🛑 Force update the existing key and ensure no duplicates
-                    variant.sizeStock[actualSizeKey] = nextSizeStock;
-                    
-                    // Cleanup: If we have multiple keys that normalize to the same thing, merge them into actualSizeKey
-                    Object.keys(variant.sizeStock).forEach(k => {
-                        if (k !== actualSizeKey && normalizeKey(k) === normTargetSize) {
-                            delete variant.sizeStock[k];
-                        }
-                    });
+    // 🔍 The Master Lookup (No more "1" while "14" exists!)
+    getLive: (pData, targetColor, targetSize) => {
+        if (!pData) return 0;
+        const cKey = StockManager.clean(targetColor);
+        const sKey = StockManager.clean(targetSize);
 
-                    // Recalculate variant total stock
-                    variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
-                    colorVariants[vIdx] = variant;
-                    
-                    const newTotalStock = colorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
-                    await productRef.update({ colorVariants, stock: newTotalStock });
-                    console.log(`✅ [SYNC SUCCESS] ${item.name} | ${item.color} | ${actualSizeKey}: ${currentSizeStock} -> ${nextSizeStock} (New Total: ${newTotalStock})`);
-                } else {
-                    const availableColors = colorVariants.map(v => `${v.name}/${v.name_ar}`).join(', ');
-                    throw new Error(`لم يتم العثور على اللون "${item.color}" للمنتج "${item.name}". الألوان المتاحة: [ ${availableColors} ]`);
-                }
-            } else {
-                console.error(`❌ [STOCK ERROR] Product NOT FOUND: ${item.id}`);
+        // 1. Find variant by name
+        const v = (pData.colorVariants || []).find(v => StockManager.clean(v.name) === cKey || StockManager.clean(v.name_ar) === cKey);
+        if (!v) return Number(pData.stock) || 0; // Fallback to overall product stock
+
+        // 2. Try to find the exact size
+        if (v.sizeStock) {
+            const actualKey = Object.keys(v.sizeStock).find(k => StockManager.clean(k) === sKey);
+            if (actualKey && v.sizeStock[actualKey] !== undefined) {
+                return Number(v.sizeStock[actualKey]) || 0;
             }
-        } catch (e) {
-            console.error("❌ [STOCK ERROR]:", e);
-            throw e;
+        }
+
+        // 3. 🚨 THE CORE FIX: If specific size not found, ALWAYS return the variant's total stock
+        return Number(v.stock) || 0;
+    },
+
+    // 📉 Decrease Logic
+    decrease: async (items) => {
+        if (!items || !items.length) return;
+        for (const item of items) {
+            try {
+                const pRef = db.collection('products').doc(item.id);
+                const pDoc = await pRef.get();
+                if (!pDoc.exists) continue;
+
+                const pData = pDoc.data();
+                let vars = [...(pData.colorVariants || [])];
+                const vIdx = vars.findIndex(v => StockManager.clean(v.name) === StockManager.clean(item.color) || StockManager.clean(v.name_ar) === StockManager.clean(item.color));
+                
+                if (vIdx !== -1) {
+                    const qty = Number(item.quantity) || 1;
+                    let v = vars[vIdx];
+                    if (!v.sizeStock) v.sizeStock = {};
+
+                    // Find and update the size key
+                    let sKey = Object.keys(v.sizeStock).find(k => StockManager.clean(k) === StockManager.clean(item.size)) || item.size;
+                    const currentVal = StockManager.getLive(pData, item.color, item.size);
+                    v.sizeStock[sKey] = Math.max(0, currentVal - qty);
+
+                    // Recalculate stats
+                    v.stock = Object.values(v.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
+                    vars[vIdx] = v;
+                    const newProductTotal = vars.reduce((s, vr) => s + (Number(vr.stock) || 0), 0);
+
+                    await pRef.update({ colorVariants: vars, stock: newProductTotal });
+                }
+            } catch (e) { console.error("Stock Decr Error:", e); }
         }
     }
-}
-window.decreaseInventoryStock = decreaseInventoryStock;
+};
 
-function normalizeKey(value) {
-    return String(value || "").toLowerCase().trim().replace(/[^a-z0-9\u0600-\u06FF]+/g, "");
-}
-
-function resolveItemStock(productData, variantData, targetSize) {
-    if (!variantData) return Number(productData?.stock) || 0;
-
-    const normalizedTargetSize = normalizeKey(targetSize || "");
-    const oneSizeSynonyms = ["onesize", "one", "مقاسواحد", "مقاسموجد", "فريسايز", "مقاسموحد", "موحد", "عادي", ""];
-    const isOneSize = oneSizeSynonyms.includes(normalizedTargetSize);
-
-    // 1. Precise lookup in sizeStock
-    if (variantData.sizeStock) {
-        // Try exact match first
-        if (variantData.sizeStock[targetSize] !== undefined) {
-             const val = Number(variantData.sizeStock[targetSize]);
-             if (val > 0) return val;
-        }
-        // Try normalized match
-        const matchKey = Object.keys(variantData.sizeStock).find(k => normalizeKey(k) === normalizedTargetSize);
-        if (matchKey && variantData.sizeStock[matchKey] !== undefined) {
-            const val = Number(variantData.sizeStock[matchKey]);
-            if (val > 0) return val;
-        }
-    }
-
-    // 2. Fallback to general variant stock (Crucial for 15 pieces case)
-    if (variantData.stock !== undefined && variantData.stock !== null) {
-        return Number(variantData.stock) || 0;
-    }
-
-    // 3. Last fallback
-    return Number(productData?.stock) || 0;
-}
+// 🏁 Global Exports (Overwriting all old logic)
+window.resolveItemStock = (p, v, s) => StockManager.getLive(p, v?.name || v?.name_ar || "", s);
+window.normalizeKey = StockManager.clean;
+window.decreaseInventoryStock = StockManager.decrease;
 
 // إعادة المخزون عند إلغاء الطلب
 async function increaseInventoryStock(items) {
