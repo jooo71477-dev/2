@@ -1011,19 +1011,29 @@ function renderHomeCategories() {
         `;
     }).join('');
 
-    // Attach scroll logic
-    rootCats.forEach((root, rootIdx) => {
-        const grid = document.getElementById(`cat-grid-${rootIdx}`);
-        const dotsRoot = document.getElementById(`dots-${rootIdx}`);
-        if (grid && dotsRoot) {
-            const dots = dotsRoot.querySelectorAll('.scroll-dot');
-            grid.onscroll = () => {
-                const scrollPercent = grid.scrollLeft / (grid.scrollWidth - grid.clientWidth);
-                const idx = Math.min(dots.length - 1, Math.ceil(scrollPercent * (dots.length - 1) * 1.1));
-                dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-            };
-        }
-    });
+    // Attach scroll logic with a slight delay for DOM sync
+    setTimeout(() => {
+        rootCats.forEach((root, rootIdx) => {
+            const grid = document.getElementById(`cat-grid-${rootIdx}`);
+            const dotsRoot = document.getElementById(`dots-${rootIdx}`);
+            if (grid && dotsRoot) {
+                const dots = dotsRoot.querySelectorAll('.scroll-dot');
+                if (grid.scrollWidth <= grid.clientWidth) {
+                    dotsRoot.style.display = 'none'; // Hide if not scrollable
+                    return;
+                }
+                dotsRoot.style.display = 'flex';
+                grid.onscroll = () => {
+                    const scrollLeft = Math.abs(grid.scrollLeft);
+                    const maxScroll = grid.scrollWidth - grid.clientWidth;
+                    const scrollPercent = scrollLeft / (maxScroll || 1);
+                    const idx = Math.min(dots.length - 1, Math.round(scrollPercent * (dots.length - 1)));
+                    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+                };
+                grid.dispatchEvent(new Event('scroll')); // Initial state
+            }
+        });
+    }, 100);
 }
 
 window.openCategoryView = (catId) => {
