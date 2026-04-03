@@ -44,9 +44,15 @@ if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
             applyRoleRestrictions();
 
             // Load correct tab
-            if (adminRole === 'products') showTab('products');
-            else if (adminRole === 'orders') showTab('orders');
-            else if (adminRole === 'all') showTab('products');
+            if (adminRole === 'all') {
+                showTab('products');
+                loadOrders(); // Start background listener for new order count
+            } else if (adminRole === 'orders') {
+                showTab('orders');
+                loadOrders();
+            } else if (adminRole === 'products') {
+                showTab('products');
+            }
 
             initMessaging();
         } else {
@@ -168,9 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 applyRoleRestrictions();
 
                 // Explicitly show the correct tab after login
-                if (role === 'products') { showTab('products'); }
-                else if (role === 'orders') { showTab('orders'); }
-                else if (role === 'all') { showTab('products'); }
+                if (role === 'products') { showTab('products'); loadProducts(); }
+                else if (role === 'orders') { showTab('orders'); loadOrders(); }
+                else if (role === 'all') { showTab('products'); loadProducts(); loadOrders(); }
 
             } catch (err) {
                 console.error(err);
@@ -184,7 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (firebase.auth().currentUser) {
         // Give it a tiny delay to ensure everything is ready
         setTimeout(() => {
-            if (adminRole === 'products' || adminRole === 'all') { showTab('products'); loadProducts(); }
+            if (adminRole === 'all') { showTab('products'); loadProducts(); loadOrders(); }
+            else if (adminRole === 'products') { showTab('products'); loadProducts(); }
             else if (adminRole === 'orders') { showTab('orders'); loadOrders(); }
         }, 500);
     }

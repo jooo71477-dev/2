@@ -1204,13 +1204,55 @@ window.deleteProduct = async (id) => {
 // Order Management
 window.updateOrderStatus = async (id, status) => {
     try {
-        await db.collection('orders').doc(id).update({ status });
-        loadOrders();
+        const orderRef = db.collection('orders').doc(id);
+        const orderDoc = await orderRef.get();
+        if (!orderDoc.exists) return;
+        const orderData = orderDoc.data();
+
+        // 🛑 Decrease stock only if status changes to "shipped" AND not already updated
+        if ((status === 'shipping' || status === 'تم الشحن') && !orderData.stockUpdated) {
+            await decreaseInventoryStock(orderData.items);
+            await orderRef.update({ status, stockUpdated: true });
+        } else {
+            await orderRef.update({ status });
+        }
+
+        if (typeof loadOrders === 'function') loadOrders();
         alert("تم تحديث حالة الطلب");
     } catch (err) {
+        console.error("Update Status Error:", err);
         alert("خطأ في التحديث");
     }
 };
+
+async function decreaseInventoryStock(items) {
+    if (!items || !items.length) return;
+    for (const item of items) {
+        try {
+            const productRef = db.collection('products').doc(item.id);
+            const pDoc = await productRef.get();
+            if (pDoc.exists) {
+                const pData = pDoc.data();
+                let colorVariants = pData.colorVariants || [];
+                const vIdx = colorVariants.findIndex(v => v.name === item.color);
+                if (vIdx !== -1) {
+                    let variant = colorVariants[vIdx];
+                    if (!variant.sizeStock) variant.sizeStock = {};
+                    const currentStock = Number(variant.sizeStock[item.size]) || 0;
+                    variant.sizeStock[item.size] = Math.max(0, currentStock - (item.quantity || 1));
+                    variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
+                    colorVariants[vIdx] = variant;
+                    const newTotalStock = colorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+                    await productRef.update({ colorVariants, stock: newTotalStock });
+                    console.log(`📉 Stock decreased for ${item.name} (${item.color}/${item.size})`);
+                }
+            }
+        } catch (e) {
+            console.error("Stock decrement error:", e);
+        }
+    }
+}
+window.decreaseInventoryStock = decreaseInventoryStock;
 
 // Search Functionality
 document.getElementById('order-search')?.addEventListener('input', (e) => {
@@ -1562,8 +1604,12 @@ async function shipToBosta(orderId) {
         await db.collection('orders').doc(orderId).update({
             trackingNumber: trackingNumber,
             status: "shipping",
-            shippedAt: firebase.firestore.FieldValue.serverTimestamp()
+            shippedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            stockUpdated: true 
         });
+
+        // 🛑 Trigger stock decrement
+        await decreaseInventoryStock(order.items);
 
         alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
         
