@@ -1305,13 +1305,24 @@ function resolveItemStock(productData, variantData, targetSize) {
         
         // 1. Exact match
         if (variantData.sizeStock[targetSize] !== undefined) {
-            return Number(variantData.sizeStock[targetSize]) || 0;
+            const exactVal = Number(variantData.sizeStock[targetSize]) || 0;
+            // 🛑 CRITICAL FIX: If exact size is 0 but variant total is > 0 AND it's a One Size, use variant total
+            if (exactVal === 0 && Number(variantData.stock) > 0 && oneSizeSynonyms.includes(normalizedTargetSize)) {
+                console.log(`   --> Size is 0 but total is ${variantData.stock}. Using total stock for One Size.`);
+                return Number(variantData.stock);
+            }
+            return exactVal;
         }
 
         // 2. Normalized match
         const matchKey = Object.keys(variantData.sizeStock).find(k => normalizeKey(k) === normalizedTargetSize);
         if (matchKey) {
-            return Number(variantData.sizeStock[matchKey]) || 0;
+            const normVal = Number(variantData.sizeStock[matchKey]) || 0;
+             if (normVal === 0 && Number(variantData.stock) > 0 && oneSizeSynonyms.includes(normalizedTargetSize)) {
+                console.log(`   --> Normalized Size is 0 but total is ${variantData.stock}. Using total stock.`);
+                return Number(variantData.stock);
+            }
+            return normVal;
         }
 
         // 3. One Size Synonyms / Fallback
