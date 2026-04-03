@@ -1260,11 +1260,15 @@ async function decreaseInventoryStock(items) {
                     if (!variant.sizeStock) variant.sizeStock = {};
                     
                     const targetSize = String(item.size || "").trim();
-                    const currentStock = Number(variant.sizeStock[targetSize]) || 0;
+
+                    const currentSizeStock = (variant.sizeStock && variant.sizeStock[targetSize] !== undefined)
+                        ? Number(variant.sizeStock[targetSize])
+                        : (variant.stock !== undefined ? Number(variant.stock) : (pData.stock !== undefined ? Number(pData.stock) : 0));
+
                     const decrementQty = Number(item.quantity || 1);
-                    
-                    variant.sizeStock[targetSize] = Math.max(0, currentStock - decrementQty);
-                    
+                    const nextSizeStock = Math.max(0, currentSizeStock - decrementQty);
+                    variant.sizeStock[targetSize] = nextSizeStock;
+
                     // Recalculate variant total stock
                     variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
                     colorVariants[vIdx] = variant;
@@ -1310,10 +1314,12 @@ async function increaseInventoryStock(items) {
                     if (!variant.sizeStock) variant.sizeStock = {};
                     
                     const targetSize = String(item.size || "").trim();
-                    const currentStock = Number(variant.sizeStock[targetSize]) || 0;
+                    const currentSizeStock = (variant.sizeStock && variant.sizeStock[targetSize] !== undefined)
+                        ? Number(variant.sizeStock[targetSize])
+                        : (variant.stock !== undefined ? Number(variant.stock) : (pData.stock !== undefined ? Number(pData.stock) : 0));
                     const incrementQty = Number(item.quantity || 1);
                     
-                    variant.sizeStock[targetSize] = currentStock + incrementQty;
+                    variant.sizeStock[targetSize] = currentSizeStock + incrementQty;
                     
                     // Recalculate variant total stock
                     variant.stock = Object.values(variant.sizeStock).reduce((a, b) => a + (Number(b) || 0), 0);
@@ -1353,7 +1359,16 @@ async function checkStockAvailability(items) {
                 if (vIdx !== -1) {
                     const variant = colorVariants[vIdx];
                     const targetSize = String(item.size || "").trim();
-                    const availableStock = Number(variant.sizeStock?.[targetSize]) || 0;
+
+                    let availableStock = 0;
+                    if (variant.sizeStock && variant.sizeStock[targetSize] !== undefined) {
+                        availableStock = Number(variant.sizeStock[targetSize]) || 0;
+                    } else if (variant.stock !== undefined && variant.stock !== null) {
+                        availableStock = Number(variant.stock) || 0;
+                    } else if (pData.stock !== undefined && pData.stock !== null) {
+                        availableStock = Number(pData.stock) || 0;
+                    }
+
                     const requiredQty = Number(item.quantity || 1);
                     
                     if (availableStock < requiredQty) {
