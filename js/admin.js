@@ -1331,48 +1331,34 @@ function normalizeKey(value) {
 }
 
 function resolveItemStock(productData, variantData, targetSize) {
+    if (!variantData) return Number(productData?.stock) || 0;
+
     const normalizedTargetSize = normalizeKey(targetSize || "");
-    const oneSizeSynonyms = ["onesize", "مقاسواحد", "مقاسموجد", "فريسايز", "مقاسمواحد", "مقاسموحد"];
+    const oneSizeSynonyms = ["onesize", "one", "مقاسواحد", "مقاسموجد", "فريسايز", "مقاسموحد", "موحد", "عادي", ""];
+    const isOneSize = oneSizeSynonyms.includes(normalizedTargetSize);
 
-    if (variantData && variantData.sizeStock && Object.keys(variantData.sizeStock).length > 0) {
-        // 1. Exact match
+    // 1. Precise lookup in sizeStock
+    if (variantData.sizeStock) {
+        // Try exact match first
         if (variantData.sizeStock[targetSize] !== undefined) {
-            const exactVal = Number(variantData.sizeStock[targetSize]) || 0;
-            if (exactVal === 0 && Number(variantData.stock) > 0 && oneSizeSynonyms.includes(normalizedTargetSize)) {
-                return Number(variantData.stock);
-            }
-            return exactVal;
+             const val = Number(variantData.sizeStock[targetSize]);
+             if (val > 0) return val;
         }
-
-        // 2. Normalized match
+        // Try normalized match
         const matchKey = Object.keys(variantData.sizeStock).find(k => normalizeKey(k) === normalizedTargetSize);
-        if (matchKey) {
-            const normVal = Number(variantData.sizeStock[matchKey]) || 0;
-             if (normVal === 0 && Number(variantData.stock) > 0 && oneSizeSynonyms.includes(normalizedTargetSize)) {
-                return Number(variantData.stock);
-            }
-            return normVal;
-        }
-
-        // 3. One Size Synonyms / Fallback
-        if (oneSizeSynonyms.includes(normalizedTargetSize)) {
-            const fallbackKey = Object.keys(variantData.sizeStock).find(k => oneSizeSynonyms.includes(normalizeKey(k)));
-            if (fallbackKey) return Number(variantData.sizeStock[fallbackKey]) || 0;
-
-            const nonEmptyKey = Object.keys(variantData.sizeStock).find(k => Number(variantData.sizeStock[k]) > 0);
-            if (nonEmptyKey) return Number(variantData.sizeStock[nonEmptyKey]) || 0;
+        if (matchKey && variantData.sizeStock[matchKey] !== undefined) {
+            const val = Number(variantData.sizeStock[matchKey]);
+            if (val > 0) return val;
         }
     }
 
-    if (variantData && variantData.stock !== undefined && variantData.stock !== null) {
+    // 2. Fallback to general variant stock (Crucial for 15 pieces case)
+    if (variantData.stock !== undefined && variantData.stock !== null) {
         return Number(variantData.stock) || 0;
     }
 
-    if (productData && productData.stock !== undefined && productData.stock !== null) {
-        return Number(productData.stock) || 0;
-    }
-
-    return 0;
+    // 3. Last fallback
+    return Number(productData?.stock) || 0;
 }
 
 // إعادة المخزون عند إلغاء الطلب
@@ -1612,9 +1598,6 @@ window.openOrderDetails = async (id) => {
             const pDoc = await pRef.get();
             if (pDoc.exists) {
                 const pData = pDoc.data();
-                const colorsStr = (pData.colorVariants || []).map(v => `${v.name}/${v.name_ar}: [ ${v.stock} pcs ]`).join('\n');
-                alert(`🕵️ Stock Audit for ${i.name}:\n\nTotal Inventory in DB: ${pData.stock || 0}\n\nColors in DB:\n${colorsStr}\n\nRequested for this Order: ${i.color} / ${i.size}`);
-                
                 const v = (pData.colorVariants || []).find(vc => normalizeKey(vc.name) === normalizeKey(i.color) || normalizeKey(vc.name_ar) === normalizeKey(i.color));
                 const available = Number(resolveItemStock(pData, v, i.size)) || 0;
                 const required = Number(i.quantity) || 1;
