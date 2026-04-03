@@ -718,7 +718,8 @@ window.runFullWebsiteAudit = () => {
     console.log("%c✨ Audit Complete! Site is fully synchronized with Dashboard.", "color: #e20613; font-weight: bold;");
 };
 
-let storefrontCategories = [];
+// Categories state
+let dynamicCategories = [];
 
 function attachRealTimeListeners() {
     if (!db) {
@@ -741,8 +742,9 @@ function attachRealTimeListeners() {
 
     // 📂 Real-time Categories (Crucial for Dashboard linking)
     db.collection('categories').onSnapshot(snapshot => {
-        storefrontCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log(`📂 [Real-time] loaded ${storefrontCategories.length} categories`);
+        dynamicCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log(`📂 [Real-time] loaded ${dynamicCategories.length} categories`);
+        if (typeof renderHomeCategories === 'function') renderHomeCategories();
         if (typeof renderSidebarCategories === 'function') renderSidebarCategories();
         if (typeof renderDynamicFilters === 'function') renderDynamicFilters();
     });
@@ -952,28 +954,133 @@ window.updateCheckoutTotal = () => {
 
 let shippingRates = {};
 
-let dynamicCategories = [];
-
+// Sync categories helper
 async function loadDynamicCategories() {
     if (db) {
         const snapshot = await db.collection('categories').get();
         dynamicCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderDynamicFilters();
+        renderHomeCategories();
+        renderSidebarCategories();
     }
 }
 
 function renderDynamicFilters() {
-    const container = document.getElementById('main-filters-container');
-    if (!container) return;
-    
-    const mainCats = dynamicCategories.filter(c => !c.parentId);
-    container.innerHTML = `<button class="main-filter-btn active" data-parent="all" onclick="applyMainFilter('all', this)" data-i18n="all">${translations[currentLang].all}</button>` +
-        mainCats.map(c => {
-            const translatedCat = (currentLang === 'ar' && c.name_ar) ? c.name_ar : translateText(c.name);
-            return `<button class="main-filter-btn" data-parent="${c.id}" onclick="applyMainFilter('${c.id}', this)" data-translate-cache="${c.name}">${translatedCat}</button>`;
-        }).join('');
-    
+    // This function originally rendered top pills, now redirected to sidebar and home grid
     renderSidebarCategories();
+    renderHomeCategories();
+}
+
+function renderHomeCategories() {
+    const container = document.getElementById('home-categories-view');
+    if (!container) return;
+
+    const mainCats = dynamicCategories.filter(c => !c.parentId);
+    if (mainCats.length === 0) {
+        container.innerHTML = `<p style="text-align:center; opacity:0.5; padding:50px;">${currentLang === 'ar' ? 'لا توجد أقسام متاحة حالياً' : 'No categories available yet'}</p>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="categories-grid-home" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
+            ${mainCats.map(c => `
+                <div class="home-cat-card" onclick="window.openCategoryView('${c.id}')" style="cursor: pointer; position: relative; height: 350px; border-radius: 24px; overflow: hidden; background: #111; border: 1px solid rgba(255,255,255,0.05); transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+                    <img src="${c.image || 'https://via.placeholder.com/400x600'}" alt="${c.name}" style="width: 100%; height: 100%; object-fit: cover; transition: 0.5s;">
+                    <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%);"></div>
+                    <div style="position: absolute; bottom: 30px; left: 30px; right: 30px;">
+                        <h3 style="color: #fff; font-size: 1.8rem; font-weight: 900; margin: 0; text-transform: uppercase;">${(currentLang === 'ar' && c.name_ar) ? c.name_ar : c.name}</h3>
+                        <div style="width: 40px; height: 4px; background: var(--primary); margin-top: 10px; border-radius: 2px;"></div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+window.openCategoryView = (catId) => {
+    const homeView = document.getElementById('home-categories-view');
+    const productsView = document.getElementById('home-products-view');
+    const titleEl = document.getElementById('current-category-title');
+    
+    if (!homeView || !productsView) return;
+
+    const cat = dynamicCategories.find(c => c.id === catId);
+    if (cat) {
+        titleEl.innerText = (currentLang === 'ar' && cat.name_ar) ? cat.name_ar : cat.name;
+    }
+
+    homeView.style.display = 'none';
+    productsView.style.display = 'block';
+    
+    activeCategory = catId;
+    filterAndRender('men', catId, 'all');
+    
+    // Update URL without reload
+    if (cat) {
+        const slug = toSlug(cat.name);
+        window.history.pushState({ catId }, '', `/category/${slug}`);
+    }
+};
+
+window.scrollToTop = () => {
+    const homeView = document.getElementById('home-categories-view');
+    const productsView = document.getElementById('home-products-view');
+    if (homeView && productsView) {
+        productsView.style.display = 'none';
+        homeView.style.display = 'block';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.history.pushState({}, '', '/');
+};
+
+function filterAndRender(target, catId = 'all', subCatId = 'all') {
+    const container = document.getElementById('men-products');
+    if (!container) return;
+
+    let filtered = remoteProducts.filter(p => p.status !== 'hidden');
+
+    if (catId !== 'all') {
+        filtered = filtered.filter(p => p.category === catId || p.parentCategory === catId);
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 100px 20px; opacity: 0.5;">
+            <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 20px; color: var(--primary);"></i>
+            <h3>${currentLang === 'ar' ? 'لا توجد منتجات في هذا القسم حالياً' : 'No products found in this category'}</h3>
+        </div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(p => {
+        const translatedName = (currentLang === 'ar' && p.name_ar) ? p.name_ar : translateText(p.name);
+        const hasDiscount = (p.priceBefore || p.oldPrice) && (Number(p.priceBefore || p.oldPrice) > Number(p.price));
+        return `
+            <div class="product-card" onclick="openSizeModal('${p.id}')">
+                <div class="product-img-wrap">
+                    <img src="${getOptimizedImg(p.image, 500)}" alt="${translatedName}" loading="lazy">
+                    ${hasDiscount ? `
+                        <div class="product-badge" style="background: #ff4d4d; color: #fff; font-weight: 900; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; position: absolute; top: 15px; left: 15px; z-index: 2;">
+                            -${Math.round((1 - (p.price / (p.priceBefore || p.oldPrice))) * 100)}%
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="product-info">
+                    <h3>${translatedName}</h3>
+                    <div class="price-row" style="display: flex; align-items: center; gap: 10px;">
+                        <span class="price">${p.price} ${translations[currentLang].currency}</span>
+                        ${hasDiscount ? `<span class="old-price" style="text-decoration: line-through; opacity: 0.5; font-size: 0.9rem;">${p.priceBefore || p.oldPrice} ${translations[currentLang].currency}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function toSlug(text) {
+    if (!text) return "";
+    return text.toString().toLowerCase().trim()
+        .replace(/\s+/g, '-')           // Replace spaces with -
+        .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+        .replace(/\-\-+/g, '-');         // Replace multiple - with single -
 }
 
 const toggleSidebarMenu = () => {
