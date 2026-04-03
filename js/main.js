@@ -746,6 +746,12 @@ function attachRealTimeListeners() {
         filterAndRender('men', activeCategory, 'all');
         renderSidebarCategories();
         hideLoader();
+
+        // 🔗 Initial Deep Link check after products are ready
+        if (!window._deepLinkHandled) {
+            window._deepLinkHandled = true;
+            setTimeout(() => window.handleDeepLink(), 800);
+        }
     }, err => {
         console.error("❌ Products listener failed:", err);
     });
@@ -874,36 +880,48 @@ function initElements() {
     
     // 🔗 PopState listener: Handle browser back/forward navigation
     window.addEventListener('popstate', (e) => {
-        const path = decodeURIComponent(window.location.pathname);
-        const params = new URLSearchParams(window.location.search);
-        
         // If navigating back and modal is open, close it
         if (sizeModal && sizeModal.classList.contains('active')) {
             sizeModal.classList.remove('active');
             selectedProductForSize = null;
             if (window._modalCarouselInterval) clearInterval(window._modalCarouselInterval);
+            return; // Don't re-open if we just closed
         }
-        
-        // Handle product URL
-        const productSlug = path.includes('/product/') ? path.split('/product/')[1] : params.get('product');
-        const catSlug = path.includes('/category/') ? path.split('/category/')[1] : params.get('cat');
-        
-        if (productSlug && remoteProducts.length > 0) {
-            let targetId = productSlug;
-            if (productSlug.includes('--')) {
-                const parts = productSlug.split('--');
-                targetId = parts[parts.length - 1];
-            }
-            const found = remoteProducts.find(x => x.id === targetId || toSlug(x.name) === toSlug(productSlug));
-            if (found) window.openSizeModal(found.id);
-        } else if (catSlug) {
-            const filterBtns = document.querySelectorAll('.main-filter-btn');
-            filterBtns.forEach(btn => {
-                if (toSlug(btn.innerText.trim()) === toSlug(catSlug)) btn.click();
-            });
-        }
+        window.handleDeepLink();
     });
 }
+
+// 🔗 Centralized Deep Link Handler
+window.handleDeepLink = () => {
+    const path = decodeURIComponent(window.location.pathname);
+    const params = new URLSearchParams(window.location.search);
+    
+    let targetProductId = params.get('product');
+    let targetCat = params.get('cat');
+
+    // Support Clean URLs: /product/slug--id
+    if (path.includes('/product/')) {
+        const part = path.split('/product/')[1];
+        if (part) {
+            if (part.includes('--')) {
+                targetProductId = part.split('--').pop();
+            } else {
+                targetProductId = part;
+            }
+        }
+    } else if (path.includes('/category/')) {
+        targetCat = path.split('/category/')[1];
+    }
+
+    if (targetProductId && remoteProducts.length > 0) {
+        const found = remoteProducts.find(x => x.id === targetProductId || toSlug(x.name) === toSlug(targetProductId));
+        if (found) window.openSizeModal(found.id);
+    } else if (targetCat) {
+        const btn = Array.from(document.querySelectorAll('.main-filter-btn'))
+                         .find(b => toSlug(b.innerText.trim()) === toSlug(targetCat));
+        if (btn) btn.click();
+    }
+};
 
 window.populateGovernorates = function () {
     const govSelect = document.getElementById('customer-gov');
@@ -1239,9 +1257,23 @@ const applySideFilter = (parent, sub) => {
 
 const applyBestSellerFilter = (catId) => {
     toggleSidebarMenu();
-    filterAndRender('men', catId, 'all', true); // Pass isBestSellerOnly = true
+    activeCategory = catId;
+    
+    // Sync UI: Set main filter active
+    document.querySelectorAll('.main-filter-btn').forEach(b => b.classList.remove('active'));
+    const mainBtn = document.querySelector(`.main-filter-btn[data-parent="${catId}"]`);
+    if (mainBtn) mainBtn.classList.add('active');
+
+    // Clear sub-filters row
+    if (subFiltersContainer) {
+        subFiltersContainer.innerHTML = '';
+        subFiltersContainer.classList.remove('active');
+    }
+
+    filterAndRender('men', catId, 'all', true); 
     document.getElementById('men-products')?.scrollIntoView({ behavior: 'smooth' });
 }
+
 
 window.applyMainFilter = (parentId, btn) => {
     document.querySelectorAll('.main-filter-btn').forEach(b => b.classList.remove('active'));
@@ -2324,7 +2356,11 @@ function injectProductSchema(p) {
 }
 
 window.shareCurrentProduct = () => {
-    const url = window.location.href;
+    const p = selectedProductForSize;
+    if (!p) return;
+    
+    // 🔗 Strategy: Use Query Param for maximum server compatibility (avoids 404 on static hosts)
+    const url = window.location.origin + window.location.pathname + "?product=" + p.id;
     
     // Try native share API first (mobile)
     if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
@@ -2518,10 +2554,14 @@ function renderModalSizes(p, color) {
         }
 
         const isOut = (stock <= 0);
+        // Show stock count only if it's less than 10 for urgency, or if user specifically asked for it
+        const stockLabel = isOut ? 'OUT' : (stock < 1000 ? `${stock} ${currentLang === 'ar' ? 'قطعة' : 'pcs'}` : '');
+        
         return `<button class="size-btn ${isOut ? 'out' : ''}" 
                         ${isOut ? 'disabled' : ''} 
                         onclick="selectSizeForCart('${s}', this)">
-                    ${s} ${isOut ? '<span class="out-label">OUT</span>' : ''}
+                    <span class="size-name">${s}</span>
+                    <span class="size-stock">${stockLabel}</span>
                 </button>`;
     }).join('');
 }

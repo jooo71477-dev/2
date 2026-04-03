@@ -1202,13 +1202,70 @@ window.deleteProduct = async (id) => {
 };
 
 // Order Management
+// Helper: Decrement per-size inventory for an order (runs only once per order)
+async function decrementOrderStock(orderId) {
+    try {
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        const o = orderDoc.data();
+        if (!o || o.stockDecremented) return; // already decremented
+
+        const batch = db.batch();
+        const items = o.items || [];
+
+        for (const item of items) {
+            if (!item.productId && !item.id) continue;
+            const pid = item.productId || item.id;
+            const productRef = db.collection('products').doc(pid);
+            const productDoc = await productRef.get();
+            if (!productDoc.exists) continue;
+
+            const pData = productDoc.data();
+            const qty = item.quantity || 1;
+            const size = item.size;
+            const color = item.color;
+
+            // Try to decrement from colorVariants inventory
+            let updated = false;
+            if (pData.colorVariants && color && size) {
+                const variants = [...(pData.colorVariants || [])];
+                const vi = variants.findIndex(v => v.name === color);
+                if (vi !== -1 && variants[vi].inventory && variants[vi].inventory[size] !== undefined) {
+                    variants[vi].inventory[size] = Math.max(0, (variants[vi].inventory[size] || 0) - qty);
+                    // Recalculate variant stock
+                    variants[vi].stock = Object.values(variants[vi].inventory).reduce((a, b) => a + b, 0);
+                    // Recalculate total product stock
+                    const totalStock = variants.reduce((s, v) => s + (v.stock || 0), 0);
+                    batch.update(productRef, { colorVariants: variants, stock: totalStock });
+                    updated = true;
+                }
+            }
+            // Fallback: decrement simple stock
+            if (!updated) {
+                const newStock = Math.max(0, (pData.stock || 0) - qty);
+                batch.update(productRef, { stock: newStock });
+            }
+        }
+
+        // Mark order as stock-decremented
+        batch.update(db.collection('orders').doc(orderId), { stockDecremented: true });
+        await batch.commit();
+        console.log('✅ Stock decremented for order', orderId);
+    } catch (err) {
+        console.error('Stock decrement error:', err);
+    }
+}
+
 window.updateOrderStatus = async (id, status) => {
     try {
         await db.collection('orders').doc(id).update({ status });
+        // Decrement stock when confirmed or processing
+        if (status === 'confirmed' || status === 'processing' || status === 'shipping') {
+            await decrementOrderStock(id);
+        }
         loadOrders();
         alert("تم تحديث حالة الطلب");
     } catch (err) {
-        alert("خطأ في التحديث");
+        alert("خطأ في التحديث: " + err.message);
     }
 };
 
@@ -1564,6 +1621,9 @@ async function shipToBosta(orderId) {
             status: "shipping",
             shippedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+
+        // Decrement stock on ship
+        await decrementOrderStock(orderId);
 
         alert(`✅ تم إنشاء الشحنة بنجاح!\nرقم التتبع: ${trackingNumber}`);
         
@@ -1991,22 +2051,40 @@ window.addBannerRow = (data = { desktopUrl: '', mobileUrl: '', title: '', subtit
     if (!container) return;
     const row = document.createElement('div');
     row.className = 'banner-row-item';
-    row.style = 'background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; border: 1px solid var(--border); position: relative; margin-bottom: 10px;';
+    row.style = 'background: rgba(255,255,255,0.03); padding: 20px; border-radius: 15px; border: 1px solid var(--border); position: relative; margin-bottom: 20px;';
     
     row.innerHTML = `
         <button type="button" onclick="this.closest('.banner-row-item').remove()" style="position: absolute; top: 10px; left: 10px; background: rgba(244, 67, 54, 0.1); border: 1px solid rgba(244, 67, 54, 0.2); color: var(--danger); cursor: pointer; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; z-index: 10;"><i class="fas fa-trash"></i></button>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div class="form-group">
-                <label>رابط صورة الكمبيوتر</label>
-                <input type="text" class="banner-desktop-url" value="${data.desktopUrl}" placeholder="https://...">
+                <label>صورة الكمبيوتر (Desktop)</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" class="banner-desktop-url" value="${data.desktopUrl}" placeholder="رابط الصورة أو ارفع واحدة..." style="flex: 1;">
+                    <label class="btn-primary" style="padding: 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; font-size: 0.8rem; margin: 0;">
+                        <i class="fas fa-upload"></i> ارفع
+                        <input type="file" accept="image/*" style="display: none;" onchange="uploadBannerPart(this, 'desktop')">
+                    </label>
+                </div>
+                <div class="upload-hint" style="font-size: 0.75rem; opacity: 0.5; margin-top: 5px;">مقاس مقترح: 1920x600</div>
+                <img class="desktop-preview" src="${data.desktopUrl}" style="width: 100%; max-height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px; display: ${data.desktopUrl ? 'block' : 'none'}; border: 1px solid rgba(255,255,255,0.1);">
             </div>
+            
             <div class="form-group">
-                <label>رابط صورة الموبايل</label>
-                <input type="text" class="banner-mobile-url" value="${data.mobileUrl}" placeholder="https://...">
+                <label>صورة الموبايل (Mobile)</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" class="banner-mobile-url" value="${data.mobileUrl}" placeholder="رابط الصورة أو ارفع واحدة..." style="flex: 1;">
+                    <label class="btn-primary" style="padding: 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; font-size: 0.8rem; margin: 0;">
+                        <i class="fas fa-upload"></i> ارفع
+                        <input type="file" accept="image/*" style="display: none;" onchange="uploadBannerPart(this, 'mobile')">
+                    </label>
+                </div>
+                <div class="upload-hint" style="font-size: 0.75rem; opacity: 0.5; margin-top: 5px;">مقاس مقترح: 800x1200</div>
+                <img class="mobile-preview" src="${data.mobileUrl}" style="width: 100%; max-height: 100px; object-fit: cover; border-radius: 8px; margin-top: 10px; display: ${data.mobileUrl ? 'block' : 'none'}; border: 1px solid rgba(255,255,255,0.1);">
             </div>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
             <div class="form-group">
                 <label>العنوان الرئيسي</label>
                 <input type="text" class="banner-title" value="${data.title}" placeholder="...">
@@ -2020,13 +2098,40 @@ window.addBannerRow = (data = { desktopUrl: '', mobileUrl: '', title: '', subtit
     container.appendChild(row);
 };
 
+window.compressImageToBase64 = (file, maxWidth, quality) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = event => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = error => reject(error);
+        };
+        reader.onerror = error => reject(error);
+    });
+};
+
 window.uploadBannerPart = async (input, type) => {
     const file = input.files[0];
     if (!file) return;
     
     const row = input.closest('.banner-row-item');
     const preview = row.querySelector(`.${type}-preview`);
-    const urlInput = row.querySelector(`.${type}-url`);
+    const urlInput = row.querySelector(`.banner-${type}-url`);
     const statusHint = input.parentElement.querySelector('.upload-hint');
     const originalHint = statusHint.innerText;
 
@@ -2110,10 +2215,14 @@ document.getElementById('cms-form').onsubmit = async (e) => {
         const bannerRows = document.querySelectorAll('.banner-row-item');
         const banners = [];
         bannerRows.forEach(row => {
-            const dUrl = row.querySelector('.desktop-url').value;
-            const mUrl = row.querySelector('.mobile-url').value;
+            const dInput = row.querySelector('.banner-desktop-url');
+            const mInput = row.querySelector('.banner-mobile-url');
             const title = row.querySelector('.banner-title').value;
             const subtitle = row.querySelector('.banner-subtitle').value;
+            
+            const dUrl = dInput ? dInput.value : '';
+            const mUrl = mInput ? mInput.value : '';
+
             if (dUrl || mUrl) {
                 banners.push({
                     desktopUrl: dUrl,
