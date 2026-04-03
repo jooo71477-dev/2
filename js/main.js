@@ -984,7 +984,7 @@ function renderHomeCategories() {
             <div class="home-cat-group" style="margin-bottom: 80px;">
                 <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 30px; padding: 0 5px;">
                     <div style="width: 6px; height: 40px; background: var(--primary); border-radius: 12px; box-shadow: 0 0 15px var(--gold-glow);"></div>
-                    <h2 style="font-size: 2.5rem; font-weight: 1000; color: #fff; margin: 0; text-transform: uppercase; letter-spacing: 2px;">${rootName}</h2>
+                    <h2 style="font-size: 2.5rem; font-weight: 1000; color: var(--text-main); margin: 0; text-transform: uppercase; letter-spacing: 2px;">${rootName}</h2>
                 </div>
                 
                 <div class="categories-grid-home" id="cat-grid-${rootIdx}">
