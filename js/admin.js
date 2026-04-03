@@ -1612,10 +1612,22 @@ window.openOrderDetails = async (id) => {
             const pDoc = await pRef.get();
             if (pDoc.exists) {
                 const pData = pDoc.data();
+                console.group(`🔍 Stock Audit: ${i.name}`);
+                console.log("Full DB Data:", pData);
+                console.log("Searching for Color:", i.color, "| Size:", i.size);
+                
                 const v = (pData.colorVariants || []).find(vc => normalizeKey(vc.name) === normalizeKey(i.color) || normalizeKey(vc.name_ar) === normalizeKey(i.color));
-                const available = resolveItemStock(pData, v, i.size);
-                stockDisplay = available >= (Number(i.quantity) || 1) ? `✅ متوفر: ${available}` : `⚠️ عجز: ${available}`;
-                stockColor = available >= (Number(i.quantity) || 1) ? '#4caf50' : '#f44336';
+                console.log("Found Variant:", v);
+                const available = Number(resolveItemStock(pData, v, i.size)) || 0;
+                const required = Number(i.quantity) || 1;
+                
+                if (available >= required) {
+                    stockDisplay = `✅ متوفر: ${available}`;
+                    stockColor = '#4caf50';
+                } else {
+                    stockDisplay = `⚠️ عجز (المتاح: ${available} / المطلوب: ${required})`;
+                    stockColor = '#f44336';
+                }
             } else {
                 stockDisplay = '❌ منتج محذوف';
                 stockColor = '#f44336';
