@@ -1260,11 +1260,7 @@ async function decreaseInventoryStock(items) {
                     if (!variant.sizeStock) variant.sizeStock = {};
                     
                     const targetSize = String(item.size || "").trim();
-
-                    const currentSizeStock = (variant.sizeStock && variant.sizeStock[targetSize] !== undefined)
-                        ? Number(variant.sizeStock[targetSize])
-                        : (variant.stock !== undefined ? Number(variant.stock) : (pData.stock !== undefined ? Number(pData.stock) : 0));
-
+                    const currentSizeStock = resolveItemStock(pData, variant, targetSize);
                     const decrementQty = Number(item.quantity || 1);
                     const nextSizeStock = Math.max(0, currentSizeStock - decrementQty);
                     variant.sizeStock[targetSize] = nextSizeStock;
@@ -1275,7 +1271,7 @@ async function decreaseInventoryStock(items) {
                     
                     const newTotalStock = colorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
                     await productRef.update({ colorVariants, stock: newTotalStock });
-                    console.log(`✅ [STOCK SUCCESS] Decreased ${item.name} (${item.color}/${item.size}): ${currentStock} -> ${variant.sizeStock[targetSize]}`);
+                    console.log(`✅ [STOCK SUCCESS] Decreased ${item.name} (${item.color}/${item.size}): ${currentSizeStock} -> ${variant.sizeStock[targetSize]}`);
                 } else {
                     console.warn(`⚠️ [STOCK WARN] Color variant NOT FOUND for "${item.color}" in product ${item.id}`);
                 }
@@ -1288,6 +1284,24 @@ async function decreaseInventoryStock(items) {
     }
 }
 window.decreaseInventoryStock = decreaseInventoryStock;
+
+function resolveItemStock(productData, variantData, targetSize) {
+    const size = String(targetSize || "").trim();
+
+    if (variantData && variantData.sizeStock && variantData.sizeStock[size] !== undefined) {
+        return Number(variantData.sizeStock[size]) || 0;
+    }
+
+    if (variantData && variantData.stock !== undefined && variantData.stock !== null) {
+        return Number(variantData.stock) || 0;
+    }
+
+    if (productData && productData.stock !== undefined && productData.stock !== null) {
+        return Number(productData.stock) || 0;
+    }
+
+    return 0;
+}
 
 // إعادة المخزون عند إلغاء الطلب
 async function increaseInventoryStock(items) {
@@ -1314,9 +1328,7 @@ async function increaseInventoryStock(items) {
                     if (!variant.sizeStock) variant.sizeStock = {};
                     
                     const targetSize = String(item.size || "").trim();
-                    const currentSizeStock = (variant.sizeStock && variant.sizeStock[targetSize] !== undefined)
-                        ? Number(variant.sizeStock[targetSize])
-                        : (variant.stock !== undefined ? Number(variant.stock) : (pData.stock !== undefined ? Number(pData.stock) : 0));
+                    const currentSizeStock = resolveItemStock(pData, variant, targetSize);
                     const incrementQty = Number(item.quantity || 1);
                     
                     variant.sizeStock[targetSize] = currentSizeStock + incrementQty;
@@ -1327,7 +1339,7 @@ async function increaseInventoryStock(items) {
                     
                     const newTotalStock = colorVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
                     await productRef.update({ colorVariants, stock: newTotalStock });
-                    console.log(`✅ [STOCK SUCCESS] Increased ${item.name} (${item.color}/${item.size}): ${currentStock} -> ${variant.sizeStock[targetSize]}`);
+                    console.log(`✅ [STOCK SUCCESS] Increased ${item.name} (${item.color}/${item.size}): ${currentSizeStock} -> ${variant.sizeStock[targetSize]}`);
                 } else {
                     console.warn(`⚠️ [STOCK WARN] Color variant NOT FOUND for "${item.color}" in product ${item.id}`);
                 }
@@ -1359,23 +1371,26 @@ async function checkStockAvailability(items) {
                 if (vIdx !== -1) {
                     const variant = colorVariants[vIdx];
                     const targetSize = String(item.size || "").trim();
-
-                    let availableStock = 0;
-                    if (variant.sizeStock && variant.sizeStock[targetSize] !== undefined) {
-                        availableStock = Number(variant.sizeStock[targetSize]) || 0;
-                    } else if (variant.stock !== undefined && variant.stock !== null) {
-                        availableStock = Number(variant.stock) || 0;
-                    } else if (pData.stock !== undefined && pData.stock !== null) {
-                        availableStock = Number(pData.stock) || 0;
-                    }
-
+                    const availableStock = resolveItemStock(pData, variant, targetSize);
                     const requiredQty = Number(item.quantity || 1);
-                    
+
                     if (availableStock < requiredQty) {
                         throw new Error(`المنتج "${item.name}" (${item.color}/${item.size}) غير متوفر بالكمية المطلوبة. متوفر: ${availableStock}, مطلوب: ${requiredQty}`);
                     }
                 } else {
-                    throw new Error(`اللون "${item.color}" غير متوفر للمنتج "${item.name}"`);
+                    // إذا اللون غير مطابق، نفحص أول variant كfallback
+                    if (colorVariants.length > 0) {
+                        const firstVariant = colorVariants[0];
+                        const targetSize = String(item.size || "").trim();
+                        const availableStock = resolveItemStock(pData, firstVariant, targetSize);
+                        const requiredQty = Number(item.quantity || 1);
+
+                        if (availableStock < requiredQty) {
+                            throw new Error(`المنتج "${item.name}" (أي لون) غير متوفر بالكمية المطلوبة. متوفر: ${availableStock}, مطلوب: ${requiredQty}`);
+                        }
+                    } else {
+                        throw new Error(`اللون "${item.color}" غير متوفر للمنتج "${item.name}"`);
+                    }
                 }
             } else {
                 throw new Error(`المنتج "${item.name}" غير موجود`);
