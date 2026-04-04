@@ -73,8 +73,8 @@
     </script>
 
     <!-- Performance Optimizations -->
-    <link rel="preload" href="./css/style.css?v=6.0" as="style">
-    <link rel="stylesheet" href="./css/style.css?v=6.0">
+    <link rel="preload" href="./css/style.css?v=6.1" as="style">
+    <link rel="stylesheet" href="./css/style.css?v=6.1">
 
     <!-- Aggressive Cache Buster -->
     <script>
@@ -175,6 +175,17 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
         }
 
+        /* Desktop hover: zoom the background div */
+        @media (min-width: 769px) {
+            .home-cat-card:hover > div:first-child {
+                transform: scale(1.08);
+            }
+            .home-cat-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            }
+        }
+
         /* 📱 Mobile Specific Styles (Higher Specificity) */
         @media (max-width: 768px) {
             .categories-grid-home {
@@ -194,20 +205,22 @@
             .home-cat-card {
                 min-width: 65vw !important;
                 scroll-snap-align: center;
-                height: 340px !important; /* Slightly reduced height for better mobile view */
+                height: 340px !important;
                 flex: 0 0 auto !important;
                 border-radius: 20px;
-                transform: none !important; /* Disable any hover scale on card */
+                transform: none !important;
                 transition: none !important;
             }
 
-            .home-cat-card img {
-                transform: none !important; /* Prevent image zoom on mobile touch */
+            /* 🍎 iOS Fix: Disable ALL transforms on the bg div to prevent zoom */
+            .home-cat-card > div:first-child {
+                transform: none !important;
                 transition: none !important;
+                -webkit-transform: none !important;
             }
             
             .home-cat-card:active {
-                transform: scale(0.98) !important; /* Subtle press effect instead of zoom */
+                transform: scale(0.98) !important;
             }
         }
 
