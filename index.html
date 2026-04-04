@@ -171,22 +171,19 @@
             overflow: hidden;
             background: #111;
             border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
         }
 
-        /* Desktop hover: zoom the background div */
+        /* Desktop hover: subtle lift only — NO zoom */
         @media (min-width: 769px) {
-            .home-cat-card:hover > div:first-child {
-                transform: scale(1.08);
-            }
             .home-cat-card:hover {
-                transform: translateY(-8px);
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+                transform: translateY(-6px);
+                box-shadow: 0 18px 35px rgba(0, 0, 0, 0.55);
             }
         }
 
-        /* 📱 Mobile Specific Styles (Higher Specificity) */
+        /* 📱 Mobile: No transforms at all */
         @media (max-width: 768px) {
             .categories-grid-home {
                 display: flex !important;
@@ -201,7 +198,7 @@
                 -webkit-overflow-scrolling: touch;
             }
             .categories-grid-home::-webkit-scrollbar { display: none; }
-            
+
             .home-cat-card {
                 min-width: 65vw !important;
                 scroll-snap-align: center;
@@ -212,15 +209,15 @@
                 transition: none !important;
             }
 
-            /* 🍎 iOS Fix: Disable ALL transforms on the bg div to prevent zoom */
-            .home-cat-card > div:first-child {
+            /* 🍎 No zoom on any child div — prevents iOS Safari glitch */
+            .home-cat-card > div {
                 transform: none !important;
-                transition: none !important;
                 -webkit-transform: none !important;
+                transition: none !important;
             }
-            
+
             .home-cat-card:active {
-                transform: scale(0.98) !important;
+                opacity: 0.9 !important;
             }
         }
 

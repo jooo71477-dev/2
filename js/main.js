@@ -990,7 +990,7 @@ function renderHomeCategories() {
                 <div class="categories-grid-home" id="cat-grid-${rootIdx}">
                     ${subCats.map(sub => `
                         <div class="home-cat-card" onclick="window.openCategoryView('${sub.id}')">
-                            <div style="position: absolute; inset: 0; background-image: url('${sub.image || 'https://via.placeholder.com/600x800'}'); background-size: cover; background-position: center center; -webkit-background-size: cover; transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);"></div>
+                            <div style="position: absolute; inset: 0; background-image: url('${sub.image || 'https://via.placeholder.com/600x800'}'); background-size: cover; background-position: center center; -webkit-background-size: cover;"></div>
                             <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.3) 50%, transparent 80%);"></div>
                             <div style="position: absolute; bottom: 18px; left: 18px; right: 18px; display: flex; flex-direction: column; gap: 8px;">
                                 <h3 style="color: #fff; font-size: 0.95rem; font-weight: 800; margin: 0; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.5px;">${(currentLang === 'ar' && sub.name_ar) ? sub.name_ar : sub.name}</h3>
