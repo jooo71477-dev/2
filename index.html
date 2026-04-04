@@ -76,6 +76,28 @@
     <link rel="preload" href="./css/style.css?v=6.0" as="style">
     <link rel="stylesheet" href="./css/style.css?v=6.0">
 
+    <!-- Aggressive Cache Buster -->
+    <script>
+        (function() {
+            const SITE_VERSION = '1.3';
+            const currentVersion = localStorage.getItem('icloth_version');
+            if (currentVersion !== SITE_VERSION) {
+                localStorage.setItem('icloth_version', SITE_VERSION);
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        for (let name of names) caches.delete(name);
+                    });
+                }
+                if (navigator.serviceWorker) {
+                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                        for(let registration of registrations) registration.unregister();
+                    });
+                }
+                window.location.reload(true);
+            }
+        })();
+    </script>
+
     <!-- Optimized font loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
