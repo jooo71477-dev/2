@@ -172,9 +172,20 @@
             .home-cat-card {
                 min-width: 65vw !important;
                 scroll-snap-align: center;
-                height: 380px !important;
+                height: 340px !important; /* Slightly reduced height for better mobile view */
                 flex: 0 0 auto !important;
                 border-radius: 20px;
+                transform: none !important; /* Disable any hover scale on card */
+                transition: none !important;
+            }
+
+            .home-cat-card img {
+                transform: none !important; /* Prevent image zoom on mobile touch */
+                transition: none !important;
+            }
+            
+            .home-cat-card:active {
+                transform: scale(0.98) !important; /* Subtle press effect instead of zoom */
             }
         }
 
