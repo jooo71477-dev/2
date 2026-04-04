@@ -1,4 +1,4 @@
-const CACHE_NAME = 'icloth-cache-v4';
+const CACHE_NAME = 'icloth-cache-v5';
 const urlsToCache = [
   '/',
   '/index.html',
