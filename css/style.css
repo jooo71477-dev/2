@@ -937,6 +937,17 @@ body.announcement-active .navbar.scrolled {
     gap: 15px; /* Reduced gap */
 }
 
+@media (max-width: 576px) {
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
+    
+    .product-img-wrap {
+        height: 240px !important; /* Maintain reasonable aspect ratio on mobile */
+    }
+}
+
 /* Luxury Product Cards */
 .product-card, 
 .product-img-wrap, 
