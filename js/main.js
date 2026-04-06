@@ -743,7 +743,9 @@ function attachRealTimeListeners() {
     // Real-time Products
     db.collection('products').onSnapshot(snapshot => {
         remoteProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log(`🔥 [Real-time] loaded ${remoteProducts.length} products`);
+        // 🔄 Sort products by sortOrder
+        remoteProducts.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        console.log(`🔥 [Real-time] loaded ${remoteProducts.length} products (Sorted)`);
         
         filterAndRender('men', activeCategory, 'all');
         renderSidebarCategories();
@@ -755,7 +757,9 @@ function attachRealTimeListeners() {
     // 📂 Real-time Categories (Crucial for Dashboard linking)
     db.collection('categories').onSnapshot(snapshot => {
         dynamicCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log(`📂 [Real-time] loaded ${dynamicCategories.length} categories`);
+        // 🔄 Sort categories by sortOrder
+        dynamicCategories.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        console.log(`📂 [Real-time] loaded ${dynamicCategories.length} categories (Sorted)`);
         if (typeof renderHomeCategories === 'function') renderHomeCategories();
         if (typeof renderSidebarCategories === 'function') renderSidebarCategories();
         if (typeof renderDynamicFilters === 'function') renderDynamicFilters();
@@ -952,6 +956,8 @@ async function loadDynamicCategories() {
     if (db) {
         const snapshot = await db.collection('categories').get();
         dynamicCategories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // 🔄 Sort categories by sortOrder
+        dynamicCategories.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
         renderHomeCategories();
         renderSidebarCategories();
     }

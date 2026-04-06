@@ -390,7 +390,7 @@ function renderProducts(data = products) {
             || '';
         return `
         <tr data-id="${p.id}">
-            <td class="drag-handle" style="cursor: move; text-align: center; width: 40px; color: var(--primary); font-size: 1.1rem; border-right: 1px solid rgba(255,255,255,0.05);"><i class="fas fa-bars"></i></td>
+            <td class="product-drag-handle" style="cursor: move; text-align: center; width: 40px; color: var(--primary); font-size: 1.1rem; border-right: 1px solid rgba(255,255,255,0.05);"><i class="fas fa-bars"></i></td>
             <td>${displayImg ? `<img src="${displayImg}" class="product-img" onerror="this.style.display='none'">` : '<div style="width:40px;height:40px;background:rgba(255,255,255,0.05);border-radius:8px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="opacity:0.3;"></i></div>'}</td>
             <td>
                 <div style="display:flex; align-items:center; gap:5px;">
@@ -435,11 +435,12 @@ function renderProducts(data = products) {
 
     // --- Initialize Drag and Drop ---
     if (window.Sortable && list) {
-        new Sortable(list, {
-            handle: '.drag-handle',
+        if (window._productsSortable) window._productsSortable.destroy();
+        window._productsSortable = new Sortable(list, {
+            handle: '.product-drag-handle',
             animation: 150,
             onEnd: async function() {
-                console.log("🔄 Order changed, syncing with DB...");
+                console.log("🔄 Product order changed, syncing with DB...");
                 await syncProductOrder();
             }
         });
@@ -3088,6 +3089,8 @@ let categories = [];
 async function loadCategories() {
     db.collection('categories').onSnapshot(snapshot => {
         categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // 🔄 Sort categories by sortOrder locally
+        categories.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
         console.log("📂 Categories Loaded:", categories.length);
         renderCategories();
         updateCatDropdowns();
@@ -3105,6 +3108,43 @@ function renderCategories() {
     roots.forEach(root => {
         renderCategoryBranch(root, 0, list);
     });
+
+    // --- Initialize Drag and Drop for Categories ---
+    if (window.Sortable && list) {
+        if (window._categoriesSortable) window._categoriesSortable.destroy();
+        window._categoriesSortable = new Sortable(list, {
+            animation: 150,
+            handle: '.cat-drag-handle',
+            onEnd: async function() {
+                console.log("🔄 Category order changed, syncing with DB...");
+                await syncCategoryOrder();
+            }
+        });
+    }
+}
+
+async function syncCategoryOrder() {
+    const rows = document.querySelectorAll('#categories-tree-list tr');
+    const batch = db.batch();
+    
+    try {
+        rows.forEach((row, index) => {
+            const id = row.getAttribute('data-id');
+            if (id) {
+                const ref = db.collection('categories').doc(id);
+                batch.update(ref, { sortOrder: index });
+                
+                // Update local state too
+                const cIdx = categories.findIndex(c => c.id === id);
+                if (cIdx !== -1) categories[cIdx].sortOrder = index;
+            }
+        });
+        await batch.commit();
+        console.log("✅ Category order updated in Firestore");
+    } catch (err) {
+        console.error("❌ Failed to sync category order:", err);
+        alert("فشل تحديث ترتيب الأقسام");
+    }
 }
 
 function renderCategoryBranch(cat, level, container) {
@@ -3112,12 +3152,14 @@ function renderCategoryBranch(cat, level, container) {
     const productCount = products.filter(p => p.category === cat.id || p.subCategory === cat.id).length;
     
     const row = document.createElement('tr');
+    row.setAttribute('data-id', cat.id); // Important for sorting
     const indent = level * 30;
     const isParent = children.length > 0;
     
     row.innerHTML = `
         <td style="padding-right: ${indent + 15}px;">
             <div style="display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-bars cat-drag-handle" style="cursor:move; opacity:0.3; font-size:0.8rem;"></i>
                 ${isParent ? '<i class="fas fa-chevron-down" style="font-size:0.7rem; opacity:0.5;"></i>' : '<i class="far fa-circle" style="font-size:0.5rem; opacity:0.3;"></i>'}
                 <span style="font-weight: ${level === 0 ? '900' : '600'}; font-size: ${level === 0 ? '1rem' : '0.9rem'};">
                     ${cat.name}
@@ -3125,9 +3167,14 @@ function renderCategoryBranch(cat, level, container) {
             </div>
         </td>
         <td style="text-align:center;">
-            <span class="status-badge" style="background: ${level === 0 ? 'rgba(212,175,55,0.1)' : 'rgba(255,255,255,0.05)'}; color: ${level === 0 ? 'var(--primary)' : '#fff'};">
-                ${level === 0 ? 'رئيسي' : `فرعي (${level})`}
-            </span>
+             <span class="status-badge" style="background: ${level === 0 ? 'rgba(212,175,55,0.1)' : 'rgba(255,255,255,0.05)'}; color: ${level === 0 ? 'var(--primary)' : '#fff'};">
+                 ${level === 0 ? 'رئيسي' : `فرعي (${level})`}
+             </span>
+        </td>
+        <td style="text-align:center;">
+            <div style="background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px; display:inline-block; font-size:0.8rem; font-weight:bold; color:var(--primary);">
+                #${cat.sortOrder || 0}
+            </div>
         </td>
         <td style="text-align:center; opacity:0.7;">${productCount} منتج</td>
         <td>
@@ -3175,6 +3222,9 @@ window.openCategoryModal = (id = null) => {
         document.getElementById('cat-name').value = cat.name || "";
         document.getElementById('cat-name-ar').value = cat.name_ar || "";
         document.getElementById('cat-parent').value = cat.parentId || "";
+        if (document.getElementById('cat-order')) {
+            document.getElementById('cat-order').value = cat.sortOrder !== undefined ? cat.sortOrder : 0;
+        }
         
         const imgInput = document.getElementById('cat-image');
         const imgPreview = document.getElementById('cat-image-preview');
@@ -3210,7 +3260,8 @@ document.getElementById('category-form').onsubmit = async (e) => {
         name: document.getElementById('cat-name').value,
         name_ar: document.getElementById('cat-name-ar').value,
         parentId: document.getElementById('cat-parent').value || null,
-        image: document.getElementById('cat-image').value || ""
+        image: document.getElementById('cat-image').value || "",
+        sortOrder: document.getElementById('cat-order') ? Number(document.getElementById('cat-order').value) : 0
     };
     try {
         if (id) {
