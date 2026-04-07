@@ -914,8 +914,13 @@ window.populateGovernorates = function () {
     }
 }
 
-window.updateCheckoutTotal = () => {
-    const itemsTotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
+function updateCheckoutTotal() {
+    const section = document.getElementById('checkout-coupon-section');
+    if (section) {
+        section.style.display = currentUser ? 'block' : 'none';
+    }
+    
+    let total = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
     const govSelected = document.getElementById('customer-gov').value;
     
     // --- Coupon Section Management ---
@@ -1626,6 +1631,16 @@ function setupEventListeners() {
                 // BUT for COD with deposit (sub-method = wallet/instapay), receipt IS required
                 const activeSubBtn = document.querySelector('.btn-shipping-sub.active');
                 const codSubMethod = activeSubBtn ? (activeSubBtn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || '') : '';
+                
+                /* Light Mode Overrides for Payment Buttons */
+                const style = document.createElement('style');
+                style.textContent = `
+                [data-theme="light"] .btn-payment { background: #f9f9f9; color: #333; border: 1px solid #ddd; }
+                [data-theme="light"] #coupon-code-input { background: #fff !important; color: #000 !important; border: 1px solid #ddd !important; }
+                [data-theme="light"] #coupon-code-input::placeholder { color: #999 !important; }
+                `;
+                document.head.appendChild(style);
+
                 const needsReceipt = (paymentMethod === 'wallet' || paymentMethod === 'instapay') ||
                                      (paymentMethod === 'cod' && codSubMethod !== '');
 
@@ -2180,7 +2195,8 @@ window.openSizeModal = (id) => {
     selectedProductForSize = p;
     const firstVariant = p.colorVariants && p.colorVariants.length > 0 ? p.colorVariants[0] : null;
     selectedColor = firstVariant ? firstVariant.name : '';
-    window._isBuyNowFlow = false; // Reset buy now flow flag
+    window._isBuyNowFlow = false; 
+    window._selectedModalSize = null; // Reset selection to allow mandatory first-size logic
 
 
     if (modalProductName) {
@@ -2612,19 +2628,21 @@ function renderModalSizes(p, color) {
         
         return `<button class="size-btn ${isOut ? 'out' : ''}" 
                         ${isOut ? 'disabled' : ''} 
-                        onclick="selectSizeForCart('${s}', this)">
+                        onclick="window.selectSizeForCart('${s}', this)">
                     <span class="size-name">${s}</span>
                     <span class="size-stock">${stockLabel}</span>
                 </button>`;
     }).join('');
 
-    // --- AUTO-SELECT FIRST AVAILABLE SIZE ---
-    const availableBtns = container.querySelectorAll('.size-btn:not(.out)');
-    if (availableBtns.length > 0) {
-        const firstBtn = availableBtns[0];
-        const sizeName = firstBtn.querySelector('.size-name').innerText;
-        window.selectSizeForCart(sizeName, firstBtn);
-    }
+    // --- MANDATORY AUTO-SELECT FIRST AVAILABLE SIZE ---
+    setTimeout(() => {
+        const availableBtns = container.querySelectorAll('.size-btn:not(.out)');
+        if (availableBtns.length > 0 && !window._selectedModalSize) {
+            const firstBtn = availableBtns[0];
+            const sizeName = firstBtn.querySelector('.size-name').innerText;
+            window.selectSizeForCart(sizeName, firstBtn);
+        }
+    }, 50);
 }
 
 window.selectSizeForCart = (size, btn) => {
@@ -3239,9 +3257,50 @@ window.signOutUser = signOutUser;
 window.toggleLanguage = toggleLanguage;
 window.applyCheckoutCoupon = applyCheckoutCoupon;
 
+// --- 💎 MODAL ACTIONS (Moved up for robustness) ---
+window.toggleWishlistFromModal = () => {
+    if (!selectedProductForSize) return;
+    const btn = document.getElementById('modal-wishlist-btn');
+    window.toggleWishlist(selectedProductForSize.id, btn);
+};
+
+window.modalSelectColor = (color, btn) => {
+    selectedColor = color;
+    document.querySelectorAll('.color-swatch-item').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    
+    // Update Slider with variant images
+    const p = selectedProductForSize;
+    if (p && p.colorVariants) {
+        const v = p.colorVariants.find(x => x.name === color);
+        const imgEl = document.getElementById('modal-img');
+        if (imgEl) {
+            window._modalImages = (v && v.images && v.images.length > 0) ? v.images : (v?.image ? [v.image] : (p.image ? [p.image] : []));
+            window._modalImgIdx = 0;
+            
+            imgEl.style.opacity = '0';
+            setTimeout(() => { imgEl.src = window._modalImages[0] || ''; imgEl.style.opacity = '1'; }, 200);
+            
+            imgEl.style.cursor = window._modalImages.length > 1 ? 'pointer' : 'default';
+            
+            if (window._modalCarouselInterval) clearInterval(window._modalCarouselInterval);
+            toggleNavButtons();
+        }
+        const colorLabelSpan = document.getElementById('selected-color-name');
+        if (colorLabelSpan) colorLabelSpan.innerText = translateText(color);
+        
+        // Update Ref if possible
+        const refEl = document.getElementById('modal-product-ref');
+        if (refEl) refEl.innerText = p.reference ? `REF. ${p.reference}` : `REF. ${p.id.substring(0,8)}`;
+
+        renderModalSizes(p, color);
+    }
+};
+
 window.toggleSidebarMenu = toggleSidebarMenu;
 window.applySideFilter = applySideFilter;
 window.applyBestSellerFilter = applyBestSellerFilter;
+window.applyCouponCode = function(...args) { return window.applyCheckoutCoupon(...args); };
 
 // --- 💖 WISHLIST SYSTEM ---
 window.toggleWishlist = (id, btn) => {

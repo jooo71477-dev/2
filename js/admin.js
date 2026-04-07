@@ -3094,7 +3094,7 @@ async function loadCategories() {
         console.log("📂 Categories Loaded:", categories.length);
         renderCategories();
         updateCatDropdowns();
-        renderProducts(); // Important: Re-render products to show category names
+        filterAdminProductsByCategory(); // Use filter logic for re-rendering
     });
 }
 
@@ -3103,7 +3103,7 @@ function renderCategories() {
     if (!list) return;
 
     list.innerHTML = '';
-    const roots = categories.filter(c => !c.parentId);
+    const roots = categories.filter(c => !c.parentId || c.parentId === "");
     
     roots.forEach(root => {
         renderCategoryBranch(root, 0, list);
@@ -3149,7 +3149,7 @@ async function syncCategoryOrder() {
 
 function renderCategoryBranch(cat, level, container) {
     const children = categories.filter(c => c.parentId === cat.id);
-    const productCount = products.filter(p => p.category === cat.id || p.subCategory === cat.id).length;
+    const productCount = products.filter(p => p.category === cat.id || p.parentCategory === cat.id || p.subCategory === cat.id).length;
     
     const row = document.createElement('tr');
     row.setAttribute('data-id', cat.id); // Important for sorting
@@ -3283,12 +3283,17 @@ window.deleteCategory = async (id) => {
 
 function updateCatDropdowns() {
     const pCatSelect = document.getElementById('p-category');
+    const filterSelect = document.getElementById('admin-product-category-filter');
     if (!pCatSelect) return;
     
-    pCatSelect.innerHTML = '<option value="" disabled selected>اختر القسم (رئيسي أو فرعي)...</option>';
+    const optionsHTML = '<option value="" disabled selected>اختر القسم (رئيسي أو فرعي)...</option>';
+    const filterHTML = '<option value="all">جميع الأقسام</option>';
+    
+    pCatSelect.innerHTML = optionsHTML;
+    if (filterSelect) filterSelect.innerHTML = filterHTML;
     
     // Build tree
-    const roots = categories.filter(c => !c.parentId);
+    const roots = categories.filter(c => !c.parentId || c.parentId === "");
     
     const addOptions = (cat, level) => {
         // Use non-breaking spaces for proper indentation in RTL/LTR mix
@@ -3296,7 +3301,10 @@ function updateCatDropdowns() {
         const option = document.createElement('option');
         option.value = cat.id;
         option.innerText = indent + cat.name;
+        
+        const clone = option.cloneNode(true);
         pCatSelect.appendChild(option);
+        if (filterSelect) filterSelect.appendChild(clone);
         
         const children = categories.filter(c => c.parentId === cat.id);
         children.forEach(child => addOptions(child, level + 1));
@@ -3306,6 +3314,17 @@ function updateCatDropdowns() {
 }
 
 // Sub-products dropdown is no longer needed since p-category handles the whole tree
+// New: Category filtering for Admin Dashboard
+window.filterAdminProductsByCategory = () => {
+    const filterVal = document.getElementById('admin-product-category-filter')?.value || 'all';
+    if (filterVal === 'all') {
+        renderProducts(products);
+    } else {
+        const filtered = products.filter(p => p.category === filterVal || p.subCategory === filterVal);
+        renderProducts(filtered);
+    }
+};
+
 window.updateSubCatsDropdown = () => {};
 
 // Note: Deduplicated and moved to line 128
