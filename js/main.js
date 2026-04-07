@@ -2618,12 +2618,12 @@ function renderModalSizes(p, color) {
                 </button>`;
     }).join('');
 
-    // --- AUTO-SELECT SINGLE SIZE ---
+    // --- AUTO-SELECT FIRST AVAILABLE SIZE ---
     const availableBtns = container.querySelectorAll('.size-btn:not(.out)');
-    if (availableBtns.length === 1) {
-        const btn = availableBtns[0];
-        const sizeName = btn.querySelector('.size-name').innerText;
-        window.selectSizeForCart(sizeName, btn);
+    if (availableBtns.length > 0) {
+        const firstBtn = availableBtns[0];
+        const sizeName = firstBtn.querySelector('.size-name').innerText;
+        window.selectSizeForCart(sizeName, firstBtn);
     }
 }
 
@@ -3237,7 +3237,7 @@ window.removeFromCart = removeFromCart;
 window.signInWithGoogle = signInWithGoogle;
 window.signOutUser = signOutUser;
 window.toggleLanguage = toggleLanguage;
-window.applyCouponCode = applyCouponCode;
+window.applyCheckoutCoupon = applyCheckoutCoupon;
 
 window.toggleSidebarMenu = toggleSidebarMenu;
 window.applySideFilter = applySideFilter;
