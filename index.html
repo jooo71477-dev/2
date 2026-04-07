@@ -723,12 +723,11 @@
     <div id="size-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header-actions">
-                <button id="close-modal" class="close-modal-btn"><i class="fas fa-times"></i></button>
-                <button id="modal-wishlist-btn" class="wishlist-modal-btn" onclick="event.stopPropagation(); window.toggleWishlistFromModal()">
+                <button id="close-modal" class="close-modal-btn" onclick="window.closeSizeModal()"><i class="fas fa-times"></i></button>
+                <button id="modal-wishlist-btn" class="wishlist-modal-btn" onclick="window.toggleWishlistFromModal()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="bookmark-svg"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
                 </button>
-                <button class="share-modal-btn" onclick="window.shareCurrentProduct()"><i
-                        class="fas fa-share-alt"></i></button>
+                <button class="share-modal-btn" onclick="window.shareCurrentProduct()"><i class="fas fa-share-alt"></i></button>
             </div>
             <div class="modal-product-img">
                 <div id="modal-badge-container"></div>
@@ -769,7 +768,16 @@
                 <!-- Stock Info -->
                 <div id="size-stock-info" style="font-size: 0.85rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; min-height: 1.2em; transition: all 0.3s ease;"></div>
 
-                <button class="add-to-basket-btn" onclick="window.addToBasketFromModal()" data-i18n="add_to_basket">ADD TO BASKET</button>
+                <div class="modal-actions-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                    <button class="add-to-basket-btn" onclick="window.addToBasketFromModal()" data-i18n="add_to_basket" style="width: 100%; border-radius: 12px; height: 55px; font-weight: 900; background: var(--text-main); color: var(--bg-color); border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <i class="fas fa-shopping-basket"></i>
+                        <span data-i18n="add_to_basket">ADD TO BASKET</span>
+                    </button>
+                    <button class="buy-now-btn" onclick="window._isBuyNowFlow = true; window.addToBasketFromModal();" data-i18n="buy_now" style="width: 100%; border-radius: 12px; height: 55px; font-weight: 900; background: var(--primary); color: #000; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <i class="fas fa-bolt"></i>
+                        <span data-i18n="buy_now">BUY NOW</span>
+                    </button>
+                </div>
 
 
 

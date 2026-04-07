@@ -1953,16 +1953,6 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
                         </div>
                         ${colorSwatches}
                     </div>
-                    <div class="card-actions">
-                        <button class="card-btn-cart" onclick="event.stopPropagation(); openSizeModal('${p.id}')">
-                            <i class="fas fa-shopping-basket"></i>
-                            <span data-i18n="add_to_basket">${translations[currentLang].add_to_basket}</span>
-                        </button>
-                        <button class="card-btn-buy" onclick="event.stopPropagation(); buyNow('${p.id}')">
-                            <i class="fas fa-bolt"></i>
-                            <span data-i18n="buy_now">${translations[currentLang].buy_now}</span>
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>`;
@@ -3297,11 +3287,36 @@ window.toggleWishlist = (id, btn) => {
     }
 };
 
+window.buyNow = (id) => {
+    window._isBuyNowFlow = true;
+    openSizeModal(id);
+};
+
+window.shareCurrentProduct = () => {
+    if (!selectedProductForSize) return;
+    const p = selectedProductForSize;
+    const url = window.location.href;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: translateText(p.name),
+            text: `${translateText(p.name)} - ${p.price} ${translations[currentLang].currency}`,
+            url: url
+        }).catch(() => {});
+        return;
+    }
+    
+    navigator.clipboard.writeText(url).then(() => {
+        showToast(currentLang === 'ar' ? '✅ تم نسخ رابط المنتج!' : '✅ Product link copied!');
+    });
+};
+
 window.toggleWishlistFromModal = () => {
     if (!selectedProductForSize) return;
     const btn = document.getElementById('modal-wishlist-btn');
     window.toggleWishlist(selectedProductForSize.id, btn);
 };
+
 
 window.toggleWishlistMenu = () => {
     const menu = document.getElementById('wishlist-sidebar');

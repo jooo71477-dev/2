@@ -2496,6 +2496,53 @@ footer {
     color: var(--primary);
 }
 
+/* Add to Basket & Buy Now in Modal */
+.add-to-basket-btn, .buy-now-btn {
+    width: 100%;
+    border-radius: 100px !important; /* Premium rounded look */
+    height: 60px !important;
+    font-size: 1rem !important;
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    cursor: pointer;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.add-to-basket-btn {
+    background: #f0f0f0 !important; /* Premium light grey */
+    color: #000 !important;
+    border: 1px solid rgba(0,0,0,0.05) !important;
+}
+
+.buy-now-btn {
+    background: var(--primary) !important; /* Gold/Primary */
+    color: #000 !important;
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+}
+
+.add-to-basket-btn:hover, .buy-now-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+}
+
+.add-to-basket-btn:active, .buy-now-btn:active {
+    transform: translateY(-1px) scale(0.98);
+}
+
+.add-to-basket-btn i, .buy-now-btn i {
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
 #logout-btn:hover {
     background: var(--primary-dark) !important;
     transform: scale(1.05);
