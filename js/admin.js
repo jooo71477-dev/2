@@ -3103,7 +3103,7 @@ function renderCategories() {
     if (!list) return;
 
     list.innerHTML = '';
-    const roots = categories.filter(c => !c.parentId || c.parentId === "");
+    const roots = categories.filter(c => !c.parentId || c.parentId === "" || !categories.find(parent => parent.id === c.parentId));
     
     roots.forEach(root => {
         renderCategoryBranch(root, 0, list);
@@ -3292,11 +3292,12 @@ function updateCatDropdowns() {
     pCatSelect.innerHTML = optionsHTML;
     if (filterSelect) filterSelect.innerHTML = filterHTML;
     
-    // Build tree
-    const roots = categories.filter(c => !c.parentId || c.parentId === "");
-    
+    const renderedIds = new Set();
     const addOptions = (cat, level) => {
-        // Use non-breaking spaces for proper indentation in RTL/LTR mix
+        if (renderedIds.has(cat.id)) return;
+        renderedIds.add(cat.id);
+
+        // Prepend dashes for better visual hierarchy in dropdowns
         const indent = level > 0 ? "\u00A0\u00A0".repeat(level) + "↳ " : "";
         const option = document.createElement('option');
         option.value = cat.id;
@@ -3310,7 +3311,14 @@ function updateCatDropdowns() {
         children.forEach(child => addOptions(child, level + 1));
     };
 
+    // Render tree starts
+    const roots = categories.filter(c => !c.parentId || c.parentId === "" || !categories.find(parent => parent.id === c.parentId));
     roots.forEach(root => addOptions(root, 0));
+
+    // Cleanup: Render any orphans left (just in case)
+    categories.forEach(cat => {
+        if (!renderedIds.has(cat.id)) addOptions(cat, 0);
+    });
 }
 
 // Sub-products dropdown is no longer needed since p-category handles the whole tree
@@ -3320,7 +3328,11 @@ window.filterAdminProductsByCategory = () => {
     if (filterVal === 'all') {
         renderProducts(products);
     } else {
-        const filtered = products.filter(p => p.category === filterVal || p.subCategory === filterVal);
+        const filtered = products.filter(p => 
+            p.category === filterVal || 
+            p.parentCategory === filterVal || 
+            p.subCategory === filterVal
+        );
         renderProducts(filtered);
     }
 };
