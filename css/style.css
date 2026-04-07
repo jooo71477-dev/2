@@ -2496,15 +2496,24 @@ footer {
     color: var(--primary);
 }
 
+.modal-actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 25px;
+    width: 100%;
+}
+
 /* Add to Basket & Buy Now in Modal */
 .add-to-basket-btn, .buy-now-btn {
     width: 100%;
     border-radius: 100px !important; /* Premium rounded look */
     height: 60px !important;
-    font-size: 1rem !important;
+    font-size: 1.1rem !important; /* Unified larger font size */
     font-weight: 900 !important;
+    font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif !important; /* Matching fonts */
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 1px;
     display: flex;
     align-items: center;
     justify-content: center;

@@ -304,8 +304,11 @@
             <div class="nav-icons"
                 style="display: flex; gap: 20px; align-items: center; flex: 1; justify-content: flex-start; z-index: 11;">
                 <a href="#" id="sidebar-toggle" onclick="window.toggleSidebarMenu(); return false;" title="Best Sellers"
-                    aria-label="Open Sidebar Menu" style="font-size: 1.6rem !important; color: var(--text);"><i
+                    aria-label="Open Sidebar Menu" style="font-size: 1.6rem !important; color: var(--text-main);"><i
                         class="fas fa-bars"></i></a>
+                <a href="#" id="home-nav-btn" onclick="scrollToTop(); return false;" title="Home"
+                    aria-label="Go to Home" style="font-size: 1.6rem !important; color: var(--text-main);"><i
+                        class="fas fa-home"></i></a>
                 <a href="#" id="lang-toggle" class="mobile-nav-hide" onclick="window.toggleLanguage(); return false;" title="Change Language"
                     aria-label="Toggle Language"
                     style="font-size: 1.2rem !important; font-weight: 900; color: var(--primary); text-decoration: none;">AR</a>
@@ -768,12 +771,12 @@
                 <!-- Stock Info -->
                 <div id="size-stock-info" style="font-size: 0.85rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; min-height: 1.2em; transition: all 0.3s ease;"></div>
 
-                <div class="modal-actions-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
-                    <button class="add-to-basket-btn" onclick="window.addToBasketFromModal()" data-i18n="add_to_basket" style="width: 100%; border-radius: 12px; height: 55px; font-weight: 900; background: var(--text-main); color: var(--bg-color); border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <div class="modal-actions-container">
+                    <button class="add-to-basket-btn" onclick="window.addToBasketFromModal()" data-i18n="add_to_basket">
                         <i class="fas fa-shopping-basket"></i>
                         <span data-i18n="add_to_basket">ADD TO BASKET</span>
                     </button>
-                    <button class="buy-now-btn" onclick="window._isBuyNowFlow = true; window.addToBasketFromModal();" data-i18n="buy_now" style="width: 100%; border-radius: 12px; height: 55px; font-weight: 900; background: var(--primary); color: #000; border: none; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <button class="buy-now-btn" onclick="window._isBuyNowFlow = true; window.addToBasketFromModal();" data-i18n="buy_now">
                         <i class="fas fa-bolt"></i>
                         <span data-i18n="buy_now">BUY NOW</span>
                     </button>
