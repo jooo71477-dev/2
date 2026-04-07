@@ -2327,7 +2327,7 @@ footer {
     height: 42px;
     background: rgba(0, 0, 0, 0.7);
     color: #fff !important;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--card-border);
     border-radius: 50% !important;
     display: flex;
     align-items: center;
@@ -2392,8 +2392,8 @@ footer {
 }
 
 .order-card-mini {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
     border-radius: 20px;
     padding: 20px;
     margin-bottom: 15px;
