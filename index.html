@@ -686,19 +686,7 @@
             <p class="empty-msg">Cart is currently empty</p>
         </div>
 
-        <!-- Coupon Section -->
-        <div id="cart-coupon-section"
-            style="padding: 15px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02);">
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="coupon-code-input" placeholder="كود الخصم"
-                    data-i18n-placeholder="coupon_placeholder"
-                    style="flex: 1; padding: 10px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: 'Cairo';">
-                <button onclick="window.applyCouponCode()"
-                    style="padding: 10px 20px; border-radius: 10px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; font-family: 'Cairo';"
-                    data-i18n="apply">تطبيق</button>
-            </div>
-            <p id="coupon-status-msg" style="margin-top: 10px; font-size: 0.85rem; display: none;"></p>
-        </div>
+
 
         <div class="cart-footer">
             <div class="cart-total">
@@ -781,8 +769,7 @@
                 <!-- Stock Info -->
                 <div id="size-stock-info" style="font-size: 0.85rem; font-weight: bold; color: var(--primary); margin-bottom: 15px; min-height: 1.2em; transition: all 0.3s ease;"></div>
 
-                <button class="add-to-basket-btn" onclick="window.addToBasketFromModal()" data-i18n="add_to_basket">ADD
-                    TO BASKET</button>
+                <button class="add-to-basket-btn" onclick="window.addToBasketFromModal()" data-i18n="add_to_basket">ADD TO BASKET</button>
 
 
 
@@ -944,6 +931,27 @@
                                 style="width: 100%; padding: 10px; background: var(--bg-color); border: 1px dashed var(--card-border); border-radius: 12px; color: var(--text-main); cursor: pointer;">
                         </div>
                     </div>
+                </div>
+
+                <!-- Coupon in Checkout -->
+                <div id="checkout-coupon-wrapper" class="form-group checkout-coupon" style="margin-top: 15px; border: 1px dashed var(--card-border); padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.02); display: none;">
+                    <label style="margin-bottom: 10px; font-weight: 700; display: block;" data-i18n="coupon_placeholder">Discount Code</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="checkout-coupon-input" placeholder="كود الخصم"
+                            style="flex: 1; padding: 10px; border-radius: 8px; background: var(--bg-color); border: 1px solid var(--card-border); color: #fff; font-family: 'Cairo';">
+                        <button type="button" onclick="window.applyCheckoutCoupon()" 
+                            style="padding: 10px 18px; border-radius: 8px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; font-family: 'Cairo'; font-size: 0.9rem;">
+                            <span data-i18n="apply">تطبيق</span>
+                        </button>
+                    </div>
+                    <p id="checkout-coupon-status" style="margin-top: 8px; font-size: 0.8rem; display: none;"></p>
+                </div>
+
+                <div id="checkout-login-prompt" style="margin-top: 15px; border: 1px dashed var(--card-border); padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.02); text-align: center; display: block;">
+                    <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 10px;" data-i18n="login_to_use_coupon">Login with Google to use the discount code 🏷️</p>
+                    <button type="button" onclick="signInWithGoogle()" style="background: none; border: 1px solid var(--primary); color: var(--primary); padding: 5px 15px; border-radius: 50px; font-size: 0.75rem; font-weight: bold; cursor: pointer; font-family: 'Cairo';">
+                        <i class="fab fa-google" style="margin-inline-end: 5px;"></i> <span data-i18n="login_with_google">Login with Google</span>
+                    </button>
                 </div>
 
                 <div class="order-summary-mini">

@@ -137,7 +137,10 @@ const translations = {
         shipping_policy: "Shipping Policy",
         returns_policy: "Returns & Exchange Policy",
         wishlist: "Favorites",
-        back_to_home: "Back to Home"
+        back_to_home: "Back to Home",
+        buy_now: "BUY NOW",
+        login_to_use_coupon: "Login with Google to use the discount code 🏷️",
+        coupon_already_used: "You have already used this coupon code before"
     },
     ar: {
         home: "الرئيسية",
@@ -221,7 +224,10 @@ const translations = {
         wishlist: "المفضلة",
         shipping_policy: "سياسة الشحن",
         returns_policy: "سياسة الاستبدال والارجاع",
-        back_to_home: "العودة للمنزل"
+        back_to_home: "العودة للمنزل",
+        buy_now: "اشتري الآن",
+        login_to_use_coupon: "سجل دخول بجوجل لاستخدام كود الخصم 🏷️",
+        coupon_already_used: "لقد استخدمت هذا الكود من قبل"
     }
 };
 
@@ -318,6 +324,13 @@ function initFirebase() {
     auth.onAuthStateChanged(user => {
         currentUser = user;
         updateAuthUI();
+        
+        // --- Real-time Coupon Section Visibility ---
+        const checkoutModal = document.getElementById('checkout-modal');
+        if (checkoutModal && checkoutModal.classList.contains('active')) {
+            updateCheckoutTotal();
+        }
+
         if (user) {
             console.log("👤 User Logged In:", user.email);
             // --- Auto-refresh My Orders Modal if open ---
@@ -905,6 +918,27 @@ window.updateCheckoutTotal = () => {
     const itemsTotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
     const govSelected = document.getElementById('customer-gov').value;
     
+    // --- Coupon Section Management ---
+    const couponWrapper = document.getElementById('checkout-coupon-wrapper');
+    const loginPrompt = document.getElementById('checkout-login-prompt');
+    if (couponWrapper && loginPrompt) {
+        if (currentUser) {
+            couponWrapper.style.display = 'block';
+            loginPrompt.style.display = 'none';
+        } else {
+            couponWrapper.style.display = 'none';
+            loginPrompt.style.display = 'block';
+            // Clear any applied coupon if user logs out or isn't logged in
+            if (appliedCoupon) {
+                appliedCoupon = null;
+                const couponInput = document.getElementById('checkout-coupon-input');
+                if (couponInput) couponInput.value = '';
+                const couponStatus = document.getElementById('checkout-coupon-status');
+                if (couponStatus) couponStatus.style.display = 'none';
+            }
+        }
+    }
+
     // Match the selected governorate to its Arabic form for lookup
     let govArabicKey = govSelected;
     const govIndex = governorates_data[currentLang].indexOf(govSelected);
@@ -1911,7 +1945,6 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
                 <div class="product-info-stack">
                     <div class="name-row">
                         <h3 data-translate-cache="${p.name}">${translatedName}</h3>
-                        <div class="add-plus-btn">+</div>
                     </div>
                     <div class="price-color-row">
                         <div class="price-box">
@@ -1919,6 +1952,16 @@ function filterAndRender(section, parent, sub, bestSellerOnly = false) {
                             ${(p.priceBefore || p.oldPrice) ? `<span class="price-before" style="font-size: 0.62rem; color: var(--text-muted); text-decoration: line-through; opacity: 0.5; margin: 0 4px;">${p.priceBefore || p.oldPrice} ${translations[currentLang].currency}</span>` : ''}
                         </div>
                         ${colorSwatches}
+                    </div>
+                    <div class="card-actions">
+                        <button class="card-btn-cart" onclick="event.stopPropagation(); openSizeModal('${p.id}')">
+                            <i class="fas fa-shopping-basket"></i>
+                            <span data-i18n="add_to_basket">${translations[currentLang].add_to_basket}</span>
+                        </button>
+                        <button class="card-btn-buy" onclick="event.stopPropagation(); buyNow('${p.id}')">
+                            <i class="fas fa-bolt"></i>
+                            <span data-i18n="buy_now">${translations[currentLang].buy_now}</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2147,6 +2190,8 @@ window.openSizeModal = (id) => {
     selectedProductForSize = p;
     const firstVariant = p.colorVariants && p.colorVariants.length > 0 ? p.colorVariants[0] : null;
     selectedColor = firstVariant ? firstVariant.name : '';
+    window._isBuyNowFlow = false; // Reset buy now flow flag
+
 
     if (modalProductName) {
         modalProductName.innerText = translateText(p.name);
@@ -2299,6 +2344,38 @@ window.openSizeModal = (id) => {
     
     // 🏷️ Inject Product Schema (Structured Data)
     injectProductSchema(p);
+};
+
+window.buyNow = (id) => {
+    const p = remoteProducts.find(prod => prod.id == id);
+    if (!p) return;
+
+    const colorVariants = p.colorVariants || [];
+    const sizes = p.sizes || [];
+    
+    // Check if it's a single option product
+    const isSingleColor = colorVariants.length <= 1;
+    const isSingleSize = sizes.length === 1 || (isSingleColor && colorVariants[0]?.sizes?.length === 1);
+
+    if (isSingleColor && isSingleSize) {
+        // Auto-add and go to checkout
+        selectedProductForSize = p;
+        selectedColor = colorVariants.length > 0 ? colorVariants[0].name : '';
+        const finalSize = (colorVariants[0]?.sizes?.[0] || sizes[0] || 'M').trim();
+        
+        window.addToCartFromModal(finalSize);
+        
+        // Open Checkout
+        setTimeout(() => {
+            closeCartSidebar();
+            document.getElementById('checkout-modal').classList.add('active');
+            updateCheckoutTotal();
+        }, 300);
+    } else {
+        // Open modal with Buy Now context
+        window.openSizeModal(id);
+        window._isBuyNowFlow = true;
+    }
 };
 
 function updateCanonical(url) {
@@ -2550,6 +2627,14 @@ function renderModalSizes(p, color) {
                     <span class="size-stock">${stockLabel}</span>
                 </button>`;
     }).join('');
+
+    // --- AUTO-SELECT SINGLE SIZE ---
+    const availableBtns = container.querySelectorAll('.size-btn:not(.out)');
+    if (availableBtns.length === 1) {
+        const btn = availableBtns[0];
+        const sizeName = btn.querySelector('.size-name').innerText;
+        window.selectSizeForCart(sizeName, btn);
+    }
 }
 
 window.selectSizeForCart = (size, btn) => {
@@ -2588,6 +2673,17 @@ window.addToCartFromModal = (size) => {
     localStorage.setItem('icloth_cart', JSON.stringify(cart));
     if (window._modalCarouselInterval) clearInterval(window._modalCarouselInterval);
     
+    // If in Buy Now flow, open checkout immediately
+    if (window._isBuyNowFlow) {
+        window._isBuyNowFlow = false;
+        setTimeout(() => {
+            window.closeSizeModal();
+            document.getElementById('checkout-modal').classList.add('active');
+            updateCheckoutTotal();
+        }, 400);
+        return;
+    }
+
     // Success Feedback instead of opening cart
     const btn = document.querySelector('.add-to-basket-btn');
     if (btn) {
@@ -2646,9 +2742,15 @@ function updateCartUI() {
     }
 }
 
-async function applyCouponCode() {
-    const input = document.getElementById('coupon-code-input');
-    const statusMsg = document.getElementById('coupon-status-msg');
+
+
+async function applyCheckoutCoupon() {
+    const input = document.getElementById('checkout-coupon-input');
+    const statusMsg = document.getElementById('checkout-coupon-status');
+    await _handleCouponApplication(input, statusMsg);
+}
+
+async function _handleCouponApplication(input, statusMsg) {
     const code = input.value.trim().toUpperCase();
 
     if (!code) return;
@@ -2678,6 +2780,21 @@ async function applyCouponCode() {
             throw new Error(translations[currentLang].invalid_coupon);
         }
 
+        // 🛡️ One-time use per email/user check
+        if (currentUser) {
+            const usedCheck = await db.collection('orders')
+                .where('userEmail', '==', currentUser.email)
+                .where('couponCode', '==', code)
+                .limit(1).get();
+            
+            if (!usedCheck.empty) {
+                throw new Error(translations[currentLang].coupon_already_used);
+            }
+        } else {
+            // Should not happen due to UI hiding, but for safety:
+            throw new Error(translations[currentLang].login_to_use_coupon);
+        }
+
         appliedCoupon = coupon;
         statusMsg.style.color = '#4CAF50';
         statusMsg.innerText = translations[currentLang].coupon_applied;
@@ -2695,6 +2812,9 @@ async function applyCouponCode() {
         }
     }
 }
+
+window.applyCheckoutCoupon = applyCheckoutCoupon;
+
 
 function updateCartQuantity(id, d) {
     const i = cart.find(x => x.cartId === id);
