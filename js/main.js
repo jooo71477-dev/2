@@ -3566,25 +3566,9 @@ window.handleAITryOnUpload = async (input) => {
     try {
         const p = selectedProductForSize;
         
-        // 1. Upload to Cloudinary (Unsigned)
+        // 1. Resize and Convert to Base64 (Zero Storage - Image is never saved)
         if (progressFill) progressFill.style.width = '25%';
-        
-        const CLOUD_NAME = "dprrwlqni"; // اسم حسابك المأخوذ من الصورة
-        const UPLOAD_PRESET = "icloth"; // الاسم الذي قمنا بإنشائه الآن
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', UPLOAD_PRESET);
-        
-        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-            method: 'POST',
-            body: formData
-        });
-        
-        const uploadData = await uploadRes.json();
-        if (uploadData.error) throw new Error(uploadData.error.message);
-        
-        const userImgUrl = uploadData.secure_url;
+        const userImgBase64 = await resizeImage(file, 1024); // Max width 1024px
 
         if (progressFill) progressFill.style.width = '45%';
         
@@ -3601,7 +3585,7 @@ window.handleAITryOnUpload = async (input) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                userImage: userImgUrl,
+                userImage: userImgBase64,
                 productImage: productImg,
                 category: p.category?.toLowerCase().includes('pant') ? 'bottoms' : 
                           (p.category?.toLowerCase().includes('dress') ? 'dresses' : 'tops')
@@ -3731,4 +3715,29 @@ async function incrementAIUsage() {
         console.error("Usage increment error:", e);
     }
 }
+
+// --- AI Workspace Controls ---
+window.openAITryOn = () => {
+    document.getElementById('ai-tryon-modal').style.display = 'flex';
+    window.resetAITryOn();
+};
+
+window.closeAITryOn = () => {
+    document.getElementById('ai-tryon-modal').style.display = 'none';
+};
+
+window.resetAITryOn = () => {
+    document.getElementById('ai-mode-upload').style.display = 'block';
+    document.getElementById('ai-mode-processing').style.display = 'none';
+    document.getElementById('ai-mode-result').style.display = 'none';
+    const input = document.getElementById('ai-photo-input');
+    if (input) input.value = '';
+    
+    document.getElementById('ai-step-1').style.opacity = '1';
+    document.getElementById('ai-step-2').style.opacity = '0.3';
+    document.getElementById('ai-step-3').style.opacity = '0.3';
+    
+    const progressFill = document.getElementById('ai-progress-bar');
+    if (progressFill) progressFill.style.width = '0%';
+};
 
