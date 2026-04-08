@@ -3565,13 +3565,12 @@ window.handleAITryOnUpload = async function(input) {
 
     try {
         const p = selectedProductForSize;
-        if (!p) throw new Error("Product context missing. Please close and reopen the fitting room.");
+        if (!p) throw new Error("Product data missing.");
         
-        // 1. Upload to Cloudinary (To get a real URL for the AI)
+        // 1. Upload to Cloudinary (Essential for Replicate)
         if (progressFill) progressFill.style.width = '15%';
-        
-        const CLOUD_NAME = "dprrwlqni".trim(); 
-        const UPLOAD_PRESET = "icloth".trim(); 
+        const CLOUD_NAME = "dprrwlqni"; 
+        const UPLOAD_PRESET = "icloth"; 
         
         const formData = new FormData();
         formData.append('file', file);
@@ -3581,64 +3580,50 @@ window.handleAITryOnUpload = async function(input) {
             method: 'POST',
             body: formData
         });
-        
         const uploadData = await uploadRes.json();
-        if (uploadData.error) throw new Error(`Cloudinary Error: ${uploadData.error.message}`);
-        
+        if (uploadData.error) throw new Error(`Image Upload Failed: ${uploadData.error.message}`);
         const userImgUrl = uploadData.secure_url;
-        if (progressFill) progressFill.style.width = '35%';
-        
-        // 2. Prepare Product Image (Ensure it's an absolute URL)
-        const color = selectedColor;
+
+        // 2. Prepare Product Image (Must be absolute)
         let productImg = p.image || '';
         if (p.colorVariants) {
-            const v = p.colorVariants.find(x => x.name === color);
-            if (v) productImg = (v.images && v.images.length > 0) ? v.images[0] : (v.image || p.image || '');
+            const v = p.colorVariants.find(x => x.name === selectedColor);
+            if (v) productImg = v.images?.[0] || v.image || p.image;
         }
-        
-        // تحويل الرابط إلى رابط كامل (Absolute URL)
         if (productImg && !productImg.startsWith('http')) {
             productImg = window.location.origin + (productImg.startsWith('/') ? '' : '/') + productImg;
         }
 
-        // 3. Call Cloudflare Worker Proxy with the URL
+        // 3. Start AI Prediction
+        if (progressFill) progressFill.style.width = '40%';
         const response = await fetch('https://gentle-sea-2a19.jooo71477.workers.dev/tryon', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 userImage: userImgUrl,
                 productImage: productImg,
-                category: p.category?.toLowerCase().includes('pant') ? 'bottoms' : 
-                          (p.category?.toLowerCase().includes('dress') ? 'dresses' : 'tops')
+                category: p.category || 'tops'
             })
         });
 
         const prediction = await response.json();
-        
-        // التحقق من بدئ العملية بنجاح
-        if (!prediction.id) {
-            const detail = prediction.detail || prediction.error || JSON.stringify(prediction);
-            console.error("AI Start Error:", prediction);
-            throw new Error(`Replicate Error: ${detail}`);
+        if (prediction.error) {
+            throw new Error(`AI Prediction Error: ${JSON.stringify(prediction.detail || prediction.error)}`);
         }
 
-        // 4. Poll for result
+        // 4. Poll for Result
         if (progressFill) progressFill.style.width = '60%';
         const finalResult = await pollReplicateStatus(prediction.id);
         
         if (progressFill) progressFill.style.width = '100%';
-        
         window._aiResultUrl = finalResult;
         document.getElementById('ai-result-img').src = finalResult;
         
-        // Success: Transition to Step 3
         setTimeout(() => {
             document.getElementById('ai-mode-processing').style.display = 'none';
             document.getElementById('ai-mode-result').style.display = 'block';
             document.getElementById('ai-step-2').style.opacity = '0.3';
             document.getElementById('ai-step-3').style.opacity = '1';
-            
-            // Record Usage
             incrementAIUsage();
         }, 800);
 
