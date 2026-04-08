@@ -3616,14 +3616,18 @@ window.handleAITryOnUpload = async (input) => {
         }, 800);
 
     } catch (err) {
-        console.error("AI Try-On Error:", err);
-        showToast(currentLang === 'ar' ? "❌ حدث خطأ! جرب مرة أخرى" : "❌ Error occurred! Please try again.");
+        console.error("AI Try-On Detailed Error:", err);
+        // إظهار سبب الخطأ الحقيقي للمستخدم
+        const errorMsg = err.message || "حدث خطأ غير متوقع";
+        showToast(currentLang === 'ar' ? `❌ خطأ: ${errorMsg}` : `❌ Error: ${errorMsg}`);
         window.resetAITryOn();
     }
 };
 
 async function pollReplicateStatus(id) {
-    const maxTries = 60; // زيادة المدة لـ 120 ثانية ليكون أكثر صبراً
+    if (!id) throw new Error("Invalid Prediction ID");
+    
+    const maxTries = 80; // ننتظر حتى 160 ثانية (حوالي 3 دقائق)
     const progressBar = document.getElementById('ai-progress-bar');
     
     for (let i = 0; i < maxTries; i++) {
@@ -3631,23 +3635,27 @@ async function pollReplicateStatus(id) {
             const res = await fetch(`https://gentle-sea-2a19.jooo71477.workers.dev/status?id=${id}`);
             const data = await res.json();
             
+            console.log("AI Status:", data.status); // سنعرف هنا ما الذي يحدث بالضبط
+
             if (data.status === 'succeeded') {
                 return data.output; 
             }
-            if (data.status === 'failed') {
-                throw new Error("AI Processing Failed");
+            if (data.status === 'failed' || data.error) {
+                throw new Error(data.error || "AI Processing Failed");
             }
             
-            // Progress increment (simulated)
+            // تحريك تدريجي لشريط التحميل
             if (progressBar) {
-                let curr = parseFloat(progressBar.style.width);
-                if (curr < 95) progressBar.style.width = (curr + 2) + '%';
+                let curr = parseFloat(progressBar.style.width) || 0;
+                if (curr < 95) progressBar.style.width = (curr + 1) + '%';
             }
-        } catch (e) { console.error("Poll error:", e); }
+        } catch (e) { 
+            console.error("Polling attempt failed:", e);
+        }
 
         await new Promise(r => setTimeout(r, 2000));
     }
-    throw new Error("Timeout waiting for AI result");
+    throw new Error("Timeout: The AI is taking too long. Please try again later.");
 }
 
 async function resizeImage(file, maxWidth) {
