@@ -3593,3 +3593,190 @@ function initOverlayDragging() {
         overlay.style.width = (currentWidth * scale) + 'px';
     };
 }
+
+// ==========================================
+// AI VIRTUAL TRY-ON (REPLICATE INTEGRATION)
+// ==========================================
+
+window._aiResultUrl = null;
+
+window.openAITryOn = () => {
+    const p = selectedProductForSize;
+    if (!p) return;
+    
+    const modal = document.getElementById('ai-tryon-modal');
+    if (!modal) return;
+    
+    window.resetAITryOn();
+    modal.classList.add('active');
+};
+
+window.closeAITryOn = () => {
+    document.getElementById('ai-tryon-modal').classList.remove('active');
+};
+
+window.resetAITryOn = () => {
+    document.getElementById('ai-mode-upload').style.display = 'block';
+    document.getElementById('ai-mode-processing').style.display = 'none';
+    document.getElementById('ai-mode-result').style.display = 'none';
+    
+    document.getElementById('ai-step-1').style.opacity = '1';
+    document.getElementById('ai-step-2').style.opacity = '0.3';
+    document.getElementById('ai-step-3').style.opacity = '0.3';
+    
+    document.getElementById('ai-photo-input').value = '';
+    window._aiResultUrl = null;
+    
+    const progressBar = document.getElementById('ai-progress-bar');
+    if (progressBar) progressBar.style.width = '0%';
+};
+
+window.handleAITryOnUpload = async (input) => {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+
+    // Check Usage Limit First
+    const canUse = await checkAIUsageLimit();
+    if (!canUse) {
+        showToast(currentLang === 'ar' ? "❌ عذراً، تم الوصول للحد اليومي (10 مرات). جرب غداً!" : "❌ Daily limit reached (10 uses). Try again tomorrow!");
+        input.value = '';
+        return;
+    }
+
+    // Progress...
+    document.getElementById('ai-mode-upload').style.display = 'none';
+    document.getElementById('ai-mode-processing').style.display = 'block';
+    document.getElementById('ai-step-1').style.opacity = '0.3';
+    document.getElementById('ai-step-2').style.opacity = '1';
+    
+    const progressFill = document.getElementById('ai-progress-bar');
+    if (progressFill) progressFill.style.width = '10%';
+
+    try {
+        // 1. Upload to Firebase Storage (Temporary Workspace)
+        const p = selectedProductForSize;
+        const fileName = `tryon_${Date.now()}_${file.name}`;
+        const storageRef = firebase.storage().ref(`temp_tryon/${fileName}`);
+        
+        if (progressFill) progressFill.style.width = '25%';
+        await storageRef.put(file);
+        const userImgUrl = await storageRef.getDownloadURL();
+        
+        if (progressFill) progressFill.style.width = '45%';
+        
+        // 2. Prepare Product Image
+        const color = selectedColor;
+        let productImg = p.image || '';
+        if (p.colorVariants) {
+            const v = p.colorVariants.find(x => x.name === color);
+            if (v) productImg = (v.images && v.images.length > 0) ? v.images[0] : (v.image || p.image || '');
+        }
+
+        // 3. Call Replicate Proxy
+        const response = await fetch('/api/tryon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userImage: userImgUrl,
+                productImage: productImg,
+                category: p.category?.toLowerCase().includes('pant') ? 'bottoms' : 'tops'
+            })
+        });
+
+        const prediction = await response.json();
+        if (prediction.error) throw new Error(prediction.error);
+
+        // 4. Poll for result
+        if (progressFill) progressFill.style.width = '60%';
+        const finalResult = await pollReplicateStatus(prediction.id);
+        
+        if (progressFill) progressFill.style.width = '100%';
+        
+        window._aiResultUrl = finalResult;
+        document.getElementById('ai-result-img').src = finalResult;
+        
+        // Success: Transition to Step 3
+        setTimeout(() => {
+            document.getElementById('ai-mode-processing').style.display = 'none';
+            document.getElementById('ai-mode-result').style.display = 'block';
+            document.getElementById('ai-step-2').style.opacity = '0.3';
+            document.getElementById('ai-step-3').style.opacity = '1';
+            
+            // Record Usage
+            incrementAIUsage();
+            
+            // Cleanup: Delete temporary uploaded photo
+            storageRef.delete().catch(console.error);
+        }, 800);
+
+    } catch (err) {
+        console.error("AI Try-On Error:", err);
+        showToast(currentLang === 'ar' ? "❌ حدث خطأ! جرب مرة أخرى" : "❌ Error occurred! Please try again.");
+        window.resetAITryOn();
+    }
+};
+
+async function pollReplicateStatus(id) {
+    const maxTries = 40; 
+    const progressBar = document.getElementById('ai-progress-bar');
+    
+    for (let i = 0; i < maxTries; i++) {
+        try {
+            const res = await fetch(`/api/replicate_status?id=${id}`);
+            const data = await res.json();
+            
+            if (data.status === 'succeeded') {
+                return data.output; 
+            }
+            if (data.status === 'failed') {
+                throw new Error("AI Processing Failed");
+            }
+            
+            // Progress increment (simulated)
+            if (progressBar) {
+                let curr = parseFloat(progressBar.style.width);
+                if (curr < 95) progressBar.style.width = (curr + 2) + '%';
+            }
+        } catch (e) { console.error("Poll error:", e); }
+
+        await new Promise(r => setTimeout(r, 2000));
+    }
+    throw new Error("Timeout waiting for AI result");
+}
+
+window.continueWithAI = () => {
+    // We already have the product in global selected state
+    window.addToBasketFromModal();
+    window.closeAITryOn();
+    window.closeSizeModal();
+    showToast(currentLang === 'ar' ? "✨ تمت الإضافة! يمكنك رؤية النتيجة في المعاينة." : "✨ Added to basket! You can see the result in preview.");
+};
+
+// --- Daily Limit Logic via Firestore ---
+async function checkAIUsageLimit() {
+    try {
+        if (!db) return true;
+        const today = new Date().toISOString().split('T')[0];
+        const doc = await db.collection('ai_usage').doc(today).get();
+        if (!doc.exists) return true;
+        const count = doc.data().count || 0;
+        return count < 10;
+    } catch (e) {
+        console.error("Usage check error:", e);
+        return true; 
+    }
+}
+
+async function incrementAIUsage() {
+    try {
+        if (!db) return;
+        const today = new Date().toISOString().split('T')[0];
+        const docRef = db.collection('ai_usage').doc(today);
+        await docRef.set({
+            count: firebase.firestore.FieldValue.increment(1)
+        }, { merge: true });
+    } catch (e) {
+        console.error("Usage increment error:", e);
+    }
+}
+

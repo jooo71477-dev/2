@@ -87,6 +87,11 @@ service cloud.firestore {
       allow write: if isAdmin(); 
     }
 
+    match /ai_usage/{id} {
+        allow read: if true;
+        allow write: if true; // Allows anyone to increment the daily limit
+    }
+
     // ❌ منع أي وصول آخر غير مصرح به
     match /{document=**} { 
       allow read, write: if false; 

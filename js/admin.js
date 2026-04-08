@@ -570,6 +570,7 @@ function openProductModal(id = null) {
         document.getElementById('p-price-before').value = p.priceBefore || p.oldPrice || '';
         if (document.getElementById('p-badge')) document.getElementById('p-badge').value = p.badge || '';
         if (document.getElementById('p-badge-ar')) document.getElementById('p-badge-ar').value = p.badge_ar || '';
+        if (document.getElementById('p-ai-tryon')) document.getElementById('p-ai-tryon').checked = !!p.aiTryOn;
 
         // --- Best Seller ---
         document.getElementById('p-best-seller').checked = !!p.isBestSeller;
@@ -617,6 +618,7 @@ function openProductModal(id = null) {
         document.getElementById('p-price').value = "";
         if (document.getElementById('p-badge')) document.getElementById('p-badge').value = "";
         if (document.getElementById('p-badge-ar')) document.getElementById('p-badge-ar').value = "";
+        if (document.getElementById('p-ai-tryon')) document.getElementById('p-ai-tryon').checked = false;
         document.getElementById('p-best-seller').checked = false;
         document.getElementById('p-size-chart').value = "";
         document.getElementById('p-size-chart-preview').style.display = "none";
@@ -699,6 +701,7 @@ document.getElementById('product-form').onsubmit = async (e) => {
         explicitMainImage: !!document.getElementById('p-image').value,
         colorVariants: variants,
         isBestSeller: document.getElementById('p-best-seller').checked,
+        aiTryOn: document.getElementById('p-ai-tryon') ? document.getElementById('p-ai-tryon').checked : false,
         sizeChartUrl: document.getElementById('p-size-chart').value,
         active: true, // Ensure visibility on main site
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
