@@ -1,25 +1,25 @@
 {
   "version": 2,
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "public": true,
   "rewrites": [
+    {
+      "source": "/api/tryon",
+      "destination": "/api/tryon.js"
+    },
+    {
+      "source": "/api/replicate_status",
+      "destination": "/api/replicate_status.js"
+    },
+    {
+      "source": "/api/translate",
+      "destination": "/api/translate.js"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/translate.js"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        }
-      ]
-    }
   ]
 }
-
-
