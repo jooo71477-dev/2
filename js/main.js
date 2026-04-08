@@ -3567,7 +3567,7 @@ window.handleAITryOnUpload = async function(input) {
         const p = selectedProductForSize;
         if (!p) throw new Error("Product data missing.");
         
-        // 1. Convert User Image to Base64 (Zero Storage!)
+        // 1. Image Data
         if (progressFill) progressFill.style.width = '20%';
         const reader = new FileReader();
         const userImgBase64 = await new Promise(resolve => {
@@ -3575,7 +3575,6 @@ window.handleAITryOnUpload = async function(input) {
             reader.readAsDataURL(file);
         });
         
-        // 2. Prepare Product Image (Ensure URL is public)
         let productImg = p.image || '';
         if (p.colorVariants) {
             const v = p.colorVariants.find(x => x.name === selectedColor);
@@ -3585,8 +3584,8 @@ window.handleAITryOnUpload = async function(input) {
             productImg = window.location.origin + (productImg.startsWith('/') ? '' : '/') + productImg;
         }
 
-        // 3. Call Fal AI (Via Worker)
-        if (progressFill) progressFill.style.width = '50%';
+        // 2. Start (Queue)
+        if (progressFill) progressFill.style.width = '40%';
         const response = await fetch('https://gentle-sea-2a19.jooo71477.workers.dev/tryon', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -3597,14 +3596,45 @@ window.handleAITryOnUpload = async function(input) {
             })
         });
 
-        const result = await response.json();
-        if (result.error) throw new Error(result.error);
-        if (!result.output) throw new Error("AI Processing failed.");
+        const startData = await response.json();
+        if (startData.error || !startData.id) {
+            console.error("AI Setup Failed Detail:", startData);
+            throw new Error("AI Setup Failed: " + JSON.stringify(startData.error || "No Request ID received"));
+        }
+        const requestId = startData.id;
 
-        // 4. Success!
+        // 3. Polling for Fal.ai
+        let attempts = 0;
+        let finalResult = null;
+        console.log("AI Polling Started for ID:", requestId);
+
+        while (attempts < 120) {
+            const statusRes = await fetch(`https://gentle-sea-2a19.jooo71477.workers.dev/status?id=${requestId}`);
+            const statusData = await statusRes.json();
+            
+            console.log(`Attempt ${attempts + 1}: Status = ${statusData.status}`);
+
+            if (statusData.status === 'COMPLETED') {
+                finalResult = statusData.response.image.url;
+                break;
+            } else if (statusData.status === 'FAILED') {
+                throw new Error("AI Processing Failed: " + JSON.stringify(statusData.error || statusData.logs));
+            }
+            
+            attempts++;
+            if (progressFill) {
+                const p = 40 + (attempts * 0.4);
+                progressFill.style.width = (p > 95 ? 95 : p).toString() + '%';
+            }
+            await new Promise(r => setTimeout(r, 1000));
+        }
+
+        if (!finalResult) throw new Error("AI Timeout: Check your Fal.ai credits.");
+
+        // 4. Success
         if (progressFill) progressFill.style.width = '100%';
-        window._aiResultUrl = result.output;
-        document.getElementById('ai-result-img').src = result.output;
+        window._aiResultUrl = finalResult;
+        document.getElementById('ai-result-img').src = finalResult;
         
         setTimeout(() => {
             document.getElementById('ai-mode-processing').style.display = 'none';
