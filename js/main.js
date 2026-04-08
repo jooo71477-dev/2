@@ -3611,7 +3611,14 @@ window.handleAITryOnUpload = async function(input) {
             throw new Error(`AI Start Request Failed: ${response.status} ${response.statusText} ${errorText}`);
         }
 
-        const startData = await response.json();
+        let startData;
+        try {
+            startData = await response.json();
+        } catch (parseError) {
+            const rawText = await response.text();
+            throw new Error(`AI Start Response JSON parse failed: ${parseError.message}. Response body: ${rawText}`);
+        }
+
         if (startData.error || !startData.id) {
             console.error("AI Setup Failed Detail:", startData);
             throw new Error("AI Setup Failed: " + JSON.stringify(startData.error || "No Request ID received"));
@@ -3679,7 +3686,13 @@ async function pollReplicateStatus(id) {
                 const text = await res.text();
                 throw new Error(`Status request failed: ${res.status} ${res.statusText} ${text}`);
             }
-            const data = await res.json();
+            let data;
+            try {
+                data = await res.json();
+            } catch (parseError) {
+                const rawText = await res.text();
+                throw new Error(`Status response JSON parse failed: ${parseError.message}. Response body: ${rawText}`);
+            }
 
             console.log("AI Status:", data.status, data);
 
