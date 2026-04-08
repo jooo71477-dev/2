@@ -3622,10 +3622,18 @@ window.handleAITryOnUpload = async (input) => {
         }, 800);
 
     } catch (err) {
-        console.error("AI Try-On Detailed Error:", err);
-        // إظهار سبب الخطأ الحقيقي للمستخدم
-        const errorMsg = err.message || "حدث خطأ غير متوقع";
-        showToast(currentLang === 'ar' ? `❌ خطأ: ${errorMsg}` : `❌ Error: ${errorMsg}`);
+        console.error("AI Try-On Diagnostic Error:", err);
+        let detailedMsg = err.message;
+        
+        // إذا كان الخطأ قادم من نظام التشخيص الجديد
+        try {
+            const diag = JSON.parse(err.message.replace('Replicate Error: ', ''));
+            if (diag.error === "DIAGNOSTIC_REPORT") {
+                detailedMsg = `[Code: ${diag.status}] ${diag.statusText}\nDetails: ${JSON.stringify(diag.replicateResponse)}`;
+            }
+        } catch(e) {}
+
+        showToast(currentLang === 'ar' ? `❌ خطأ في التشخيص: ${detailedMsg}` : `❌ Diagnostic Error: ${detailedMsg}`);
         window.resetAITryOn();
     }
 };
