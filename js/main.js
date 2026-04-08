@@ -3542,6 +3542,12 @@ window.resetAITryOn = () => {
     if (progressBar) progressBar.style.width = '0%';
 };
 
+const AI_API_BASE = '/api';
+const AI_TRYON_ENDPOINT = `${AI_API_BASE}/tryon`;
+const AI_STATUS_ENDPOINT = `${AI_API_BASE}/replicate_status`;
+const AI_MAX_POLL_ATTEMPTS = 80;
+const AI_POLL_INTERVAL_MS = 2000;
+
 window.handleAITryOnUpload = async function(input) {
     const file = (input instanceof HTMLInputElement) ? input.files[0] : input;
     if (!file) return;
@@ -3550,7 +3556,13 @@ window.handleAITryOnUpload = async function(input) {
     const canUse = await checkAIUsageLimit();
     if (!canUse) {
         showToast(currentLang === 'ar' ? "❌ عذراً، تم الوصول للحد اليومي (10 مرات). جرب غداً!" : "❌ Daily limit reached (10 uses). Try again tomorrow!");
-        input.value = '';
+        if (input instanceof HTMLInputElement) input.value = '';
+        return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+        showToast(currentLang === 'ar' ? "❌ حجم الصورة كبير جداً. استخدم صورة أقل من 8MB." : "❌ Image is too large. Use a photo smaller than 8MB.");
+        if (input instanceof HTMLInputElement) input.value = '';
         return;
     }
 
@@ -3567,28 +3579,9 @@ window.handleAITryOnUpload = async function(input) {
         const p = selectedProductForSize;
         if (!p) throw new Error("Product data missing.");
         
-        // 1. Resize/Compress Image (Crucial fixes 408/500 errors)
         if (progressFill) progressFill.style.width = '15%';
-        
-        const userImgBase64 = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width, h = img.height;
-                    const MAX = 1024;
-                    if (w > h && w > MAX) { h *= MAX/w; w = MAX; }
-                    else if (h > MAX) { w *= MAX/h; h = MAX; }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8));
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
+        const userImgBase64 = await resizeImage(file, 1024);
+        if (!userImgBase64) throw new Error("Failed to process uploaded image.");
 
         if (progressFill) progressFill.style.width = '30%';
         
@@ -3601,9 +3594,9 @@ window.handleAITryOnUpload = async function(input) {
             productImg = window.location.origin + (productImg.startsWith('/') ? '' : '/') + productImg;
         }
 
-        // 2. Start (Queue)
+        // 2. Start (Queue) via local API proxy
         if (progressFill) progressFill.style.width = '40%';
-        const response = await fetch('https://gentle-sea-2a19.jooo71477.workers.dev/tryon', {
+        const response = await fetch(AI_TRYON_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -3613,6 +3606,11 @@ window.handleAITryOnUpload = async function(input) {
             })
         });
 
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`AI Start Request Failed: ${response.status} ${response.statusText} ${errorText}`);
+        }
+
         const startData = await response.json();
         if (startData.error || !startData.id) {
             console.error("AI Setup Failed Detail:", startData);
@@ -3620,33 +3618,23 @@ window.handleAITryOnUpload = async function(input) {
         }
         const requestId = startData.id;
 
-        // 3. Polling for Fal.ai
-        let attempts = 0;
-        let finalResult = null;
         console.log("AI Polling Started for ID:", requestId);
+        const outputData = await pollReplicateStatus(requestId);
 
-        while (attempts < 120) {
-            const statusRes = await fetch(`https://gentle-sea-2a19.jooo71477.workers.dev/status?id=${requestId}`);
-            const statusData = await statusRes.json();
-            
-            console.log(`Attempt ${attempts + 1}: Status = ${statusData.status}`);
-
-            if (statusData.status === 'COMPLETED') {
-                finalResult = statusData.response.image.url;
-                break;
-            } else if (statusData.status === 'FAILED') {
-                throw new Error("AI Processing Failed: " + JSON.stringify(statusData.error || statusData.logs));
-            }
-            
-            attempts++;
-            if (progressFill) {
-                const p = 40 + (attempts * 0.4);
-                progressFill.style.width = (p > 95 ? 95 : p).toString() + '%';
-            }
-            await new Promise(r => setTimeout(r, 1000));
+        let finalResult = null;
+        if (typeof outputData === 'string') {
+            finalResult = outputData;
+        } else if (Array.isArray(outputData)) {
+            finalResult = outputData.find(item => typeof item === 'string') || outputData[0];
+        } else if (outputData?.image) {
+            finalResult = outputData.image;
+        } else if (outputData?.[0]?.image) {
+            finalResult = outputData[0].image;
         }
 
-        if (!finalResult) throw new Error("AI Timeout: Check your Fal.ai credits.");
+        if (!finalResult) {
+            throw new Error('AI Processing Failed: Invalid Replicate output');
+        }
 
         // 4. Success
         if (progressFill) progressFill.style.width = '100%';
@@ -3680,36 +3668,41 @@ window.handleAITryOnUpload = async function(input) {
 
 async function pollReplicateStatus(id) {
     if (!id) throw new Error("Invalid Prediction ID");
-    
-    const maxTries = 80; // ننتظر حتى 160 ثانية (حوالي 3 دقائق)
+
     const progressBar = document.getElementById('ai-progress-bar');
-    
-    for (let i = 0; i < maxTries; i++) {
+    let lastError = null;
+
+    for (let i = 0; i < AI_MAX_POLL_ATTEMPTS; i++) {
         try {
-            const res = await fetch(`https://gentle-sea-2a19.jooo71477.workers.dev/status?id=${id}`);
+            const res = await fetch(`${AI_STATUS_ENDPOINT}?id=${encodeURIComponent(id)}`);
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Status request failed: ${res.status} ${res.statusText} ${text}`);
+            }
             const data = await res.json();
-            
-            console.log("AI Status:", data.status); // سنعرف هنا ما الذي يحدث بالضبط
+
+            console.log("AI Status:", data.status, data);
 
             if (data.status === 'succeeded') {
-                return data.output; 
+                return data.output;
             }
             if (data.status === 'failed' || data.error) {
                 throw new Error(data.error || "AI Processing Failed");
             }
-            
-            // تحريك تدريجي لشريط التحميل
+
             if (progressBar) {
                 let curr = parseFloat(progressBar.style.width) || 0;
                 if (curr < 95) progressBar.style.width = (curr + 1) + '%';
             }
-        } catch (e) { 
+        } catch (e) {
+            lastError = e;
             console.error("Polling attempt failed:", e);
         }
 
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, AI_POLL_INTERVAL_MS));
     }
-    throw new Error("Timeout: The AI is taking too long. Please try again later.");
+
+    throw new Error(lastError ? `Timeout after polling: ${lastError.message}` : "Timeout: The AI is taking too long. Please try again later.");
 }
 
 async function resizeImage(file, maxWidth) {
