@@ -3567,24 +3567,15 @@ window.handleAITryOnUpload = async function(input) {
         const p = selectedProductForSize;
         if (!p) throw new Error("Product data missing.");
         
-        // 1. Upload User Image
-        if (progressFill) progressFill.style.width = '15%';
-        const CLOUD_NAME = "dprrwlqni"; 
-        const UPLOAD_PRESET = "icloth"; 
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', UPLOAD_PRESET);
-        
-        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-            method: 'POST',
-            body: formData
+        // 1. Convert User Image to Base64 (Zero Storage!)
+        if (progressFill) progressFill.style.width = '20%';
+        const reader = new FileReader();
+        const userImgBase64 = await new Promise(resolve => {
+            reader.onload = e => resolve(e.target.result);
+            reader.readAsDataURL(file);
         });
-        const uploadData = await uploadRes.json();
-        if (uploadData.error) throw new Error(uploadData.error.message);
-        const userImgUrl = uploadData.secure_url;
-
-        // 2. Product Image
+        
+        // 2. Prepare Product Image (Ensure URL is public)
         let productImg = p.image || '';
         if (p.colorVariants) {
             const v = p.colorVariants.find(x => x.name === selectedColor);
@@ -3594,28 +3585,26 @@ window.handleAITryOnUpload = async function(input) {
             productImg = window.location.origin + (productImg.startsWith('/') ? '' : '/') + productImg;
         }
 
-        // 3. Start AI
-        if (progressFill) progressFill.style.width = '40%';
+        // 3. Call Fal AI (Via Worker)
+        if (progressFill) progressFill.style.width = '50%';
         const response = await fetch('https://gentle-sea-2a19.jooo71477.workers.dev/tryon', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                userImage: userImgUrl,
+                userImage: userImgBase64,
                 productImage: productImg,
                 category: p.category || 'tops'
             })
         });
 
-        const prediction = await response.json();
-        if (prediction.error) throw new Error(JSON.stringify(prediction.error));
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+        if (!result.output) throw new Error("AI Processing failed.");
 
-        // 4. Wait for Result
-        if (progressFill) progressFill.style.width = '60%';
-        const finalResult = await pollReplicateStatus(prediction.id);
-        
+        // 4. Success!
         if (progressFill) progressFill.style.width = '100%';
-        window._aiResultUrl = finalResult;
-        document.getElementById('ai-result-img').src = finalResult;
+        window._aiResultUrl = result.output;
+        document.getElementById('ai-result-img').src = result.output;
         
         setTimeout(() => {
             document.getElementById('ai-mode-processing').style.display = 'none';
@@ -3623,7 +3612,7 @@ window.handleAITryOnUpload = async function(input) {
             document.getElementById('ai-step-2').style.opacity = '0.3';
             document.getElementById('ai-step-3').style.opacity = '1';
             incrementAIUsage();
-        }, 800);
+        }, 500);
 
     } catch (err) {
         console.error("AI Try-On Diagnostic Error:", err);
