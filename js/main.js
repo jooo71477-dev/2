@@ -140,7 +140,19 @@ const translations = {
         back_to_home: "Back to Home",
         buy_now: "BUY NOW",
         login_to_use_coupon: "Login with Google to use the discount code 🏷️",
-        coupon_already_used: "You have already used this coupon code before"
+        coupon_already_used: "You have already used this coupon code before",
+        ai_tryon_workspace: "AI TRY-ON",
+        ai_tryon_desc: "Elevate your experience with AI Smart Try-On",
+        step_upload: "UPLOAD",
+        step_process: "PROCESS",
+        step_result: "RESULT",
+        upload_photo_msg: "UPLOAD YOUR PHOTO",
+        ai_upload_hint: "Full-body or half-body photo with simple background gives the most realistic results.",
+        ai_working: "STITCHING GARMENT...",
+        ai_wait_msg: "Our AI is meticulously fitting the product to your photo. This takes around 20 seconds.",
+        privacy_note: "SECURE CLOUD PROCESSING • PHOTOS DELETED AUTOMATICALLY",
+        done: "Done",
+        reset: "Try Another Photo"
     },
     ar: {
         home: "الرئيسية",
@@ -227,7 +239,19 @@ const translations = {
         back_to_home: "العودة للمنزل",
         buy_now: "اشتري الآن",
         login_to_use_coupon: "سجل دخول بجوجل لاستخدام كود الخصم 🏷️",
-        coupon_already_used: "لقد استخدمت هذا الكود من قبل"
+        coupon_already_used: "لقد استخدمت هذا الكود من قبل",
+        ai_tryon_workspace: "تجربة الذكاء الاصطناعي",
+        ai_tryon_desc: "انتقل بتجربتك لمستوى آخر مع القياس الذكي",
+        step_upload: "رفع الصورة",
+        step_process: "معالجة",
+        step_result: "النتيجة",
+        upload_photo_msg: "ارفع صورتك الشخصية",
+        ai_upload_hint: "الصورة الكاملة أو النصفية بخلفية بسيطة تعطي أفضل النتائج.",
+        ai_working: "جاري تركيب الملابس...",
+        ai_wait_msg: "يقوم الذكاء الاصطناعي بضبط المنتج على جسمك بدقة. يستغرق ذلك حوالي 20 ثانية.",
+        privacy_note: "معالجة سحابية آمنة • يتم مسح الصور تلقائياً",
+        done: "تم",
+        reset: "تجربة صورة أخرى"
     }
 };
 
@@ -3477,122 +3501,7 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
     initAll();
     initFirebase();
 }
-// ======= AI TRY-ON LOGIC =======
-window.openAITryOn = () => {
-    const p = selectedProductForSize;
-    if (!p) return;
-    
-    const modal = document.getElementById('ai-tryon-modal');
-    const overlayImg = document.getElementById('ai-product-overlay');
-    
-    if (modal && overlayImg) {
-        // Use the current modal image or product image
-        overlayImg.src = document.getElementById('modal-img').src;
-        modal.classList.add('active');
-        
-        // Reset state
-        window.resetAITryOn();
-    }
-};
-
-window.closeAITryOn = () => {
-    const modal = document.getElementById('ai-tryon-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        // SECURITY: Clear user photo and overlay source immediately
-        setTimeout(() => {
-            const userPhoto = document.getElementById('ai-user-photo');
-            const overlayImg = document.getElementById('ai-product-overlay');
-            if (userPhoto) userPhoto.src = '';
-            if (overlayImg) overlayImg.src = '';
-            document.getElementById('ai-photo-input').value = '';
-        }, 300);
-    }
-};
-
-window.resetAITryOn = () => {
-    document.getElementById('ai-upload-area').style.display = 'block';
-    document.getElementById('ai-preview-area').style.display = 'none';
-    document.getElementById('ai-user-photo').src = '';
-    document.getElementById('ai-photo-input').value = '';
-};
-
-window.handleAITryOnUpload = (input) => {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const userPhoto = document.getElementById('ai-user-photo');
-            userPhoto.src = e.target.result;
-            
-            document.getElementById('ai-upload-area').style.display = 'none';
-            document.getElementById('ai-preview-area').style.display = 'block';
-            
-            // Initialize dragging
-            initOverlayDragging();
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-};
-
-function initOverlayDragging() {
-    const overlay = document.getElementById('ai-product-overlay');
-    const container = document.getElementById('ai-canvas-container');
-    let isDragging = false;
-    let startX, startY, initialX, initialY;
-
-    const startDrag = (e) => {
-        isDragging = true;
-        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-        
-        startX = clientX;
-        startY = clientY;
-        
-        const rect = overlay.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        
-        initialX = rect.left - containerRect.left;
-        initialY = rect.top - containerRect.top;
-        
-        e.preventDefault();
-    };
-
-    const doDrag = (e) => {
-        if (!isDragging) return;
-        
-        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-        
-        const dx = clientX - startX;
-        const dy = clientY - startY;
-        
-        overlay.style.left = (initialX + dx + (overlay.offsetWidth/2)) + 'px';
-        overlay.style.top = (initialY + dy + (overlay.offsetHeight/2)) + 'px';
-        
-        e.preventDefault();
-    };
-
-    const stopDrag = () => {
-        isDragging = false;
-    };
-
-    overlay.onmousedown = startDrag;
-    overlay.ontouchstart = startDrag;
-    
-    window.onmousemove = doDrag;
-    window.ontouchmove = doDrag;
-    
-    window.onmouseup = stopDrag;
-    window.ontouchend = stopDrag;
-
-    // Scale overlay with pinch/scroll (optional but nice)
-    container.onwheel = (e) => {
-        e.preventDefault();
-        const scale = e.deltaY > 0 ? 0.9 : 1.1;
-        const currentWidth = overlay.offsetWidth;
-        overlay.style.width = (currentWidth * scale) + 'px';
-    };
-}
+// --- End of Legacy Logic ---
 
 // ==========================================
 // AI VIRTUAL TRY-ON (REPLICATE INTEGRATION)
@@ -3679,7 +3588,8 @@ window.handleAITryOnUpload = async (input) => {
             body: JSON.stringify({
                 userImage: userImgUrl,
                 productImage: productImg,
-                category: p.category?.toLowerCase().includes('pant') ? 'bottoms' : 'tops'
+                category: p.category?.toLowerCase().includes('pant') ? 'bottoms' : 
+                          (p.category?.toLowerCase().includes('dress') ? 'dresses' : 'tops')
             })
         });
 
