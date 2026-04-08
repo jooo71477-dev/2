@@ -1,0 +1,16 @@
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /temp_tryon/{allPaths=**} {
+      // السماح بالرفع والقراءة للجميع لتجربة القياس
+      // ملاحظة: سيتم المسح تلقائياً من الكود بعد المعالجة
+      allow read, write: if true;
+    }
+    
+    match /{allPaths=**} {
+      // باقي الملفات للأدمن فقط
+      allow read: if true;
+      allow write: if request.auth != null && 
+                     request.auth.token.email in ["jooo714777@gmail.com", "jooo71477@gmail.com", "yousef.diesel.2023@gmail.com"];
+    }
+  }
+}

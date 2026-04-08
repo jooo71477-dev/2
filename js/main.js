@@ -3562,15 +3562,28 @@ window.handleAITryOnUpload = async (input) => {
     if (progressFill) progressFill.style.width = '10%';
 
     try {
-        // 1. Upload to Firebase Storage (Temporary Workspace)
         const p = selectedProductForSize;
-        const fileName = `tryon_${Date.now()}_${file.name}`;
-        const storageRef = firebase.storage().ref(`temp_tryon/${fileName}`);
         
+        // 1. Upload to Cloudinary (Unsigned)
         if (progressFill) progressFill.style.width = '25%';
-        await storageRef.put(file);
-        const userImgUrl = await storageRef.getDownloadURL();
         
+        const CLOUD_NAME = "dprrwlqni"; // اسم حسابك المأخوذ من الصورة
+        const UPLOAD_PRESET = "icloth"; // الاسم الذي قمنا بإنشائه الآن
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', UPLOAD_PRESET);
+        
+        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const uploadData = await uploadRes.json();
+        if (uploadData.error) throw new Error(uploadData.error.message);
+        
+        const userImgUrl = uploadData.secure_url;
+
         if (progressFill) progressFill.style.width = '45%';
         
         // 2. Prepare Product Image
@@ -3614,9 +3627,6 @@ window.handleAITryOnUpload = async (input) => {
             
             // Record Usage
             incrementAIUsage();
-            
-            // Cleanup: Delete temporary uploaded photo
-            storageRef.delete().catch(console.error);
         }, 800);
 
     } catch (err) {
@@ -3652,6 +3662,36 @@ async function pollReplicateStatus(id) {
         await new Promise(r => setTimeout(r, 2000));
     }
     throw new Error("Timeout waiting for AI result");
+}
+
+async function resizeImage(file, maxWidth) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = (maxWidth / width) * height;
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                // Compress to JPEG 0.8 quality to save size
+                resolve(canvas.toDataURL('image/jpeg', 0.8));
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
 
 window.continueWithAI = () => {
