@@ -3567,13 +3567,30 @@ window.handleAITryOnUpload = async function(input) {
         const p = selectedProductForSize;
         if (!p) throw new Error("Product data missing.");
         
-        // 1. Image Data
-        if (progressFill) progressFill.style.width = '20%';
-        const reader = new FileReader();
-        const userImgBase64 = await new Promise(resolve => {
-            reader.onload = e => resolve(e.target.result);
+        // 1. Resize/Compress Image (Crucial fixes 408/500 errors)
+        if (progressFill) progressFill.style.width = '15%';
+        
+        const userImgBase64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    const MAX = 1024;
+                    if (w > h && w > MAX) { h *= MAX/w; w = MAX; }
+                    else if (h > MAX) { w *= MAX/h; h = MAX; }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                };
+                img.src = e.target.result;
+            };
             reader.readAsDataURL(file);
         });
+
+        if (progressFill) progressFill.style.width = '30%';
         
         let productImg = p.image || '';
         if (p.colorVariants) {
