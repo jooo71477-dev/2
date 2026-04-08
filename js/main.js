@@ -3594,9 +3594,10 @@ window.handleAITryOnUpload = async (input) => {
 
         const prediction = await response.json();
         
-        // إذا لم يرجع لنا رقم تعريف، فهذا يعني أن هناك خطأ في الطلب
+        // التحقق من بدئ العملية بنجاح
         if (!prediction.id) {
             const detail = prediction.detail || prediction.error || JSON.stringify(prediction);
+            console.error("AI Start Error:", prediction);
             throw new Error(`Replicate Error: ${detail}`);
         }
 
