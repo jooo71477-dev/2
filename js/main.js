@@ -3511,80 +3511,38 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 
 window._aiResultUrl = null;
 
-window.openAITryOn = () => {
-    const p = selectedProductForSize;
-    if (!p) return;
-    
-    const modal = document.getElementById('ai-tryon-modal');
-    if (!modal) return;
-    
-    window.resetAITryOn();
-    modal.classList.add('active');
-};
-
-window.closeAITryOn = () => {
-    document.getElementById('ai-tryon-modal').classList.remove('active');
-};
-
-window.resetAITryOn = () => {
-    document.getElementById('ai-mode-upload').style.display = 'block';
-    document.getElementById('ai-mode-processing').style.display = 'none';
-    document.getElementById('ai-mode-result').style.display = 'none';
-    
-    document.getElementById('ai-step-1').style.opacity = '1';
-    document.getElementById('ai-step-2').style.opacity = '0.3';
-    document.getElementById('ai-step-3').style.opacity = '0.3';
-    
-    document.getElementById('ai-photo-input').value = '';
-    window._aiResultUrl = null;
-    
-    const progressBar = document.getElementById('ai-progress-bar');
-    if (progressBar) progressBar.style.width = '0%';
-};
-
-const AI_API_BASE = '/api';
-const AI_TRYON_ENDPOINT = `${AI_API_BASE}/tryon`;
-const AI_STATUS_ENDPOINT = `${AI_API_BASE}/replicate_status`;
-const AI_MAX_POLL_ATTEMPTS = 80;
-const AI_POLL_INTERVAL_MS = 2000;
+// --- AI TRY-ON SYSTEM (FULLY RECONSTRUCTED) ---
+const AI_WORKER_URL = 'https://gentle-sea-2a19.jooo71477.workers.dev';
 
 window.handleAITryOnUpload = async function(input) {
     const file = (input instanceof HTMLInputElement) ? input.files[0] : input;
     if (!file) return;
 
-    // Check Usage Limit First
+    // 1. Safety & Usage Checks
     const canUse = await checkAIUsageLimit();
     if (!canUse) {
-        showToast(currentLang === 'ar' ? "❌ عذراً، تم الوصول للحد اليومي (10 مرات). جرب غداً!" : "❌ Daily limit reached (10 uses). Try again tomorrow!");
-        if (input instanceof HTMLInputElement) input.value = '';
+        showToast(currentLang === 'ar' ? "❌ عذراً، تم الوصول للحد اليومي (10 مرات)." : "❌ Daily limit reached.");
         return;
     }
 
-    if (file.size > 8 * 1024 * 1024) {
-        showToast(currentLang === 'ar' ? "❌ حجم الصورة كبير جداً. استخدم صورة أقل من 8MB." : "❌ Image is too large. Use a photo smaller than 8MB.");
-        if (input instanceof HTMLInputElement) input.value = '';
-        return;
-    }
-
-    // Progress...
+    // 2. Prepare UI
     document.getElementById('ai-mode-upload').style.display = 'none';
     document.getElementById('ai-mode-processing').style.display = 'block';
     document.getElementById('ai-step-1').style.opacity = '0.3';
     document.getElementById('ai-step-2').style.opacity = '1';
-    
     const progressFill = document.getElementById('ai-progress-bar');
     if (progressFill) progressFill.style.width = '10%';
 
     try {
         const p = selectedProductForSize;
-        if (!p) throw new Error("Product data missing.");
-        
-        if (progressFill) progressFill.style.width = '15%';
-        const userImgBase64 = await resizeImage(file, 1024);
-        if (!userImgBase64) throw new Error("Failed to process uploaded image.");
+        if (!p) throw new Error("Product missing");
 
-        if (progressFill) progressFill.style.width = '30%';
-        
+        // 3. Compress & Convert Image
+        if (progressFill) progressFill.style.width = '20%';
+        const userImgBase64 = await resizeImage(file, 1024);
+        if (!userImgBase64) throw new Error("Failed to process photo");
+
+        // 4. Prepare Product URL
         let productImg = p.image || '';
         if (p.colorVariants) {
             const v = p.colorVariants.find(x => x.name === selectedColor);
@@ -3594,9 +3552,9 @@ window.handleAITryOnUpload = async function(input) {
             productImg = window.location.origin + (productImg.startsWith('/') ? '' : '/') + productImg;
         }
 
-        // 2. Start (Queue) via local API proxy
+        // 5. Start AI (Queue)
         if (progressFill) progressFill.style.width = '40%';
-        const response = await fetch(AI_TRYON_ENDPOINT, {
+        const response = await fetch(`${AI_WORKER_URL}/tryon`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -3606,44 +3564,32 @@ window.handleAITryOnUpload = async function(input) {
             })
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`AI Start Request Failed: ${response.status} ${response.statusText} ${errorText}`);
-        }
-
-        let startData;
-        try {
-            startData = await response.json();
-        } catch (parseError) {
-            const rawText = await response.text();
-            throw new Error(`AI Start Response JSON parse failed: ${parseError.message}. Response body: ${rawText}`);
-        }
-
-        if (startData.error || !startData.id) {
-            console.error("AI Setup Failed Detail:", startData);
-            throw new Error("AI Setup Failed: " + JSON.stringify(startData.error || "No Request ID received"));
-        }
+        if (!response.ok) throw new Error(`Server Error: ${response.status}`);
+        const startData = await response.json();
         const requestId = startData.id;
 
-        console.log("AI Polling Started for ID:", requestId);
-        const outputData = await pollReplicateStatus(requestId);
-
+        // 6. Polling for Result
+        let attempts = 0;
         let finalResult = null;
-        if (typeof outputData === 'string') {
-            finalResult = outputData;
-        } else if (Array.isArray(outputData)) {
-            finalResult = outputData.find(item => typeof item === 'string') || outputData[0];
-        } else if (outputData?.image) {
-            finalResult = outputData.image;
-        } else if (outputData?.[0]?.image) {
-            finalResult = outputData[0].image;
+        while (attempts < 80) {
+            const statusRes = await fetch(`${AI_WORKER_URL}/status?id=${requestId}`);
+            const statusData = await statusRes.json();
+            
+            if (statusData.status === 'COMPLETED') {
+                finalResult = statusData.response.image.url;
+                break;
+            } else if (statusData.status === 'FAILED') {
+                throw new Error("AI Failed: " + JSON.stringify(statusData.error));
+            }
+            
+            attempts++;
+            if (progressFill) progressFill.style.width = (40 + (attempts * 0.7)) + '%';
+            await new Promise(r => setTimeout(r, 2000));
         }
 
-        if (!finalResult) {
-            throw new Error('AI Processing Failed: Invalid Replicate output');
-        }
+        if (!finalResult) throw new Error("Timeout");
 
-        // 4. Success
+        // 7. SUCCESS
         if (progressFill) progressFill.style.width = '100%';
         window._aiResultUrl = finalResult;
         document.getElementById('ai-result-img').src = finalResult;
@@ -3654,12 +3600,9 @@ window.handleAITryOnUpload = async function(input) {
             document.getElementById('ai-step-2').style.opacity = '0.3';
             document.getElementById('ai-step-3').style.opacity = '1';
             incrementAIUsage();
-        }, 500);
+        }, 800);
 
     } catch (err) {
-        console.error("AI Try-On Diagnostic Error:", err);
-        let detailedMsg = err.message;
-        
         // إذا كان الخطأ قادم من نظام التشخيص الجديد
         try {
             const diag = JSON.parse(err.message.replace('Replicate Error: ', ''));
