@@ -3569,8 +3569,8 @@ window.handleAITryOnUpload = async (input) => {
         // 1. Upload to Cloudinary (To get a real URL for the AI)
         if (progressFill) progressFill.style.width = '15%';
         
-        const CLOUD_NAME = "dprrwlqni"; 
-        const UPLOAD_PRESET = "icloth"; 
+        const CLOUD_NAME = "dprrwlqni".trim(); 
+        const UPLOAD_PRESET = "08c9038a-e7e4-4ca5-ab2d-31cf360f8a2f".trim(); 
         
         const formData = new FormData();
         formData.append('file', file);
