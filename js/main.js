@@ -3588,12 +3588,17 @@ window.handleAITryOnUpload = async function(input) {
         const userImgUrl = uploadData.secure_url;
         if (progressFill) progressFill.style.width = '35%';
         
-        // 2. Prepare Product Image
+        // 2. Prepare Product Image (Ensure it's an absolute URL)
         const color = selectedColor;
         let productImg = p.image || '';
         if (p.colorVariants) {
             const v = p.colorVariants.find(x => x.name === color);
             if (v) productImg = (v.images && v.images.length > 0) ? v.images[0] : (v.image || p.image || '');
+        }
+        
+        // تحويل الرابط إلى رابط كامل (Absolute URL)
+        if (productImg && !productImg.startsWith('http')) {
+            productImg = window.location.origin + (productImg.startsWith('/') ? '' : '/') + productImg;
         }
 
         // 3. Call Cloudflare Worker Proxy with the URL
