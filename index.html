@@ -780,6 +780,10 @@
                         <i class="fas fa-bolt"></i>
                         <span data-i18n="buy_now">BUY NOW</span>
                     </button>
+                    <button id="modal-ai-tryon-btn" class="ai-tryon-btn-modal" onclick="window.openAITryOn()" style="display: none;">
+                        <i class="fas fa-magic"></i>
+                        <span data-i18n="ai_tryon">AI TRY-ON</span>
+                    </button>
                 </div>
 
 
@@ -1189,6 +1193,33 @@
     </div>
 
 
+
+    <!-- AI Try-On Modal -->
+    <div id="ai-tryon-modal" class="modal" style="z-index: 10002;">
+        <div class="modal-box ai-tryon-workspace" style="max-width: 600px; padding: 30px;">
+            <button class="close-modal" onclick="window.closeAITryOn()"><i class="fas fa-times"></i></button>
+            <h2 class="modal-title" style="margin-bottom: 20px;"><i class="fas fa-magic"></i> <span data-i18n="ai_tryon_workspace">AI Try-On Workspace</span></h2>
+            
+            <div id="ai-upload-area" style="border: 2px dashed var(--primary); border-radius: 15px; padding: 40px; text-align: center; cursor: pointer; transition: 0.3s;" onclick="document.getElementById('ai-photo-input').click()">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: var(--primary); margin-bottom: 15px;"></i>
+                <p style="font-weight: bold;" data-i18n="upload_photo_msg">Upload your photo to try the item</p>
+                <p style="font-size: 0.8rem; opacity: 0.6;" data-i18n="upload_photo_submsg">Photos are deleted immediately after use 🔒</p>
+                <input type="file" id="ai-photo-input" accept="image/*" style="display: none;" onchange="window.handleAITryOnUpload(this)">
+            </div>
+
+            <div id="ai-preview-area" style="display: none; position: relative; margin-top: 20px; text-align: center;">
+                <div id="ai-canvas-container" style="position: relative; display: inline-block; max-width: 100%; border-radius: 15px; overflow: hidden; background: #000;">
+                    <img id="ai-user-photo" src="" style="max-width: 100%; display: block;">
+                    <img id="ai-product-overlay" src="" style="position: absolute; cursor: move; width: 150px; left: 50%; top: 50%; transform: translate(-50%, -50%); filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));">
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn btn-primary" onclick="window.closeAITryOn()" data-i18n="done">Done</button>
+                    <button class="btn" style="background: #333; color: #fff;" onclick="window.resetAITryOn()" data-i18n="reset">Try Another Photo</button>
+                </div>
+                <p style="font-size: 0.75rem; opacity: 0.6; margin-top: 10px;" data-i18n="ai_hint">Pro tip: Drag the item to adjust it on your photo</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Firebase SDKs - Load synchronously at bottom to ensure availability for main.js -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>

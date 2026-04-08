@@ -287,6 +287,7 @@ function toggleForm() {
         }
         if (removeBtn) removeBtn.style.display = 'none';
 
+        document.getElementById('p-ai-tryon').checked = false;
         colorVariants = [];
         renderColorVariants();
         document.getElementById('form-title').innerText = 'إضافة منتج جديد';
@@ -583,6 +584,7 @@ if (saveProductForm) {
             colors: colorVariants.map(v => v.name || ""),
             badge: document.getElementById('p-badge').value || "",
             badge_ar: document.getElementById('p-badge-ar') ? document.getElementById('p-badge-ar').value || "" : "",
+            aiTryOn: document.getElementById('p-ai-tryon').checked,
             updatedAt: new Date().toISOString()
         };
 
@@ -947,6 +949,7 @@ async function editProduct(id) {
     document.getElementById('p-badge').value = p.badge || '';
     if (document.getElementById('p-badge-ar')) document.getElementById('p-badge-ar').value = p.badge_ar || '';
     document.getElementById('p-image-base64').value = p.image || "";
+    document.getElementById('p-ai-tryon').checked = p.aiTryOn || false;
 
     const previewImg = document.getElementById('preview-img');
     const removeBtn = document.getElementById('remove-img-btn');

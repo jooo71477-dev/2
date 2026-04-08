@@ -2335,6 +2335,12 @@ window.openSizeModal = (id) => {
     // Render Related Products
     renderRelatedProducts(p.subCategory || p.category, p.id);
 
+    // AI Try-On Button visibility
+    const aiBtn = document.getElementById('modal-ai-tryon-btn');
+    if (aiBtn) {
+        aiBtn.style.display = p.aiTryOn ? 'flex' : 'none';
+    }
+
     // Update URL to allow sharing this specific product (Clean URL with relative fallback)
     const isLocal = window.location.protocol === 'file:';
     if (!isLocal) {
@@ -3470,4 +3476,120 @@ document.addEventListener('DOMContentLoaded', () => {
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     initAll();
     initFirebase();
+}
+// ======= AI TRY-ON LOGIC =======
+window.openAITryOn = () => {
+    const p = selectedProductForSize;
+    if (!p) return;
+    
+    const modal = document.getElementById('ai-tryon-modal');
+    const overlayImg = document.getElementById('ai-product-overlay');
+    
+    if (modal && overlayImg) {
+        // Use the current modal image or product image
+        overlayImg.src = document.getElementById('modal-img').src;
+        modal.classList.add('active');
+        
+        // Reset state
+        window.resetAITryOn();
+    }
+};
+
+window.closeAITryOn = () => {
+    const modal = document.getElementById('ai-tryon-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        // SECURITY: Clear user photo and overlay source immediately
+        setTimeout(() => {
+            const userPhoto = document.getElementById('ai-user-photo');
+            const overlayImg = document.getElementById('ai-product-overlay');
+            if (userPhoto) userPhoto.src = '';
+            if (overlayImg) overlayImg.src = '';
+            document.getElementById('ai-photo-input').value = '';
+        }, 300);
+    }
+};
+
+window.resetAITryOn = () => {
+    document.getElementById('ai-upload-area').style.display = 'block';
+    document.getElementById('ai-preview-area').style.display = 'none';
+    document.getElementById('ai-user-photo').src = '';
+    document.getElementById('ai-photo-input').value = '';
+};
+
+window.handleAITryOnUpload = (input) => {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const userPhoto = document.getElementById('ai-user-photo');
+            userPhoto.src = e.target.result;
+            
+            document.getElementById('ai-upload-area').style.display = 'none';
+            document.getElementById('ai-preview-area').style.display = 'block';
+            
+            // Initialize dragging
+            initOverlayDragging();
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+
+function initOverlayDragging() {
+    const overlay = document.getElementById('ai-product-overlay');
+    const container = document.getElementById('ai-canvas-container');
+    let isDragging = false;
+    let startX, startY, initialX, initialY;
+
+    const startDrag = (e) => {
+        isDragging = true;
+        const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+        
+        startX = clientX;
+        startY = clientY;
+        
+        const rect = overlay.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        
+        initialX = rect.left - containerRect.left;
+        initialY = rect.top - containerRect.top;
+        
+        e.preventDefault();
+    };
+
+    const doDrag = (e) => {
+        if (!isDragging) return;
+        
+        const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        
+        const dx = clientX - startX;
+        const dy = clientY - startY;
+        
+        overlay.style.left = (initialX + dx + (overlay.offsetWidth/2)) + 'px';
+        overlay.style.top = (initialY + dy + (overlay.offsetHeight/2)) + 'px';
+        
+        e.preventDefault();
+    };
+
+    const stopDrag = () => {
+        isDragging = false;
+    };
+
+    overlay.onmousedown = startDrag;
+    overlay.ontouchstart = startDrag;
+    
+    window.onmousemove = doDrag;
+    window.ontouchmove = doDrag;
+    
+    window.onmouseup = stopDrag;
+    window.ontouchend = stopDrag;
+
+    // Scale overlay with pinch/scroll (optional but nice)
+    container.onwheel = (e) => {
+        e.preventDefault();
+        const scale = e.deltaY > 0 ? 0.9 : 1.1;
+        const currentWidth = overlay.offsetWidth;
+        overlay.style.width = (currentWidth * scale) + 'px';
+    };
 }
