@@ -1208,82 +1208,103 @@
 
 
     <!-- AI Virtual Try-On Modal (Powered by Replicate) -->
-    <div id="ai-tryon-modal" class="modal" style="z-index: 100002; background: rgba(0,0,0,0.92); backdrop-filter: blur(25px); display: none; align-items: center; justify-content: center; padding: 20px;">
-        <div class="modal-content" style="max-width: 850px; width: 100%; background: #080808; border: 1px solid rgba(212,175,55,0.4); padding: 50px; border-radius: 40px; box-shadow: 0 50px 120px rgba(0,0,0,1); position: relative; overflow: hidden; min-height: 500px;">
-            <!-- Decor -->
-            <div style="position: absolute; top: -100px; left: -100px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(212,175,55,0.05) 0%, transparent 70%); pointer-events: none;"></div>
+    <div id="ai-tryon-modal" class="modal" style="z-index: 100002; background: rgba(0,0,0,0.95); backdrop-filter: blur(25px); display: none; align-items: center; justify-content: center; padding: 20px;">
+        <div class="modal-content" style="max-width: 1000px; width: 100%; background: #050505; border: 1px solid rgba(212,175,55,0.3); padding: 0; border-radius: 40px; box-shadow: 0 50px 150px rgba(0,0,0,1); position: relative; overflow: hidden; display: flex; flex-direction: column;">
             
-            <button class="close-modal" onclick="window.closeAITryOn()" style="background: rgba(255,255,255,0.05); color: #fff; border-radius: 50%; width: 50px; height: 50px; top: 30px; right: 30px; transition: 0.3s;" onmouseover="this.style.background='rgba(255,0,0,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'"><i class="fas fa-times"></i></button>
+            <button class="close-modal" onclick="window.closeAITryOn()" style="background: rgba(255,255,255,0.05); color: #fff; border-radius: 50%; width: 45px; height: 45px; top: 25px; right: 25px; transition: 0.3s; z-index: 100;"><i class="fas fa-times"></i></button>
+
+            <!-- Main Workspace Container -->
+            <div id="ai-workspace-main" style="display: flex; min-height: 550px; flex-wrap: wrap;">
+                
+                <!-- Left Sidebar: Info & Steps -->
+                <div style="flex: 1; min-width: 300px; background: linear-gradient(180deg, rgba(212,175,55,0.05) 0%, transparent 100%); padding: 50px 40px; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 30px;">
+                    <div>
+                        <div style="display: inline-flex; align-items: center; gap: 10px; background: rgba(212,175,55,0.1); padding: 8px 16px; border-radius: 50px; border: 1px solid rgba(212,175,55,0.2); margin-bottom: 20px;">
+                            <i class="fas fa-robot" style="color: var(--primary); font-size: 0.8rem;"></i>
+                            <span style="color: var(--primary); font-weight: 1000; font-size: 0.65rem; letter-spacing: 3px; text-transform: uppercase;">AI WORKSPACE</span>
+                        </div>
+                        <h2 style="font-size: 2.2rem; font-weight: 1000; color: #fff; line-height: 1.1; margin-bottom: 15px;">VIRTUAL<br>FITTING</h2>
+                        <p style="font-size: 0.95rem; color: #777; line-height: 1.6;">Elevate your style with our intelligent virtual fitting experience. Secure & private.</p>
+                    </div>
+
+                    <!-- Steps Vertical -->
+                    <div style="display: flex; flex-direction: column; gap: 25px; margin-top: 20px;">
+                        <div id="ai-step-1" style="display: flex; align-items: center; gap: 15px;">
+                            <div style="width: 35px; height: 35px; border-radius: 12px; background: var(--primary); color: #000; font-weight: 900; display: flex; align-items: center; justify-content: center;">1</div>
+                            <div style="font-weight: 800; font-size: 0.85rem; color: #fff;">UPLOAD PHOTO</div>
+                        </div>
+                        <div id="ai-step-2" style="display: flex; align-items: center; gap: 15px; opacity: 0.3;">
+                            <div style="width: 35px; height: 35px; border-radius: 12px; background: #222; color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center;">2</div>
+                            <div style="font-weight: 800; font-size: 0.85rem; color: #fff;">PROCESSING</div>
+                        </div>
+                        <div id="ai-step-3" style="display: flex; align-items: center; gap: 15px; opacity: 0.3;">
+                            <div style="width: 35px; height: 35px; border-radius: 12px; background: #222; color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center;">3</div>
+                            <div style="font-weight: 800; font-size: 0.85rem; color: #fff;">RESULT</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.7rem; color: #555; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-shield-alt"></i> SECURE CLOUD PROCESSING
+                    </div>
+                </div>
+
+                <!-- Right Side: Interaction Area -->
+                <div style="flex: 2; min-width: 350px; padding: 50px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative;">
+                    
+                    <!-- State 1: Upload -->
+                    <div id="ai-mode-upload" style="width: 100%; max-width: 450px;">
+                        <div onclick="document.getElementById('ai-photo-input').click()" 
+                             style="border: 2px dashed rgba(212, 175, 55, 0.2); border-radius: 30px; padding: 80px 40px; text-align: center; cursor: pointer; background: rgba(255,255,255,0.02); transition: 0.4s;"
+                             onmouseover="this.style.borderColor='var(--primary)'; this.style.background='rgba(212,175,55,0.05)'"
+                             onmouseout="this.style.borderColor='rgba(212, 175, 55, 0.2)'; this.style.background='rgba(255,255,255,0.02)'">
+                            <div style="width: 80px; height: 80px; background: rgba(212,175,55,0.1); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px;">
+                                <i class="fas fa-camera" style="font-size: 2rem; color: var(--primary);"></i>
+                            </div>
+                            <h3 style="color: #fff; font-weight: 900; font-size: 1.4rem; margin-bottom: 10px;">UPLOAD YOUR PHOTO</h3>
+                            <p style="color: #666; font-size: 0.9rem; line-height: 1.5;">Choose a clear photo for the best AI results.</p>
+                        </div>
+                        <input type="file" id="ai-photo-input" accept="image/*" style="display: none;" onchange="window.handleAITryOnUpload(this)">
+                    </div>
+
+                    <!-- State 2: Processing -->
+                    <div id="ai-mode-processing" style="display: none; text-align: center; width: 100%; max-width: 400px;">
+                        <div style="position: relative; width: 120px; height: 120px; margin: 0 auto 30px;">
+                            <div style="position: absolute; width: 100%; height: 100%; border: 4px solid rgba(212,175,55,0.1); border-radius: 50%;"></div>
+                            <div style="position: absolute; width: 100%; height: 100%; border: 4px solid var(--primary); border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite;"></div>
+                            <i class="fas fa-magic" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2.5rem; color: var(--primary); animation: pulse 1.5s infinite;"></i>
+                        </div>
+                        <h3 style="color: #fff; font-weight: 900; font-size: 1.4rem; margin-bottom: 15px;">CREATING MAGIC...</h3>
+                        <div style="width: 100%; height: 6px; background: #222; border-radius: 10px; overflow: hidden; margin-bottom: 10px;">
+                            <div id="ai-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #d4af37, #f1c40f); transition: 0.3s;"></div>
+                        </div>
+                        <p style="color: #666; font-size: 0.85rem;" data-i18n="ai_loading_msg">Our AI is dressing you up. This takes about 30-60 seconds.</p>
+                    </div>
+
+                    <!-- State 3: Result -->
+                    <div id="ai-mode-result" style="display: none; text-align: center; width: 100%;">
+                        <div style="display: flex; gap: 30px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                            <div style="flex: 1; max-width: 400px; position: relative; border-radius: 30px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 30px 60px rgba(0,0,0,0.5);">
+                                <img id="ai-result-img" src="" alt="Result" style="width: 100%; display: block;">
+                                <div style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px; background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);">
+                                    <span style="color: var(--primary); font-weight: 900; font-size: 0.7rem; letter-spacing: 2px;">READY TO STYLE</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 15px; width: 250px;">
+                                <button onclick="window.continueWithAI()" style="width: 100%; background: var(--primary); color: #000; border: none; padding: 18px; border-radius: 18px; font-weight: 900; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                    <i class="fas fa-shopping-bag"></i> ADD TO CART
+                                </button>
+                                <button onclick="window.resetAITryOn()" style="width: 100%; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 18px; font-weight: 800; font-size: 0.85rem; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                                    TRY ANOTHER
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
-            <div class="ai-modal-header" style="text-align: center; margin-bottom: 50px;">
-                <div style="display: inline-flex; align-items: center; gap: 12px; background: rgba(212,175,55,0.1); padding: 12px 24px; border-radius: 100px; border: 1px solid rgba(212,175,55,0.2); margin-bottom: 25px;">
-                    <i class="fas fa-sparkles" style="color: var(--primary); font-size: 1rem;"></i>
-                    <span style="color: var(--primary); font-weight: 1000; font-size: 0.8rem; letter-spacing: 4px; text-transform: uppercase;">PREMIUM AI WORKSPACE</span>
-                </div>
-                <h2 style="font-size: 2.8rem; font-weight: 1000; color: #fff; margin-bottom: 15px; letter-spacing: -2px; line-height: 1.1;">VIRTUAL FITTING ROOM</h2>
-                <p style="font-size: 1.1rem; color: #aaa; max-width: 500px; margin: 0 auto; line-height: 1.6;" data-i18n="ai_tryon_desc">Elevate your style with our intelligent virtual fitting experience.</p>
-            </div>
+        </div>
+    </div>
 
-            <!-- Steps -->
-            <div class="ai-steps" style="display: flex; justify-content: center; align-items: center; gap: 40px; margin-bottom: 40px; position: relative;">
-                <div style="position: absolute; width: 100%; height: 1px; background: rgba(255,255,255,0.05); top: 15px; z-index: 0;"></div>
-                <div id="ai-step-1" class="ai-step active" style="z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                    <div style="width: 30px; height: 30px; border-radius: 50%; background: var(--primary); color: #000; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">1</div>
-                    <span style="font-size: 0.65rem; font-weight: 800; opacity: 0.8;" data-i18n="step_upload">UPLOAD</span>
-                </div>
-                <div id="ai-step-2" class="ai-step" style="z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0.3;">
-                    <div style="width: 30px; height: 30px; border-radius: 50%; background: #222; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">2</div>
-                    <span style="font-size: 0.65rem; font-weight: 800; opacity: 0.8;" data-i18n="step_process">PROCESS</span>
-                </div>
-                <div id="ai-step-3" class="ai-step" style="z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0.3;">
-                    <div style="width: 30px; height: 30px; border-radius: 50%; background: #222; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">3</div>
-                    <span style="font-size: 0.65rem; font-weight: 800; opacity: 0.8;" data-i18n="step_result">RESULT</span>
-                </div>
-            </div>
-
-            <!-- State 1: Upload (Personal Photo) -->
-            <div id="ai-mode-upload" class="ai-mode-view">
-                <div class="upload-zone" onclick="document.getElementById('ai-photo-input').click()" 
-                     style="border: 2px dashed rgba(212, 175, 55, 0.2); border-radius: 20px; padding: 60px 20px; text-align: center; cursor: pointer; background: rgba(255,255,255,0.01); transition: 0.3s;"
-                     onmouseover="this.style.borderColor='var(--primary)'; this.style.background='rgba(212,175,55,0.03)'"
-                     onmouseout="this.style.borderColor='rgba(212, 175, 55, 0.2)'; this.style.background='rgba(255,255,255,0.01)'">
-                    <i class="fas fa-camera-retro" style="font-size: 3.5rem; color: var(--primary); margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(212,175,55,0.2));"></i>
-                    <h3 style="margin-bottom: 8px; font-weight: 900;" data-i18n="upload_photo_msg">UPLOAD YOUR PHOTO</h3>
-                    <p style="font-size: 0.8rem; opacity: 0.5; max-width: 280px; margin: 0 auto; line-height: 1.6;" data-i18n="ai_upload_hint">Full-body or half-body photo with simple background gives the most realistic results.</p>
-                    <input type="file" id="ai-photo-input" accept="image/*" style="display: none;" onchange="window.handleAITryOnUpload(this)">
-                </div>
-            </div>
-
-            <!-- State 2: Processing (Magic Loading) -->
-            <div id="ai-mode-processing" class="ai-mode-view" style="display: none; text-align: center; padding: 40px 0;">
-                <div class="ai-spinner" style="position: relative; width: 100px; height: 100px; margin: 0 auto 30px;">
-                    <div style="position: absolute; inset: 0; border: 4px solid rgba(212,175,55,0.1); border-top-color: var(--primary); border-radius: 50%; animation: ai-spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;"></div>
-                    <i class="fas fa-sparkles" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--primary); font-size: 2rem; animation: ai-pulse 2s ease-in-out infinite;"></i>
-                </div>
-                <h3 style="font-weight: 950; margin-bottom: 10px;" data-i18n="ai_working">STITCHING GARMENT...</h3>
-                <p style="font-size: 0.85rem; opacity: 0.6;" data-i18n="ai_wait_msg">Our AI is meticulously fitting the product to your photo. This takes around 20 seconds.</p>
-                <div style="width: 100%; height: 4px; background: #111; border-radius: 10px; margin-top: 35px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
-                    <div id="ai-progress-bar" style="width: 0%; height: 100%; background: var(--primary); box-shadow: 0 0 20px var(--primary); transition: width 0.5s;"></div>
-                </div>
-            </div>
-
-            <!-- State 3: Result -->
-            <div id="ai-mode-result" class="ai-mode-view" style="display: none;">
-                <div class="ai-result-card" style="border-radius: 20px; overflow: hidden; border: 1px solid var(--primary); box-shadow: 0 20px 60px rgba(0,0,0,0.6); position: relative; background: #000; margin-bottom: 25px;">
-                    <img id="ai-result-img" src="" style="width: 100%; display: block; min-height: 400px; object-fit: contain;">
-                    <div style="position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.8); padding: 4px 12px; border-radius: 50px; border: 1px solid var(--primary); font-size: 0.6rem; font-weight: 900; color: var(--primary); letter-spacing: 1px;">AI GENERATED</div>
-                </div>
-                <div style="display: flex; gap: 15px;">
-                    <button class="btn btn-primary" style="flex: 2; height: 55px; font-weight: 900;" onclick="window.continueWithAI()">
-                        <i class="fas fa-check-circle" style="margin-right: 8px;"></i> <span data-i18n="add_to_basket">ADD TO BASKET</span>
-                    </button>
-                    <button class="btn" style="flex: 1; height: 55px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1);" onclick="window.resetAITryOn()">
-                        <i class="fas fa-redo"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Privacy Footer -->
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; gap: 10px; opacity: 0.4; font-size: 0.72rem;">
                 <i class="fas fa-shield-alt" style="color: var(--primary);"></i>
                 <span data-i18n="privacy_note">SECURE CLOUD PROCESSING • PHOTOS DELETED AUTOMATICALLY</span>
