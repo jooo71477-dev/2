@@ -3566,11 +3566,26 @@ window.handleAITryOnUpload = async (input) => {
     try {
         const p = selectedProductForSize;
         
-        // 1. Resize and Convert to Base64 (Zero Storage - Image is never saved)
-        if (progressFill) progressFill.style.width = '25%';
-        const userImgBase64 = await resizeImage(file, 1024); // Max width 1024px
-
-        if (progressFill) progressFill.style.width = '45%';
+        // 1. Upload to Cloudinary (To get a real URL for the AI)
+        if (progressFill) progressFill.style.width = '15%';
+        
+        const CLOUD_NAME = "dprrwlqni"; 
+        const UPLOAD_PRESET = "icloth"; 
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', UPLOAD_PRESET);
+        
+        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const uploadData = await uploadRes.json();
+        if (uploadData.error) throw new Error(`Cloudinary Error: ${uploadData.error.message}`);
+        
+        const userImgUrl = uploadData.secure_url;
+        if (progressFill) progressFill.style.width = '35%';
         
         // 2. Prepare Product Image
         const color = selectedColor;
@@ -3580,12 +3595,12 @@ window.handleAITryOnUpload = async (input) => {
             if (v) productImg = (v.images && v.images.length > 0) ? v.images[0] : (v.image || p.image || '');
         }
 
-        // 3. Call Cloudflare Worker Proxy
+        // 3. Call Cloudflare Worker Proxy with the URL
         const response = await fetch('https://gentle-sea-2a19.jooo71477.workers.dev/tryon', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                userImage: userImgBase64,
+                userImage: userImgUrl,
                 productImage: productImg,
                 category: p.category?.toLowerCase().includes('pant') ? 'bottoms' : 
                           (p.category?.toLowerCase().includes('dress') ? 'dresses' : 'tops')
