@@ -3580,8 +3580,8 @@ window.handleAITryOnUpload = async (input) => {
             if (v) productImg = (v.images && v.images.length > 0) ? v.images[0] : (v.image || p.image || '');
         }
 
-        // 3. Call Replicate Proxy
-        const response = await fetch('/api/tryon', {
+        // 3. Call Cloudflare Worker Proxy
+        const response = await fetch('https://gentle-sea-2a19.jooo71477.workers.dev/tryon', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -3628,7 +3628,7 @@ async function pollReplicateStatus(id) {
     
     for (let i = 0; i < maxTries; i++) {
         try {
-            const res = await fetch(`/api/replicate_status?id=${id}`);
+            const res = await fetch(`https://gentle-sea-2a19.jooo71477.workers.dev/status?id=${id}`);
             const data = await res.json();
             
             if (data.status === 'succeeded') {
