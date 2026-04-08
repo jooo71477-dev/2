@@ -3567,7 +3567,7 @@ window.handleAITryOnUpload = async function(input) {
         const p = selectedProductForSize;
         if (!p) throw new Error("Product data missing.");
         
-        // 1. Upload to Cloudinary (Essential for Replicate)
+        // 1. Upload User Image
         if (progressFill) progressFill.style.width = '15%';
         const CLOUD_NAME = "dprrwlqni"; 
         const UPLOAD_PRESET = "icloth"; 
@@ -3581,10 +3581,10 @@ window.handleAITryOnUpload = async function(input) {
             body: formData
         });
         const uploadData = await uploadRes.json();
-        if (uploadData.error) throw new Error(`Image Upload Failed: ${uploadData.error.message}`);
+        if (uploadData.error) throw new Error(uploadData.error.message);
         const userImgUrl = uploadData.secure_url;
 
-        // 2. Prepare Product Image (Must be absolute)
+        // 2. Product Image
         let productImg = p.image || '';
         if (p.colorVariants) {
             const v = p.colorVariants.find(x => x.name === selectedColor);
@@ -3594,7 +3594,7 @@ window.handleAITryOnUpload = async function(input) {
             productImg = window.location.origin + (productImg.startsWith('/') ? '' : '/') + productImg;
         }
 
-        // 3. Start AI Prediction
+        // 3. Start AI
         if (progressFill) progressFill.style.width = '40%';
         const response = await fetch('https://gentle-sea-2a19.jooo71477.workers.dev/tryon', {
             method: 'POST',
@@ -3607,11 +3607,9 @@ window.handleAITryOnUpload = async function(input) {
         });
 
         const prediction = await response.json();
-        if (prediction.error) {
-            throw new Error(`AI Prediction Error: ${JSON.stringify(prediction.detail || prediction.error)}`);
-        }
+        if (prediction.error) throw new Error(JSON.stringify(prediction.error));
 
-        // 4. Poll for Result
+        // 4. Wait for Result
         if (progressFill) progressFill.style.width = '60%';
         const finalResult = await pollReplicateStatus(prediction.id);
         
