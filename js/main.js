@@ -3542,9 +3542,9 @@ window.resetAITryOn = () => {
     if (progressBar) progressBar.style.width = '0%';
 };
 
-window.handleAITryOnUpload = async (input) => {
-    if (!input.files || !input.files[0]) return;
-    const file = input.files[0];
+window.handleAITryOnUpload = async function(input) {
+    const file = (input instanceof HTMLInputElement) ? input.files[0] : input;
+    if (!file) return;
 
     // Check Usage Limit First
     const canUse = await checkAIUsageLimit();
@@ -3565,12 +3565,13 @@ window.handleAITryOnUpload = async (input) => {
 
     try {
         const p = selectedProductForSize;
+        if (!p) throw new Error("Product context missing. Please close and reopen the fitting room.");
         
         // 1. Upload to Cloudinary (To get a real URL for the AI)
         if (progressFill) progressFill.style.width = '15%';
         
         const CLOUD_NAME = "dprrwlqni".trim(); 
-        const UPLOAD_PRESET = "08c9038a-e7e4-4ca5-ab2d-31cf360f8a2f".trim(); 
+        const UPLOAD_PRESET = "icloth".trim(); 
         
         const formData = new FormData();
         formData.append('file', file);
