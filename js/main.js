@@ -3623,7 +3623,7 @@ window.handleAITryOnUpload = async (input) => {
 };
 
 async function pollReplicateStatus(id) {
-    const maxTries = 40; 
+    const maxTries = 60; // زيادة المدة لـ 120 ثانية ليكون أكثر صبراً
     const progressBar = document.getElementById('ai-progress-bar');
     
     for (let i = 0; i < maxTries; i++) {
