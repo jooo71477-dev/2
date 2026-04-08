@@ -3593,7 +3593,12 @@ window.handleAITryOnUpload = async (input) => {
         });
 
         const prediction = await response.json();
-        if (prediction.error) throw new Error(prediction.error);
+        
+        // إذا لم يرجع لنا رقم تعريف، فهذا يعني أن هناك خطأ في الطلب
+        if (!prediction.id) {
+            const detail = prediction.detail || prediction.error || JSON.stringify(prediction);
+            throw new Error(`Replicate Error: ${detail}`);
+        }
 
         // 4. Poll for result
         if (progressFill) progressFill.style.width = '60%';
