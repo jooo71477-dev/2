@@ -3574,12 +3574,17 @@ window.handleAITryOnUpload = async function(input) {
         while (attempts < 80) {
             const statusRes = await fetch(`${AI_WORKER_URL}/status?id=${requestId}`);
             const statusData = await statusRes.json();
+            const currentStatus = (statusData.status || "").toLowerCase();
             
-            if (statusData.status === 'COMPLETED') {
-                finalResult = statusData.response.image.url;
+            console.log("Current AI Status:", currentStatus);
+
+            if (currentStatus === 'completed' || currentStatus === 'succeeded') {
+                // Fal.ai uses statusData.response.image.url
+                // Replicate uses statusData.output
+                finalResult = (statusData.response && statusData.response.image) ? statusData.response.image.url : statusData.output;
                 break;
-            } else if (statusData.status === 'FAILED') {
-                throw new Error("AI Failed: " + JSON.stringify(statusData.error));
+            } else if (currentStatus === 'failed') {
+                throw new Error("AI Failed: " + JSON.stringify(statusData.error || "Unknown Failure"));
             }
             
             attempts++;
@@ -3603,6 +3608,9 @@ window.handleAITryOnUpload = async function(input) {
         }, 800);
 
     } catch (err) {
+        console.error("AI Error:", err);
+        let detailedMsg = err.message;
+
         // إذا كان الخطأ قادم من نظام التشخيص الجديد
         try {
             const diag = JSON.parse(err.message.replace('Replicate Error: ', ''));
@@ -3611,7 +3619,7 @@ window.handleAITryOnUpload = async function(input) {
             }
         } catch(e) {}
 
-        showToast(currentLang === 'ar' ? `❌ خطأ في التشخيص: ${detailedMsg}` : `❌ Diagnostic Error: ${detailedMsg}`);
+        showToast(currentLang === 'ar' ? `❌ فشل: ${detailedMsg}` : `❌ Failed: ${detailedMsg}`);
         window.resetAITryOn();
     }
 };
